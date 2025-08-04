@@ -5,11 +5,11 @@ import { z } from "zod";
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  phone: varchar("phone"),
-  profileImageUrl: varchar("profile_image_url"),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  phone: varchar("phone").notNull().unique(),
+  address: varchar("address").notNull(),
+  password: varchar("password").notNull(), // Mot de passe haché
   language: varchar("language").default("fr"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -81,6 +81,23 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+// Auth schemas
+export const registerSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  confirmPassword: z.string().min(6),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
+});
+
+export const loginSchema = z.object({
+  phone: z.string().min(1, "Le numéro de téléphone est requis"),
+  password: z.string().min(1, "Le mot de passe est requis"),
 });
 
 export const insertPharmacySchema = createInsertSchema(pharmacies).omit({

@@ -2,20 +2,25 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useTranslation } from "@/lib/i18n";
+import type { Language } from "@/lib/i18n";
 
 export default function LanguageSelection() {
   const [, setLocation] = useLocation();
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("");
+  const { language, setLanguage } = useLanguage();
+  const { t } = useTranslation(language);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>(language);
 
-  const selectLanguage = (lang: string) => {
+  const selectLanguage = (lang: Language) => {
     setSelectedLanguage(lang);
-    localStorage.setItem('pharma-language', lang);
-    // For now, we'll proceed to onboarding regardless of language
-    // In a real app, this would affect the entire interface
+    setLanguage(lang); // Mettre à jour le contexte global
   };
 
   const handleContinue = () => {
-    setLocation("/onboarding");
+    if (selectedLanguage) {
+      setLocation("/onboarding");
+    }
   };
 
   return (
@@ -35,7 +40,7 @@ export default function LanguageSelection() {
         
         <div className="w-full max-w-sm space-y-4 mb-12">
           <h2 className="text-lg font-semibold text-center text-gray-900 mb-6">
-            CHOISIR LA LANGUE
+            {t('chooseLanguage').toUpperCase()}
           </h2>
           
           <Button
@@ -44,7 +49,7 @@ export default function LanguageSelection() {
             onClick={() => selectLanguage('fr')}
             data-testid="button-language-french"
           >
-            FRANÇAIS
+            🇫🇷 {t('french').toUpperCase()}
           </Button>
           
           <Button
@@ -53,7 +58,7 @@ export default function LanguageSelection() {
             onClick={() => selectLanguage('en')}
             data-testid="button-language-english"
           >
-            ENGLISH
+            🇬🇧 {t('english').toUpperCase()}
           </Button>
         </div>
         
@@ -61,18 +66,18 @@ export default function LanguageSelection() {
           <Button
             variant="outline"
             className="w-full py-3 px-6 border border-pharma-green text-pharma-green rounded-xl font-medium hover:bg-pharma-green hover:text-white transition-colors"
-            onClick={handleContinue}
+            onClick={() => setLocation("/login")}
             data-testid="button-login"
           >
-            Se connecter
+            {t('login')}
           </Button>
           <Button
             variant="ghost"
             className="w-full py-3 px-6 text-pharma-green font-medium"
-            onClick={handleContinue}
+            onClick={() => setLocation("/register")}
             data-testid="button-register"
           >
-            S'inscrire
+            {t('register')}
           </Button>
         </div>
       </div>

@@ -12,11 +12,15 @@ import {
   type InsertNotification
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import bcrypt from "bcryptjs";
 
 export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
+  getUserByPhone(phone: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
+  loginUser(phone: string, password: string): Promise<User | null>;
 
   // Pharmacy operations
   getPharmacies(lat?: number, lng?: number, radius?: number): Promise<Pharmacy[]>;
@@ -153,21 +157,51 @@ export class MemStorage implements IStorage {
     return this.users.get(id);
   }
 
+  async getUserByPhone(phone: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.phone === phone);
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
+    const hashedPassword = await bcrypt.hash(insertUser.password, 10);
+    
     const user: User = { 
       id,
-      email: insertUser.email ?? null,
-      firstName: insertUser.firstName ?? null,
-      lastName: insertUser.lastName ?? null,
-      phone: insertUser.phone ?? null,
-      profileImageUrl: insertUser.profileImageUrl ?? null,
-      language: insertUser.language ?? null,
+      firstName: insertUser.firstName,
+      lastName: insertUser.lastName,
+      phone: insertUser.phone,
+      address: insertUser.address,
+      password: hashedPassword,
+      language: insertUser.language ?? "fr",
       createdAt: new Date(),
       updatedAt: new Date()
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+
+    const updatedUser: User = {
+      ...user,
+      ...updates,
+      // Si le mot de passe est mis à jour, le hacher
+      password: updates.password ? await bcrypt.hash(updates.password, 10) : user.password,
+      updatedAt: new Date()
+    };
+    
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async loginUser(phone: string, password: string): Promise<User | null> {
+    const user = await this.getUserByPhone(phone);
+    if (!user) return null;
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    return isPasswordValid ? user : null;
   }
 
   // Pharmacy operations

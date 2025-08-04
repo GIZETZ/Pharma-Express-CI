@@ -2,8 +2,16 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
+import session from "express-session";
 import { storage } from "./storage";
-import { insertPharmacySchema, insertPrescriptionSchema, insertOrderSchema, insertNotificationSchema } from "@shared/schema";
+import { 
+  insertPharmacySchema, 
+  insertPrescriptionSchema, 
+  insertOrderSchema, 
+  insertNotificationSchema,
+  registerSchema,
+  loginSchema
+} from "@shared/schema";
 import { z } from "zod";
 
 // Multer configuration for file uploads
@@ -22,10 +30,142 @@ const upload = multer({
   },
 });
 
+// Interface pour les sessions
+declare module 'express-session' {
+  interface SessionData {
+    userId?: string;
+    language?: string;
+  }
+}
+
+// Middleware d'authentification
+const requireAuth = (req: any, res: any, next: any) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+  next();
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configuration des sessions
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key-development-only',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false, // true en production avec HTTPS
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
+    }
+  }));
+
   // Health check
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  // Routes d'authentification
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const validatedData = registerSchema.parse(req.body);
+      
+      // Vérifier si l'utilisateur existe déjà
+      const existingUser = await storage.getUserByPhone(validatedData.phone);
+      if (existingUser) {
+        return res.status(400).json({ message: 'Un utilisateur avec ce numéro existe déjà' });
+      }
+
+      // Créer l'utilisateur
+      const { confirmPassword, ...userData } = validatedData;
+      const user = await storage.createUser(userData);
+
+      // Démarrer la session
+      req.session.userId = user.id;
+      req.session.language = user.language;
+
+      // Retourner les infos utilisateur (sans le mot de passe)
+      const { password, ...userInfo } = user;
+      res.status(201).json(userInfo);
+    } catch (error) {
+      console.error('Erreur lors de l\'inscription:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Données invalides', errors: error.errors });
+      }
+      res.status(500).json({ message: 'Erreur lors de l\'inscription' });
+    }
+  });
+
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const validatedData = loginSchema.parse(req.body);
+      
+      const user = await storage.loginUser(validatedData.phone, validatedData.password);
+      if (!user) {
+        return res.status(400).json({ message: 'Numéro de téléphone ou mot de passe incorrect' });
+      }
+
+      // Démarrer la session
+      req.session.userId = user.id;
+      req.session.language = user.language;
+
+      // Retourner les infos utilisateur (sans le mot de passe)
+      const { password, ...userInfo } = user;
+      res.json(userInfo);
+    } catch (error) {
+      console.error('Erreur lors de la connexion:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Données invalides', errors: error.errors });
+      }
+      res.status(500).json({ message: 'Erreur lors de la connexion' });
+    }
+  });
+
+  app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: 'Erreur lors de la déconnexion' });
+      }
+      res.json({ message: 'Déconnexion réussie' });
+    });
+  });
+
+  app.get('/api/auth/user', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(404).json({ message: 'Utilisateur non trouvé' });
+      }
+      
+      // Retourner les infos utilisateur (sans le mot de passe)
+      const { password, ...userInfo } = user;
+      res.json(userInfo);
+    } catch (error) {
+      console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+      res.status(500).json({ message: 'Erreur serveur' });
+    }
+  });
+
+  app.put('/api/auth/user', requireAuth, async (req: any, res) => {
+    try {
+      const updates = req.body;
+      const updatedUser = await storage.updateUser(req.session.userId, updates);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'Utilisateur non trouvé' });
+      }
+
+      // Mettre à jour la langue de session si elle a changé
+      if (updates.language) {
+        req.session.language = updates.language;
+      }
+
+      // Retourner les infos utilisateur (sans le mot de passe)
+      const { password, ...userInfo } = updatedUser;
+      res.json(userInfo);
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du profil:', error);
+      res.status(500).json({ message: 'Erreur lors de la mise à jour' });
+    }
   });
 
   // Pharmacies endpoints
@@ -72,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Prescriptions endpoints
-  app.post('/api/prescriptions', upload.single('prescription'), async (req, res) => {
+  app.post('/api/prescriptions', requireAuth, upload.single('prescription'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: 'Prescription image is required' });
@@ -87,7 +227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const imageUrl = `/uploads/prescriptions/${Date.now()}-${req.file.originalname}`;
       
       const prescriptionData = {
-        userId: 'current-user', // In real app, get from session/auth
+        userId: req.session.userId, // Utiliser l'ID de l'utilisateur connecté
         imageUrl,
         status: 'pending' as const,
         medications: null, // Would be populated by OCR processing
@@ -112,10 +252,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/prescriptions', async (req, res) => {
+  app.get('/api/prescriptions', requireAuth, async (req: any, res) => {
     try {
-      const userId = 'current-user'; // In real app, get from session/auth
-      const prescriptions = await storage.getUserPrescriptions(userId);
+      const prescriptions = await storage.getUserPrescriptions(req.session.userId);
       res.json(prescriptions);
     } catch (error) {
       console.error('Error fetching prescriptions:', error);
@@ -137,7 +276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Orders endpoints
-  app.post('/api/orders', async (req, res) => {
+  app.post('/api/orders', requireAuth, async (req: any, res) => {
     try {
       const orderData = insertOrderSchema.parse(req.body);
       const order = await storage.createOrder(orderData);
