@@ -39,7 +39,6 @@ export default function DashboardPharmacien() {
   });
   const { data: orders } = useQuery({ queryKey: ["/api/pharmacien/orders"] });
   const { data: prescriptions } = useQuery({ queryKey: ["/api/pharmacien/prescriptions"] });
-  const { data: user } = useQuery({ queryKey: ["/api/auth/user"] });
 
   const handleOrderUpdate = (orderId: string, status: string) => {
     updateOrderMutation.mutate({ orderId, status });
