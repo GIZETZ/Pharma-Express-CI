@@ -1,0 +1,29 @@
+                             ┌────────────────────┐
+                             │  YahoPharma+ App   │
+                             └────────┬───────────┘
+                                      │
+                ┌────────────────────┼────────────────────┐
+                │                    │                    │
+         ┌──────▼──────┐      ┌──────▼──────┐      ┌──────▼──────┐
+         │   Patient   │      │ Pharmacien  │      │   Livreur   │
+         └──────┬──────┘      └──────┬──────┘      └──────┬──────┘
+                │                    │                    │
+     ┌──────────▼──────────┐ ┌───────▼───────────┐ ┌──────▼─────────┐
+     │ Créer un compte     │ │ Réception ord.    │ │ Reçoit missions │
+     │ Envoyer ordonnance  │ │ Vérif. médicaments│ │ Suivi de statut │
+     │ Localiser pharmacie │ │ Prop. prix/alt.   │ │ Tarification fix│
+     │ Suivre livraison    │ │ Valide & prépare  │ │ 500FCFA pour lui│
+     └──────────┬──────────┘ └────────┬──────────┘ └──────┬─────────┘
+                │                    │                    │
+                └────────┬───────────┴────────────┬───────┘
+                         │                        │
+                   ┌─────▼─────┐            ┌─────▼─────┐
+                   │   Admin   │            │  Sécurité │
+                   └─────┬─────┘            └─────┬─────┘
+                         │                        │
+        ┌────────────────▼──────┐        ┌────────▼─────────┐
+        │ Gère Pharmacies       │        │ Données cryptées │
+        │ Gère livreurs         │        │ Ordonnances sécu │
+        │ Supervision commandes │        │ RGPD Médical CI  │
+        │ Tableau de bord       │        └──────────────────┘
+        └───────────────────────┘

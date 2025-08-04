@@ -21,6 +21,19 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
   loginUser(phone: string, password: string): Promise<User | null>;
+  
+  // Admin operations
+  getPendingUsers(): Promise<User[]>;
+  updateUserVerificationStatus(userId: string, status: "approved" | "rejected" | "pending"): Promise<User | null>;
+  getApplicationStats(): Promise<{
+    patients: number;
+    pharmaciens: number;
+    livreurs: number;
+    orders: number;
+    pendingOrders: number;
+    activeDeliveries: number;
+    completedDeliveries: number;
+  }>;
 
   // Pharmacy operations
   getPharmacies(lat?: number, lng?: number, radius?: number): Promise<Pharmacy[]>;
@@ -219,6 +232,58 @@ export class MemStorage implements IStorage {
 
   async getUserByPhone(phone: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(user => user.phone === phone);
+  }
+
+  async getPendingUsers(): Promise<User[]> {
+    return Array.from(this.users.values()).filter(user => 
+      (user.role === "pharmacien" || user.role === "livreur") && 
+      user.verificationStatus === "pending"
+    );
+  }
+
+  async updateUserVerificationStatus(userId: string, status: "approved" | "rejected" | "pending"): Promise<User | null> {
+    const user = this.users.get(userId);
+    if (!user) return null;
+
+    const updatedUser = {
+      ...user,
+      verificationStatus: status,
+      updatedAt: new Date()
+    };
+
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+
+  async getApplicationStats(): Promise<{
+    patients: number;
+    pharmaciens: number;
+    livreurs: number;
+    orders: number;
+    pendingOrders: number;
+    activeDeliveries: number;
+    completedDeliveries: number;
+  }> {
+    const allUsers = Array.from(this.users.values());
+    const allOrders = Array.from(this.orders.values());
+    
+    const patients = allUsers.filter(u => u.role === "patient").length;
+    const pharmaciens = allUsers.filter(u => u.role === "pharmacien" && u.verificationStatus === "approved").length;
+    const livreurs = allUsers.filter(u => u.role === "livreur" && u.verificationStatus === "approved").length;
+    const orders = allOrders.length;
+    const pendingOrders = allOrders.filter(o => o.status === "pending").length;
+    const activeDeliveries = allOrders.filter(o => o.status === "in_transit").length;
+    const completedDeliveries = allOrders.filter(o => o.status === "delivered").length;
+
+    return {
+      patients,
+      pharmaciens,
+      livreurs,
+      orders,
+      pendingOrders,
+      activeDeliveries,
+      completedDeliveries
+    };
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {

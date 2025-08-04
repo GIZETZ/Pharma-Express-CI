@@ -75,9 +75,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Un utilisateur avec ce numéro existe déjà' });
       }
 
+      // Set verification status based on role
+      let verificationStatus = "approved"; // Default for patients
+      if (validatedData.role === "pharmacien" || validatedData.role === "livreur") {
+        verificationStatus = "pending"; // Requires admin validation
+      }
+
       // Créer l'utilisateur
       const { confirmPassword, ...userData } = validatedData;
-      const user = await storage.createUser(userData);
+      const user = await storage.createUser({
+        ...userData,
+        verificationStatus,
+      });
 
       // Démarrer la session
       req.session.userId = user.id;
@@ -134,6 +143,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(req.session.userId);
       if (!user) {
         return res.status(404).json({ message: 'Utilisateur non trouvé' });
+      }
+
+      // Check if professional account is pending validation
+      if ((user.role === "pharmacien" || user.role === "livreur") && user.verificationStatus === "pending") {
+        const { password, ...userInfo } = user;
+        return res.json({
+          ...userInfo,
+          isPending: true,
+          message: "Votre compte est en attente de validation administrative"
+        });
       }
 
       // Retourner les infos utilisateur (sans le mot de passe)
@@ -440,6 +459,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error with reverse geocoding:', error);
       res.status(500).json({ message: 'Failed to get address' });
+    }
+  });
+
+  // Admin routes for SupervisorLock
+  const requireAdmin = async (req: any, res: any, next: any) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+    
+    next();
+  };
+
+  // Get pending users for validation
+  app.get('/api/admin/pending-users', requireAdmin, async (req, res) => {
+    try {
+      const pendingUsers = await storage.getPendingUsers();
+      res.json(pendingUsers);
+    } catch (error) {
+      console.error('Error fetching pending users:', error);
+      res.status(500).json({ message: 'Failed to fetch pending users' });
+    }
+  });
+
+  // Validate or reject user account
+  app.post('/api/admin/validate-user', requireAdmin, async (req, res) => {
+    try {
+      const { userId, action } = req.body;
+      
+      if (!userId || !action || !['approve', 'reject'].includes(action)) {
+        return res.status(400).json({ message: 'Invalid request data' });
+      }
+
+      const newStatus = action === 'approve' ? 'approved' : 'rejected';
+      const updatedUser = await storage.updateUserVerificationStatus(userId, newStatus);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.json({ message: `User ${action}d successfully`, user: updatedUser });
+    } catch (error) {
+      console.error('Error validating user:', error);
+      res.status(500).json({ message: 'Failed to validate user' });
+    }
+  });
+
+  // Get application statistics
+  app.get('/api/admin/stats', requireAdmin, async (req, res) => {
+    try {
+      const stats = await storage.getApplicationStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      res.status(500).json({ message: 'Failed to fetch statistics' });
     }
   });
 

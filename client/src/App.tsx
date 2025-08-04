@@ -23,12 +23,24 @@ import DashboardPatient from "@/pages/dashboard-patient";
 import DashboardPharmacien from "@/pages/dashboard-pharmacien";
 import DashboardLivreur from "@/pages/dashboard-livreur";
 import DashboardAdmin from "@/pages/dashboard-admin";
+import SupervisorLock from "@/pages/supervisorlock";
+import PendingValidation from "@/pages/pending-validation";
 import PWAInstallPrompt from "@/components/pwa-install-prompt";
 
 function RoleDashboard() {
   const { user } = useAuth();
   
   if (!user) return null;
+
+  // Check if professional account is pending validation
+  if ((user.role === "pharmacien" || user.role === "livreur") && user.verificationStatus === "pending") {
+    return <PendingValidation />;
+  }
+
+  // Check if professional account was rejected
+  if ((user.role === "pharmacien" || user.role === "livreur") && user.verificationStatus === "rejected") {
+    return <PendingValidation />; // Could create a separate rejection page
+  }
   
   switch (user.role) {
     case "admin":
@@ -76,6 +88,7 @@ function Router() {
           <Route path="/profile" component={Profile} />
           <Route path="/edit-profile" component={EditProfile} />
           <Route path="/delivery-address" component={DeliveryAddress} />
+          <Route path="/supervisorlock" component={SupervisorLock} />
           <Route component={NotFound} />
         </>
       ) : (
