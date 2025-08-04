@@ -223,6 +223,95 @@ export class MemStorage implements IStorage {
     deliveryPersonsData.forEach(person => {
       this.deliveryPersons.set(person.id, person);
     });
+
+    // Seed some test orders
+    const testOrders = [
+      {
+        userId: Array.from(this.users.values()).find(u => u.role === "patient")?.id || randomUUID(),
+        pharmacyId: Array.from(this.pharmacies.values())[0]?.id || randomUUID(),
+        status: 'pending',
+        totalAmount: 25000,
+        deliveryAddress: 'Cocody, près du carrefour 2 plateaux',
+        deliveryNotes: 'Médicaments pour hypertension',
+      },
+      {
+        userId: Array.from(this.users.values()).find(u => u.role === "patient")?.id || randomUUID(),
+        pharmacyId: Array.from(this.pharmacies.values())[1]?.id || randomUUID(),
+        status: 'confirmed',
+        totalAmount: 15000,
+        deliveryAddress: 'Adjamé, près de la gare',
+        deliveryNotes: 'Antibiotiques prescrits',
+      },
+      {
+        userId: Array.from(this.users.values()).find(u => u.role === "patient")?.id || randomUUID(),
+        pharmacyId: Array.from(this.pharmacies.values())[0]?.id || randomUUID(),
+        status: 'ready_for_delivery',
+        totalAmount: 8500,
+        deliveryAddress: 'Marcory zone 4',
+        deliveryNotes: 'Vitamines et compléments',
+      },
+      {
+        userId: Array.from(this.users.values()).find(u => u.role === "patient")?.id || randomUUID(),
+        pharmacyId: Array.from(this.pharmacies.values())[1]?.id || randomUUID(),
+        status: 'delivered',
+        totalAmount: 12000,
+        deliveryAddress: 'Plateau, près de la cathédrale',
+        deliveryNotes: 'Commande livrée avec succès',
+      }
+    ];
+
+    testOrders.forEach(orderData => {
+      const order: Order = {
+        id: randomUUID(),
+        userId: orderData.userId,
+        pharmacyId: orderData.pharmacyId,
+        prescriptionId: null,
+        status: orderData.status,
+        totalAmount: orderData.totalAmount,
+        deliveryAddress: orderData.deliveryAddress,
+        deliveryNotes: orderData.deliveryNotes,
+        estimatedDelivery: new Date(Date.now() + 30 * 60 * 1000),
+        deliveredAt: orderData.status === 'delivered' ? new Date() : null,
+        deliveryPersonId: orderData.status === 'delivered' ? Array.from(this.deliveryPersons.values())[0]?.id : null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      this.orders.set(order.id, order);
+    });
+
+    // Seed some test prescriptions
+    const testPrescriptions = [
+      {
+        userId: Array.from(this.users.values()).find(u => u.role === "patient")?.id || randomUUID(),
+        imageUrl: "/uploads/prescriptions/prescription1.jpg",
+        status: 'pending',
+        medications: [
+          { name: "Paracétamol 500mg", dosage: "2 fois par jour", available: true },
+          { name: "Ibuprofène 400mg", dosage: "3 fois par jour", available: true }
+        ]
+      },
+      {
+        userId: Array.from(this.users.values()).find(u => u.role === "patient")?.id || randomUUID(),
+        imageUrl: "/uploads/prescriptions/prescription2.jpg",
+        status: 'processed',
+        medications: [
+          { name: "Amoxicilline 1g", dosage: "2 fois par jour", available: false },
+          { name: "Doliprane 1000mg", dosage: "3 fois par jour", available: true }
+        ]
+      }
+    ];
+
+    testPrescriptions.forEach(prescData => {
+      const prescription: Prescription = {
+        id: randomUUID(),
+        userId: prescData.userId,
+        imageUrl: prescData.imageUrl,
+        status: prescData.status,
+        medications: prescData.medications,
+        createdAt: new Date()
+      };
+      this.prescriptions.set(prescription.id, prescription);
+    });
   }
 
   // User operations
@@ -460,9 +549,10 @@ export class MemStorage implements IStorage {
   async getPharmacistOrders(pharmacistId: string): Promise<any[]> {
     const ordersArray = Array.from(this.orders.values());
     const usersArray = Array.from(this.users.values());
-    const filteredOrders = ordersArray.filter(order => order.pharmacyId === pharmacistId);
-
-    const ordersWithUserDetails = filteredOrders.map(order => {
+    
+    // Pour l'instant, retourner toutes les commandes car nous n'avons pas encore
+    // d'association directe entre pharmacien et pharmacie
+    const ordersWithUserDetails = ordersArray.map(order => {
         const user = usersArray.find(user => user.id === order.userId);
         return {
             id: order.id,
@@ -553,14 +643,30 @@ export class MemStorage implements IStorage {
       .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))[0];
   }
 
-  async getPharmacistOrders(pharmacistId: string): Promise<Order[]> {
-    // For now, return all orders since we don't have pharmacy-specific assignment
-    // In a real app, you'd filter by pharmacyId
-    return Array.from(this.orders.values());
-  }
+  
 
-  async getAllPrescriptions(): Promise<Prescription[]> {
-    return Array.from(this.prescriptions.values());
+  async getAllPrescriptions(): Promise<any[]> {
+    const prescriptionsArray = Array.from(this.prescriptions.values());
+    const usersArray = Array.from(this.users.values());
+    
+    const prescriptionsWithUserDetails = prescriptionsArray.map(prescription => {
+      const user = usersArray.find(user => user.id === prescription.userId);
+      return {
+        id: prescription.id,
+        userId: prescription.userId,
+        imageUrl: prescription.imageUrl,
+        status: prescription.status,
+        medications: prescription.medications,
+        createdAt: prescription.createdAt,
+        user: user ? {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.phone
+        } : null
+      };
+    });
+
+    return prescriptionsWithUserDetails.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
   }
 
   // Create new pharmacy
