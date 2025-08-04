@@ -61,10 +61,7 @@ export default function DashboardPatient() {
   // Mutation pour créer une commande
   const createOrderMutation = useMutation({
     mutationFn: (orderDetails: any) =>
-      apiRequest("/api/orders", {
-        method: "POST",
-        body: JSON.stringify(orderDetails),
-      }),
+      apiRequest("/api/orders", "POST", orderDetails),
     onSuccess: () => {
       toast({
         title: "Commande créée",
@@ -225,7 +222,7 @@ export default function DashboardPatient() {
           )}
         </div>
 
-        <Tabs defaultValue="orders" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="orders">Mes Commandes</TabsTrigger>
             <TabsTrigger value="prescriptions">Ordonnances</TabsTrigger>
@@ -256,7 +253,7 @@ export default function DashboardPatient() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                   <p>Chargement de vos commandes...</p>
                 </div>
-              ) : orders && orders.length > 0 ? (
+              ) : orders && Array.isArray(orders) && orders.length > 0 ? (
                 orders.map((order: any) => (
                   <Card key={order.id} className="hover:shadow-md transition-shadow">
                     <CardHeader>
@@ -517,7 +514,7 @@ export default function DashboardPatient() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {currentOrder && currentOrder.status === 'in_delivery' ? (
+                {currentOrder && typeof currentOrder === 'object' && 'status' in currentOrder && (currentOrder as any).status === 'in_delivery' ? (
                   <div className="space-y-6">
                     {/* Statut de la livraison */}
                     <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
@@ -527,7 +524,7 @@ export default function DashboardPatient() {
                             🚚 Livraison en cours
                           </h3>
                           <p className="text-sm text-orange-700">
-                            Commande #{currentOrder.id.slice(0, 8)}
+                            Commande #{(currentOrder as any).id.slice(0, 8)}
                           </p>
                         </div>
                         <Badge className="bg-orange-100 text-orange-800">
@@ -538,15 +535,15 @@ export default function DashboardPatient() {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-gray-600">Pharmacie</p>
-                          <p className="font-medium">{currentOrder.pharmacy?.name}</p>
+                          <p className="font-medium">{(currentOrder as any).pharmacy?.name}</p>
                         </div>
                         <div>
                           <p className="text-gray-600">Montant</p>
-                          <p className="font-medium">{currentOrder.totalAmount} FCFA</p>
+                          <p className="font-medium">{(currentOrder as any).totalAmount} FCFA</p>
                         </div>
                         <div>
                           <p className="text-gray-600">Adresse</p>
-                          <p className="font-medium">{currentOrder.deliveryAddress}</p>
+                          <p className="font-medium">{(currentOrder as any).deliveryAddress}</p>
                         </div>
                         <div>
                           <p className="text-gray-600">Temps estimé</p>
@@ -610,7 +607,7 @@ export default function DashboardPatient() {
                       </p>
                     </div>
                   </div>
-                ) : orders && orders.some((order: any) => order.status === 'pending' || order.status === 'confirmed' || order.status === 'ready_for_delivery') ? (
+                ) : orders && Array.isArray(orders) && orders.some((order: any) => order.status === 'pending' || order.status === 'confirmed' || order.status === 'ready_for_delivery') ? (
                   <div className="text-center py-8">
                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Clock className="h-8 w-8 text-blue-600" />
@@ -620,7 +617,7 @@ export default function DashboardPatient() {
                       Votre commande est en cours de traitement par la pharmacie
                     </p>
                     <div className="text-left bg-gray-50 rounded-lg p-4 max-w-md mx-auto">
-                      {orders.filter((order: any) => ['pending', 'confirmed', 'ready_for_delivery'].includes(order.status)).map((order: any) => (
+                      {Array.isArray(orders) && orders.filter((order: any) => ['pending', 'confirmed', 'ready_for_delivery'].includes(order.status)).map((order: any) => (
                         <div key={order.id} className="space-y-2">
                           <p className="text-sm"><strong>Commande #{order.id.slice(0, 8)}</strong></p>
                           <p className="text-sm">Pharmacie: {order.pharmacy?.name}</p>
@@ -648,7 +645,7 @@ export default function DashboardPatient() {
           </TabsContent>
         </Tabs>
       </div>
-      <BottomNavigation />
+      <BottomNavigation currentPage="orders" />
     </div>
   );
 }
