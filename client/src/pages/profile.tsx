@@ -79,10 +79,31 @@ export default function Profile() {
     setLocation("/home");
   };
 
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/auth/logout', {});
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Déconnexion réussie",
+        description: "À bientôt!",
+      });
+      queryClient.clear();
+      localStorage.clear();
+      window.location.href = '/login';
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Une erreur est survenue lors de la déconnexion",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleLogout = () => {
-    // Clear local storage and redirect to language selection
-    localStorage.clear();
-    setLocation("/");
+    logoutMutation.mutate();
   };
 
   if (isLoading) {
@@ -154,8 +175,8 @@ export default function Profile() {
                 <h2 className="text-xl font-semibold text-gray-900" data-testid="text-user-name">
                   {user ? `${user.firstName} ${user.lastName}` : 'Chargement...'}
                 </h2>
-                <p className="text-gray-600" data-testid="text-user-email">
-                  {user?.email || 'Chargement...'}
+                <p className="text-gray-600" data-testid="text-user-phone">
+                  {user?.phone || 'Chargement...'}
                 </p>
                 <p className="text-pharma-green text-sm font-medium">
                   Membre depuis 2023

@@ -29,6 +29,7 @@ export default function Register() {
       address: "",
       password: "",
       confirmPassword: "",
+      role: "patient",
       language: "fr",
     },
   });
@@ -66,7 +67,7 @@ export default function Register() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            Pharma Express CI
+            YahoPharma+
           </CardTitle>
           <CardDescription>
             Créez votre compte
@@ -152,11 +153,34 @@ export default function Register() {
 
               <FormField
                 control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type de compte</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-role">
+                          <SelectValue placeholder="Choisir votre rôle" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="patient">👤 Patient - Commander des médicaments</SelectItem>
+                        <SelectItem value="pharmacien">💊 Pharmacien - Gérer une pharmacie</SelectItem>
+                        <SelectItem value="livreur">🚗 Livreur - Effectuer des livraisons</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="language"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Langue préférée</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value || "fr"}>
                       <FormControl>
                         <SelectTrigger data-testid="select-language">
                           <SelectValue placeholder="Choisir une langue" />
