@@ -1,0 +1,932 @@
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharma Express CI - Livraison de Médicaments</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#22C55E">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png">
+    <link rel="apple-touch-icon" href="/icon-192x192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Pharma Express CI">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'pharma-green': '#22C55E',
+                        'pharma-green-dark': '#16A34A',
+                        'pharma-blue': '#2563EB',
+                        'pharma-bg': '#FAFAFA',
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .notification-badge { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        
+        /* PWA Install Button Styling */
+        .install-prompt { 
+            position: fixed; 
+            bottom: 80px; 
+            left: 16px; 
+            right: 16px; 
+            z-index: 50;
+            display: none;
+        }
+        .install-prompt.show { display: block; }
+        
+        /* Camera Preview Styling */
+        .camera-preview {
+            aspect-ratio: 4/3;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Map Container */
+        .map-container {
+            height: 200px;
+            background: linear-gradient(45deg, #e5e7eb, #f3f4f6);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Delivery Animation */
+        .delivery-icon {
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body class="bg-pharma-bg text-gray-900 font-inter">
+    <!-- PWA Install Prompt -->
+    <div id="installPrompt" class="install-prompt">
+        <div class="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
+            <div class="flex items-center space-x-3">
+                <div class="bg-pharma-green rounded-lg p-2">
+                    <i class="fas fa-download text-white text-lg"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900">Installer l'app</h3>
+                    <p class="text-sm text-gray-600">Ajoutez Pharma Express CI à votre écran d'accueil</p>
+                </div>
+                <button id="installBtn" class="bg-pharma-green text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    Installer
+                </button>
+                <button id="dismissBtn" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Language Selection Screen -->
+    <div id="languageScreen" class="screen active min-h-screen flex flex-col">
+        <div class="flex-1 flex flex-col justify-center items-center px-6 py-8">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-pharma-green rounded-2xl mb-6">
+                    <i class="fas fa-plus text-white text-3xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">Pharma Express CI</h1>
+                <p class="text-gray-600">Livraison de médicaments à domicile</p>
+            </div>
+            
+            <div class="w-full max-w-sm space-y-4 mb-12">
+                <h2 class="text-lg font-semibold text-center text-gray-900 mb-6">CHOISIR LA LANGUE</h2>
+                
+                <button class="w-full py-4 px-6 border-2 border-gray-300 rounded-xl text-gray-900 font-medium hover:border-pharma-green transition-colors" onclick="selectLanguage('fr')">
+                    FRANÇAIS
+                </button>
+                
+                <button class="w-full py-4 px-6 border-2 border-gray-300 rounded-xl text-gray-900 font-medium hover:border-pharma-green transition-colors" onclick="selectLanguage('en')">
+                    ENGLISH
+                </button>
+            </div>
+            
+            <div class="w-full max-w-sm space-y-3">
+                <button class="w-full py-3 px-6 border border-pharma-green text-pharma-green rounded-xl font-medium hover:bg-pharma-green hover:text-white transition-colors" onclick="showScreen('loginScreen')">
+                    Se connecter
+                </button>
+                <button class="w-full py-3 px-6 text-pharma-green font-medium" onclick="showScreen('registerScreen')">
+                    S'inscrire
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarding Screen -->
+    <div id="onboardingScreen" class="screen min-h-screen flex flex-col">
+        <div class="flex-1 flex flex-col justify-center items-center px-6 py-8">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-24 h-24 bg-pharma-green rounded-2xl mb-6">
+                    <i class="fas fa-prescription-bottle-medical text-white text-3xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">Pharma Express CI</h1>
+            </div>
+            
+            <div class="bg-white rounded-2xl p-6 w-full max-w-sm mb-8 shadow-sm">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Téléverser une ordonnance</h2>
+                <p class="text-gray-600 mb-6">Choisissez une pharmacie et faites-vous livrer vos médicaments</p>
+                
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mb-6">
+                    <div class="w-12 h-12 bg-gray-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
+                        <i class="fas fa-camera text-gray-400 text-xl"></i>
+                    </div>
+                    <p class="text-gray-600 font-medium">Téléverser l'ordonnance</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="font-semibold text-gray-900 mb-2">Sélectionner une pharmacie</h3>
+                        <p class="text-gray-600 text-sm">Veuillez sélectionner une pharmacie</p>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="w-full max-w-sm bg-pharma-blue text-white py-4 rounded-xl font-semibold text-lg" onclick="showScreen('homeScreen')">
+                Continuer
+            </button>
+        </div>
+    </div>
+
+    <!-- Home Screen -->
+    <div id="homeScreen" class="screen min-h-screen">
+        <!-- Header -->
+        <header class="bg-white px-4 py-3 shadow-sm">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-pharma-green rounded-lg flex items-center justify-center">
+                        <i class="fas fa-plus text-white text-lg"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-gray-900">Pharma Express CI</h1>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button class="relative p-2">
+                        <i class="fas fa-bell text-gray-600 text-lg"></i>
+                        <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-badge"></span>
+                    </button>
+                    <button onclick="showScreen('profileScreen')">
+                        <!-- Profile photo placeholder with proper aspect handling -->
+                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100" 
+                             alt="Profile" 
+                             class="w-10 h-10 rounded-full object-cover border-2 border-gray-200" />
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Quick Upload Card -->
+        <div class="px-4 py-6">
+            <div class="bg-gradient-to-r from-pharma-green to-green-400 rounded-2xl p-6 text-white mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <i class="fas fa-prescription text-white text-lg"></i>
+                            <span class="text-white/90 text-sm font-medium">ORDONNANCE</span>
+                        </div>
+                        <h2 class="text-xl font-semibold mb-1">Envoyer une ordonnance</h2>
+                        <p class="text-white/80 text-sm">Prenez une photo ou téléversez</p>
+                    </div>
+                    <button onclick="showScreen('cameraScreen')" class="bg-white/20 backdrop-blur-sm rounded-xl p-3 hover:bg-white/30 transition-colors">
+                        <i class="fas fa-arrow-right text-white text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Services Grid -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-white rounded-2xl p-6 shadow-sm" onclick="showScreen('pharmaciesScreen')">
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-clinic-medical text-pharma-green text-xl"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-1">Pharmacies</h3>
+                    <p class="text-gray-600 text-sm">Trouvez près de vous</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 shadow-sm" onclick="showScreen('deliveryScreen')">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-motorcycle text-pharma-blue text-xl delivery-icon"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-1">Livraison</h3>
+                    <p class="text-gray-600 text-sm">Suivi en temps réel</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 shadow-sm" onclick="showScreen('insuranceScreen')">
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-shield-alt text-purple-600 text-xl"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-1">Assurance</h3>
+                    <p class="text-gray-600 text-sm">Couverture médicale</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 shadow-sm" onclick="showScreen('historyScreen')">
+                    <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-line text-orange-600 text-xl"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-1">Historique</h3>
+                    <p class="text-gray-600 text-sm">Vos commandes</p>
+                </div>
+            </div>
+
+            <!-- Delivery Tracking Card -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
+                <h3 class="font-semibold text-gray-900 mb-4">À propos de la livraison</h3>
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-map-marker-alt text-pharma-green"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-900">Suivez la livraison en temps réel</p>
+                        <p class="text-gray-600 text-sm">Estimé: 30-45 minutes</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2">
+            <div class="flex items-center justify-around">
+                <button class="flex flex-col items-center py-2 px-3 text-pharma-green">
+                    <i class="fas fa-home text-xl mb-1"></i>
+                    <span class="text-xs font-medium">Accueil</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-gray-400 hover:text-pharma-green" onclick="showScreen('pharmaciesScreen')">
+                    <i class="fas fa-shopping-cart text-xl mb-1"></i>
+                    <span class="text-xs font-medium">Pharmacies</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-gray-400 hover:text-pharma-green" onclick="showScreen('ordersScreen')">
+                    <i class="fas fa-receipt text-xl mb-1"></i>
+                    <span class="text-xs font-medium">Commandes</span>
+                </button>
+                <button class="flex flex-col items-center py-2 px-3 text-gray-400 hover:text-pharma-green" onclick="showScreen('profileScreen')">
+                    <i class="fas fa-user text-xl mb-1"></i>
+                    <span class="text-xs font-medium">Profil</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Camera Screen -->
+    <div id="cameraScreen" class="screen min-h-screen bg-black">
+        <div class="relative h-screen">
+            <!-- Header -->
+            <div class="absolute top-0 left-0 right-0 z-10 p-4">
+                <div class="flex items-center justify-between">
+                    <button onclick="showScreen('homeScreen')" class="w-10 h-10 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <h2 class="text-white font-semibold">Scanner l'ordonnance</h2>
+                    <button class="w-10 h-10 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white">
+                        <i class="fas fa-flash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Camera Preview -->
+            <div class="camera-preview h-full bg-gray-900 flex items-center justify-center">
+                <div class="text-center text-white">
+                    <i class="fas fa-camera text-6xl mb-4 opacity-50"></i>
+                    <p class="text-lg font-medium mb-2">Caméra non disponible</p>
+                    <p class="text-white/70 text-sm">Simulation de l'interface caméra</p>
+                </div>
+            </div>
+
+            <!-- Camera Overlay Guide -->
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="w-80 h-60 border-4 border-white rounded-2xl border-dashed opacity-50"></div>
+            </div>
+
+            <!-- Bottom Controls -->
+            <div class="absolute bottom-0 left-0 right-0 p-6">
+                <div class="flex items-center justify-center space-x-8">
+                    <button class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white">
+                        <i class="fas fa-images text-xl"></i>
+                    </button>
+                    <button onclick="capturePhoto()" class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg">
+                        <div class="w-16 h-16 bg-pharma-green rounded-full flex items-center justify-center">
+                            <i class="fas fa-camera text-white text-xl"></i>
+                        </div>
+                    </button>
+                    <button class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white">
+                        <i class="fas fa-sync-alt text-xl"></i>
+                    </button>
+                </div>
+                <p class="text-white text-center mt-4 text-sm">Positionnez l'ordonnance dans le cadre</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pharmacies Screen -->
+    <div id="pharmaciesScreen" class="screen min-h-screen pb-20">
+        <!-- Header -->
+        <header class="bg-white px-4 py-3 shadow-sm sticky top-0 z-10">
+            <div class="flex items-center space-x-3">
+                <button onclick="showScreen('homeScreen')" class="w-10 h-10 flex items-center justify-center">
+                    <i class="fas fa-arrow-left text-gray-600 text-lg"></i>
+                </button>
+                <h1 class="text-xl font-bold text-gray-900">Pharmacies à proximité</h1>
+            </div>
+        </header>
+
+        <!-- Search Bar -->
+        <div class="px-4 py-4">
+            <div class="relative">
+                <input type="text" placeholder="Rechercher une pharmacie..." 
+                       class="w-full pl-12 pr-4 py-3 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-pharma-green focus:bg-white transition-all" 
+                       data-mock="true">
+                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+        </div>
+
+        <!-- Map -->
+        <div class="px-4 mb-4">
+            <div class="map-container">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="text-center text-gray-600">
+                        <i class="fas fa-map-marked-alt text-4xl mb-2"></i>
+                        <p class="font-medium">Carte interactive</p>
+                        <p class="text-sm">Localisation des pharmacies</p>
+                    </div>
+                </div>
+                <!-- Mock location pins -->
+                <div class="absolute top-6 left-8 w-3 h-3 bg-pharma-green rounded-full animate-pulse"></div>
+                <div class="absolute top-16 right-12 w-3 h-3 bg-pharma-green rounded-full animate-pulse"></div>
+                <div class="absolute bottom-8 left-16 w-3 h-3 bg-pharma-green rounded-full animate-pulse"></div>
+            </div>
+        </div>
+
+        <!-- Pharmacy List -->
+        <div class="px-4 space-y-4">
+            <!-- @MAP: pharmacies.map(pharmacy => ( -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm" data-mock="true">
+                <div class="flex items-start space-x-4">
+                    <div class="w-12 h-12 bg-pharma-green rounded-xl flex items-center justify-center">
+                        <i class="fas fa-clinic-medical text-white"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900" data-bind="pharmacy.name">Pharmacie de la Paix</h3>
+                        <p class="text-gray-600 text-sm mb-2" data-bind="pharmacy.address">Avenue Félix Houphouët-Boigny, Abidjan</p>
+                        <div class="flex items-center space-x-4 text-xs">
+                            <div class="flex items-center space-x-1">
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <span class="font-medium" data-bind="pharmacy.rating">4.8</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <i class="fas fa-clock text-gray-400"></i>
+                                <span class="text-gray-600" data-bind="pharmacy.deliveryTime">25 min</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                <span class="text-gray-600" data-bind="pharmacy.distance">1.2 km</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full mb-2">
+                            Ouvert
+                        </div>
+                        <button onclick="selectPharmacy()" class="bg-pharma-green text-white px-4 py-2 rounded-lg text-sm font-medium">
+                            Choisir
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-4 shadow-sm" data-mock="true">
+                <div class="flex items-start space-x-4">
+                    <div class="w-12 h-12 bg-pharma-green rounded-xl flex items-center justify-center">
+                        <i class="fas fa-clinic-medical text-white"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900">Pharmacie du Plateau</h3>
+                        <p class="text-gray-600 text-sm mb-2">Boulevard de la République, Plateau</p>
+                        <div class="flex items-center space-x-4 text-xs">
+                            <div class="flex items-center space-x-1">
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <span class="font-medium">4.6</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <i class="fas fa-clock text-gray-400"></i>
+                                <span class="text-gray-600">30 min</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                <span class="text-gray-600">2.1 km</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full mb-2">
+                            Ouvert
+                        </div>
+                        <button onclick="selectPharmacy()" class="bg-pharma-green text-white px-4 py-2 rounded-lg text-sm font-medium">
+                            Choisir
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-4 shadow-sm" data-mock="true">
+                <div class="flex items-start space-x-4">
+                    <div class="w-12 h-12 bg-gray-300 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-clinic-medical text-gray-500"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900">Pharmacie Moderne</h3>
+                        <p class="text-gray-600 text-sm mb-2">Rue des Jardins, Cocody</p>
+                        <div class="flex items-center space-x-4 text-xs">
+                            <div class="flex items-center space-x-1">
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <span class="font-medium">4.4</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <i class="fas fa-clock text-gray-400"></i>
+                                <span class="text-gray-600">40 min</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                <span class="text-gray-600">3.5 km</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="bg-red-100 text-red-800 text-xs font-medium px-2 py-1 rounded-full mb-2">
+                            Fermé
+                        </div>
+                        <button disabled class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed">
+                            Fermé
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_MAP )) -->
+        </div>
+    </div>
+
+    <!-- Delivery Tracking Screen -->
+    <div id="deliveryScreen" class="screen min-h-screen pb-20">
+        <!-- Header -->
+        <header class="bg-white px-4 py-3 shadow-sm sticky top-0 z-10">
+            <div class="flex items-center space-x-3">
+                <button onclick="showScreen('homeScreen')" class="w-10 h-10 flex items-center justify-center">
+                    <i class="fas fa-arrow-left text-gray-600 text-lg"></i>
+                </button>
+                <h1 class="text-xl font-bold text-gray-900">Suivi de livraison</h1>
+            </div>
+        </header>
+
+        <!-- Delivery Status -->
+        <div class="px-4 py-6">
+            <div class="bg-gradient-to-r from-pharma-green to-green-400 rounded-2xl p-6 text-white mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-xl font-semibold">En cours de livraison</h2>
+                        <p class="text-white/80">Commande #PX2024001</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <i class="fas fa-motorcycle text-white text-2xl delivery-icon"></i>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-clock text-white/80"></i>
+                    <span class="font-medium">Arrivée estimée: 15-20 minutes</span>
+                </div>
+            </div>
+
+            <!-- Delivery Map -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm mb-6">
+                <h3 class="font-semibold text-gray-900 mb-3">Localisation en temps réel</h3>
+                <div class="map-container">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center text-gray-600">
+                            <i class="fas fa-route text-4xl mb-2"></i>
+                            <p class="font-medium">Carte de suivi</p>
+                            <p class="text-sm">Position du livreur</p>
+                        </div>
+                    </div>
+                    <!-- Mock delivery route -->
+                    <div class="absolute top-4 left-4 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
+                    <div class="absolute bottom-4 right-4 w-4 h-4 bg-blue-500 rounded-full"></div>
+                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                        <i class="fas fa-motorcycle text-pharma-green text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delivery Timeline -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
+                <h3 class="font-semibold text-gray-900 mb-4">Statut de la commande</h3>
+                <div class="space-y-4">
+                    <!-- @STATE: orderStatus = 'in_transit' -->
+                    <div class="flex items-center space-x-4">
+                        <div class="w-8 h-8 bg-pharma-green rounded-full flex items-center justify-center">
+                            <i class="fas fa-check text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-medium text-gray-900">Commande confirmée</h4>
+                            <p class="text-gray-600 text-sm">Aujourd'hui à 14:30</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <div class="w-8 h-8 bg-pharma-green rounded-full flex items-center justify-center">
+                            <i class="fas fa-check text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-medium text-gray-900">Préparation en pharmacie</h4>
+                            <p class="text-gray-600 text-sm">Aujourd'hui à 14:45</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <div class="w-8 h-8 bg-pharma-green rounded-full flex items-center justify-center animate-pulse">
+                            <i class="fas fa-motorcycle text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-medium text-gray-900">En cours de livraison</h4>
+                            <p class="text-gray-600 text-sm">Maintenant - Jean-Claude, livreur</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                            <i class="fas fa-home text-gray-500 text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-medium text-gray-500">Livraison terminée</h4>
+                            <p class="text-gray-400 text-sm">En attente</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delivery Contact -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
+                <h3 class="font-semibold text-gray-900 mb-4">Contact livreur</h3>
+                <div class="flex items-center space-x-4">
+                    <!-- Delivery person photo with proper aspect handling -->
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100" 
+                         alt="Livreur" 
+                         class="w-12 h-12 rounded-full object-cover" />
+                    <div class="flex-1">
+                        <h4 class="font-medium text-gray-900" data-bind="deliveryPerson.name">Jean-Claude K.</h4>
+                        <p class="text-gray-600 text-sm">Livreur agréé</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-phone text-pharma-green"></i>
+                        </button>
+                        <button class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-comment text-pharma-blue"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Screen -->
+    <div id="profileScreen" class="screen min-h-screen pb-20">
+        <!-- Header -->
+        <header class="bg-white px-4 py-3 shadow-sm sticky top-0 z-10">
+            <div class="flex items-center space-x-3">
+                <button onclick="showScreen('homeScreen')" class="w-10 h-10 flex items-center justify-center">
+                    <i class="fas fa-arrow-left text-gray-600 text-lg"></i>
+                </button>
+                <h1 class="text-xl font-bold text-gray-900">Mon Profil</h1>
+            </div>
+        </header>
+
+        <!-- Profile Header -->
+        <div class="px-4 py-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
+                <div class="flex items-center space-x-4 mb-6">
+                    <!-- User profile photo with proper aspect handling -->
+                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100" 
+                         alt="Profile" 
+                         class="w-20 h-20 rounded-full object-cover border-4 border-gray-100" />
+                    <div class="flex-1">
+                        <h2 class="text-xl font-semibold text-gray-900" data-bind="user.name" data-mock="true">David Kouame</h2>
+                        <p class="text-gray-600" data-bind="user.email" data-mock="true">david.kouame@email.com</p>
+                        <p class="text-pharma-green text-sm font-medium">Membre depuis 2023</p>
+                    </div>
+                    <button class="text-pharma-green">
+                        <i class="fas fa-edit text-lg"></i>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                        <p class="text-2xl font-bold text-pharma-green" data-bind="user.stats.orders" data-mock="true">12</p>
+                        <p class="text-gray-600 text-sm">Commandes</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold text-pharma-green" data-bind="user.stats.savings" data-mock="true">2,450</p>
+                        <p class="text-gray-600 text-sm">CFA économisés</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold text-pharma-green" data-bind="user.stats.points" data-mock="true">850</p>
+                        <p class="text-gray-600 text-sm">Points fidélité</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu Options -->
+            <div class="space-y-4">
+                <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div class="px-4 py-3 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-900">Compte</h3>
+                    </div>
+                    
+                    <button class="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-user-edit text-pharma-green text-lg"></i>
+                            <span class="font-medium text-gray-900">Informations personnelles</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </button>
+                    
+                    <button class="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-map-marker-alt text-pharma-green text-lg"></i>
+                            <span class="font-medium text-gray-900">Adresses de livraison</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </button>
+                    
+                    <button class="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-credit-card text-pharma-green text-lg"></i>
+                            <span class="font-medium text-gray-900">Méthodes de paiement</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div class="px-4 py-3 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-900">Préférences</h3>
+                    </div>
+                    
+                    <button class="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-bell text-pharma-green text-lg"></i>
+                            <span class="font-medium text-gray-900">Notifications</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-gray-500 text-sm">Activées</span>
+                            <i class="fas fa-chevron-right text-gray-400"></i>
+                        </div>
+                    </button>
+                    
+                    <button class="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-language text-pharma-green text-lg"></i>
+                            <span class="font-medium text-gray-900">Langue</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-gray-500 text-sm">Français</span>
+                            <i class="fas fa-chevron-right text-gray-400"></i>
+                        </div>
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div class="px-4 py-3 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-900">Support</h3>
+                    </div>
+                    
+                    <button class="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-question-circle text-pharma-green text-lg"></i>
+                            <span class="font-medium text-gray-900">Centre d'aide</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </button>
+                    
+                    <button class="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-headset text-pharma-green text-lg"></i>
+                            <span class="font-medium text-gray-900">Contacter le support</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </button>
+                </div>
+
+                <!-- Logout Button -->
+                <button class="w-full bg-red-50 text-red-600 py-4 rounded-2xl font-semibold hover:bg-red-100 transition-colors">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    Se déconnecter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PWA Service Worker and Push Notification Setup -->
+    <script>
+        // PWA Installation
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+        const installPrompt = document.getElementById('installPrompt');
+        const dismissBtn = document.getElementById('dismissBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installPrompt.classList.add('show');
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                deferredPrompt = null;
+                installPrompt.classList.remove('show');
+            }
+        });
+
+        dismissBtn.addEventListener('click', () => {
+            installPrompt.classList.remove('show');
+        });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    // Mock service worker registration
+                    console.log('Service Worker would be registered here for:');
+                    console.log('- Offline caching of app shell and data');
+                    console.log('- Push notification handling');
+                    console.log('- Background sync for pending orders');
+                    // TODO: Implement actual service worker registration
+                    // const registration = await navigator.serviceWorker.register('/sw.js');
+                } catch (error) {
+                    console.log('Service Worker registration failed:', error);
+                }
+            });
+        }
+
+        // Push Notifications Setup (Mock)
+        async function requestNotificationPermission() {
+            if ('Notification' in window) {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    console.log('Notification permission granted');
+                    // TODO: Implement push notification subscription
+                    showNotification('Notifications activées', 'Vous recevrez des mises à jour sur vos commandes');
+                }
+            }
+        }
+
+        function showNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, {
+                    body: body,
+                    icon: '/icon-192x192.png',
+                    badge: '/icon-192x192.png'
+                });
+            }
+        }
+
+        // Screen Navigation
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+            
+            // Add fade-in animation
+            document.getElementById(screenId).classList.add('fade-in');
+            setTimeout(() => {
+                document.getElementById(screenId).classList.remove('fade-in');
+            }, 300);
+        }
+
+        // Language Selection
+        function selectLanguage(lang) {
+            console.log(`Language selected: ${lang}`);
+            // TODO: Implement language switching
+            showScreen('onboardingScreen');
+        }
+
+        // Camera Functionality (Mock)
+        function capturePhoto() {
+            console.log('Photo captured - would process prescription image');
+            // TODO: Implement camera capture and image processing
+            showNotification('Photo capturée', 'Analyse de l\'ordonnance en cours...');
+            setTimeout(() => {
+                showScreen('pharmaciesScreen');
+            }, 2000);
+        }
+
+        // Pharmacy Selection
+        function selectPharmacy() {
+            console.log('Pharmacy selected');
+            showNotification('Pharmacie sélectionnée', 'Votre commande est en cours de traitement');
+            showScreen('deliveryScreen');
+        }
+
+        // Geolocation (Mock)
+        function getCurrentLocation() {
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        console.log('Location:', position.coords.latitude, position.coords.longitude);
+                        // TODO: Use coordinates to find nearby pharmacies
+                    },
+                    (error) => {
+                        console.log('Geolocation error:', error);
+                    }
+                );
+            }
+        }
+
+        // IndexedDB Setup (Mock)
+        function initializeOfflineStorage() {
+            console.log('IndexedDB would be initialized here for:');
+            console.log('- Caching user profile data');
+            console.log('- Storing prescription history');
+            console.log('- Offline pharmacy information');
+            console.log('- Pending orders queue');
+            // TODO: Implement IndexedDB setup
+        }
+
+        // Auto-start functionality
+        (() => {
+            // Request notification permission on load
+            setTimeout(requestNotificationPermission, 2000);
+            
+            // Initialize location services
+            getCurrentLocation();
+            
+            // Initialize offline storage
+            initializeOfflineStorage();
+            
+            // Simulate app installation prompt after delay
+            setTimeout(() => {
+                if (!deferredPrompt) {
+                    // Fallback for browsers that don't support beforeinstallprompt
+                    installPrompt.classList.add('show');
+                }
+            }, 5000);
+        })();
+
+        // Mock PWA Manifest (would be in separate manifest.json file)
+        const manifestData = {
+            "name": "Pharma Express CI",
+            "short_name": "PharmaCI",
+            "description": "Livraison de médicaments à domicile en Côte d'Ivoire",
+            "start_url": "/",
+            "display": "standalone",
+            "background_color": "#FAFAFA",
+            "theme_color": "#22C55E",
+            "orientation": "portrait",
+            "icons": [
+                {
+                    "src": "/icon-192x192.png",
+                    "sizes": "192x192",
+                    "type": "image/png",
+                    "purpose": "maskable any"
+                },
+                {
+                    "src": "/icon-512x512.png",
+                    "sizes": "512x512",
+                    "type": "image/png",
+                    "purpose": "maskable any"
+                }
+            ],
+            "categories": ["health", "medical", "pharmacy"],
+            "lang": "fr",
+            "dir": "ltr"
+        };
+        console.log('PWA Manifest Configuration:', manifestData);
+    </script>
+</body>
+</html>

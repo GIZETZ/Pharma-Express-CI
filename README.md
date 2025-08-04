@@ -83,7 +83,7 @@ Une application web progressive (PWA) pour la livraison de médicaments en Côte
 
 ```bash
 # Cloner depuis GitHub
-git clone https://github.com/votre-username/yaho-pharma-serviceconnect.git
+git clone https://github.com/GIZETZ/Pharma-Express-CI.git
 cd yaho-pharma-serviceconnect
 
 # Ou copier depuis votre dossier local
@@ -126,7 +126,7 @@ NODE_ENV=development
 
 ```bash
 # Générer et appliquer les migrations
-npm run db:generate
+npm run db:push
 npm run db:migrate
 ```
 
