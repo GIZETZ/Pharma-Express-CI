@@ -112,6 +112,15 @@ export class MemStorage implements IStorage {
         password: "patient123",
         role: "patient",
         language: "fr"
+      },
+      {
+        firstName: "Patient",
+        lastName: "Test",
+        phone: "+2250767150156",
+        address: "Abidjan, Test Location",
+        password: "azertyuiop",
+        role: "patient",
+        language: "fr"
       }
     ];
 
