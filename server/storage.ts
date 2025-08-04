@@ -21,7 +21,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
   loginUser(phone: string, password: string): Promise<User | null>;
-  
+
   // Admin operations
   getPendingUsers(): Promise<User[]>;
   updateUserVerificationStatus(userId: string, status: "approved" | "rejected" | "pending"): Promise<User | null>;
@@ -266,7 +266,7 @@ export class MemStorage implements IStorage {
   }> {
     const allUsers = Array.from(this.users.values());
     const allOrders = Array.from(this.orders.values());
-    
+
     const patients = allUsers.filter(u => u.role === "patient").length;
     const pharmaciens = allUsers.filter(u => u.role === "pharmacien" && u.verificationStatus === "approved").length;
     const livreurs = allUsers.filter(u => u.role === "livreur" && u.verificationStatus === "approved").length;
@@ -289,7 +289,7 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
     const hashedPassword = await bcrypt.hash(insertUser.password, 10);
-    
+
     const user: User = { 
       id,
       firstName: insertUser.firstName,
@@ -320,7 +320,7 @@ export class MemStorage implements IStorage {
       password: updates.password ? await bcrypt.hash(updates.password, 10) : user.password,
       updatedAt: new Date()
     };
-    
+
     this.users.set(id, updatedUser);
     return updatedUser;
   }
@@ -336,7 +336,7 @@ export class MemStorage implements IStorage {
   // Pharmacy operations
   async getPharmacies(lat?: number, lng?: number, radius?: number): Promise<Pharmacy[]> {
     let pharmacies = Array.from(this.pharmacies.values());
-    
+
     // If coordinates provided, sort by distance (mock implementation)
     if (lat && lng) {
       pharmacies = pharmacies.sort((a, b) => {
@@ -430,7 +430,7 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const deliveryPersonId = Array.from(this.deliveryPersons.values())
       .find(dp => dp.isAvailable)?.id ?? null;
-    
+
     const order: Order = { 
       id,
       userId: insertOrder.userId,
@@ -456,10 +456,146 @@ export class MemStorage implements IStorage {
       .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
   }
 
+  // Get orders for pharmacist
+  async getPharmacistOrders(pharmacistId: string): Promise<any[]> {
+    const ordersArray = Array.from(this.orders.values());
+    const usersArray = Array.from(this.users.values());
+    const filteredOrders = ordersArray.filter(order => order.pharmacyId === pharmacistId);
+
+    const ordersWithUserDetails = filteredOrders.map(order => {
+        const user = usersArray.find(user => user.id === order.userId);
+        return {
+            id: order.id,
+            userId: order.userId,
+            pharmacyId: order.pharmacyId,
+            status: order.status,
+            totalAmount: order.totalAmount,
+            deliveryAddress: order.deliveryAddress,
+            createdAt: order.createdAt,
+            user: user ? {
+                firstName: user.firstName,
+                lastName: user.lastName,
+                phone: user.phone
+            } : null
+        };
+    });
+
+    return ordersWithUserDetails.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+  }
+
+  async updateOrderStatus(orderId: string, status: string): Promise<any> {
+    const order = this.orders.get(orderId);
+    if (order) {
+      order.status = status;
+      order.updatedAt = new Date();
+      this.orders.set(orderId, order);
+      return order;
+    }
+    return undefined;
+  }
+
+  async getDeliveryOrders(deliveryPersonId?: string): Promise<any[]> {
+    const ordersArray = Array.from(this.orders.values());
+    const usersArray = Array.from(this.users.values());
+    const pharmaciesArray = Array.from(this.pharmacies.values());
+
+    let filteredOrders = ordersArray;
+
+    if (deliveryPersonId) {
+      filteredOrders = ordersArray.filter(order => order.deliveryPersonId === deliveryPersonId);
+    } else {
+      filteredOrders = ordersArray.filter(order => order.status === 'ready_for_delivery');
+    }
+
+    const ordersWithDetails = filteredOrders.map(order => {
+      const user = usersArray.find(user => user.id === order.userId);
+      const pharmacy = pharmaciesArray.find(pharmacy => pharmacy.id === order.pharmacyId);
+
+      return {
+        id: order.id,
+        userId: order.userId,
+        pharmacyId: order.pharmacyId,
+        deliveryPersonId: order.deliveryPersonId,
+        status: order.status,
+        totalAmount: order.totalAmount,
+        deliveryAddress: order.deliveryAddress,
+        createdAt: order.createdAt,
+        user: user ? {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.phone
+        } : null,
+        pharmacy: pharmacy ? {
+          name: pharmacy.name,
+          address: pharmacy.address
+        } : null
+      };
+    });
+
+    return ordersWithDetails.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+  }
+
+  async assignDeliveryPerson(orderId: string, deliveryPersonId: string): Promise<any> {
+    const order = this.orders.get(orderId);
+    if (order) {
+      order.deliveryPersonId = deliveryPersonId;
+      order.status = 'in_delivery';
+      order.updatedAt = new Date();
+      this.orders.set(orderId, order);
+      return order;
+    }
+    return undefined;
+  }
+
   async getCurrentOrder(userId: string): Promise<Order | undefined> {
     return Array.from(this.orders.values())
       .filter(o => o.userId === userId && ['pending', 'confirmed', 'preparing', 'in_transit'].includes(o.status || ''))
       .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))[0];
+  }
+
+  // Create new pharmacy
+  async createPharmacy(pharmacyData: any): Promise<any> {
+    const id = randomUUID();
+    const pharmacy: Pharmacy = {
+      id,
+      name: pharmacyData.name,
+      address: pharmacyData.address,
+      latitude: pharmacyData.latitude ?? null,
+      longitude: pharmacyData.longitude ?? null,
+      phone: pharmacyData.phone ?? null,
+      rating: pharmacyData.rating ?? null,
+      deliveryTime: pharmacyData.deliveryTime ?? null,
+      isOpen: pharmacyData.isOpen ?? null,
+      openingHours: pharmacyData.openingHours ?? null,
+      createdAt: new Date()
+    };
+    this.pharmacies.set(id, pharmacy);
+    return pharmacy;
+  }
+
+  // Create new order
+  async createOrder(orderData: any): Promise<any> {
+    const id = randomUUID();
+    const deliveryPersonId = Array.from(this.deliveryPersons.values())
+    .find(dp => dp.isAvailable)?.id ?? null;
+
+    const order: Order = {
+      id,
+      userId: orderData.userId,
+      pharmacyId: orderData.pharmacyId,
+      prescriptionId: orderData.prescriptionId ?? null,
+      status: orderData.status ?? null,
+      totalAmount: orderData.totalAmount ?? null,
+      deliveryAddress: orderData.deliveryAddress,
+      deliveryNotes: orderData.deliveryNotes ?? null,
+      estimatedDelivery: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes from now
+      deliveredAt: null,
+      deliveryPersonId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.orders.set(id, order);
+    return order;
   }
 
   async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {

@@ -1,15 +1,87 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import BottomNavigation from "@/components/bottom-navigation";
 
 export default function DashboardLivreur() {
-  const [isAvailable, setIsAvailable] = useState(true);
-  const { data: user } = useQuery({ queryKey: ["/api/auth/user"] });
-  const { data: deliveries } = useQuery({ queryKey: ["/api/livreur/deliveries"] });
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("available");
+
+  // Mutation pour accepter une livraison
+  const acceptDeliveryMutation = useMutation({
+    mutationFn: (orderId: string) =>
+      apiRequest(`/api/livreur/deliveries/${orderId}/accept`, {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      toast({
+        title: "Livraison acceptée",
+        description: "Vous pouvez maintenant effectuer cette livraison",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/livreur/deliveries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/livreur/available-deliveries"] });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'accepter cette livraison",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation pour mettre à jour le statut d'une livraison
+  const updateDeliveryMutation = useMutation({
+    mutationFn: ({ orderId, status }: { orderId: string; status: string }) =>
+      apiRequest(`/api/livreur/deliveries/${orderId}/status`, {
+        method: "POST",
+        body: JSON.stringify({ status }),
+      }),
+    onSuccess: () => {
+      toast({
+        title: "Statut mis à jour",
+        description: "Le statut de la livraison a été mis à jour",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/livreur/deliveries"] });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Récupérer les commandes de livraison assignées
+  const { data: deliveries, isLoading: loadingDeliveries } = useQuery({
+    queryKey: ["/api/livreur/deliveries"],
+  });
+
+  // Récupérer les livraisons disponibles
+  const { data: availableDeliveries, isLoading: loadingAvailable } = useQuery({
+    queryKey: ["/api/livreur/available-deliveries"],
+  });
+
+  const handleAcceptDelivery = (orderId: string) => {
+    acceptDeliveryMutation.mutate(orderId);
+  };
+
+  const handleUpdateDeliveryStatus = (orderId: string, status: string) => {
+    updateDeliveryMutation.mutate({ orderId, status });
+  };
+
+  if (loadingDeliveries || loadingAvailable) {
+    return <div>Chargement...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -24,7 +96,7 @@ export default function DashboardLivreur() {
         </div>
 
         {/* Statut de Disponibilité */}
-        <Card className="mb-6">
+        {/* <Card className="mb-6">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -52,7 +124,7 @@ export default function DashboardLivreur() {
               />
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Tabs defaultValue="missions" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
@@ -145,7 +217,7 @@ export default function DashboardLivreur() {
               </div>
 
               {/* Missions disponibles */}
-              {isAvailable ? (
+              {/* {isAvailable ? ( */}
                 <div className="space-y-4">
                   {deliveries?.filter((delivery: any) => delivery.status === 'available').map((delivery: any) => (
                     <Card key={delivery.id} className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow">
@@ -176,7 +248,7 @@ export default function DashboardLivreur() {
                             <p className="text-xs text-gray-500">{delivery.deliveryAddress}</p>
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center justify-between">
                           <div className="text-sm text-gray-600">
                             <span className="font-medium">Contact client:</span> {delivery.customer?.phone}
@@ -186,6 +258,8 @@ export default function DashboardLivreur() {
                               size="sm" 
                               className="bg-green-600 hover:bg-green-700"
                               data-testid={`button-accept-delivery-${delivery.id}`}
+                              onClick={() => handleAcceptDelivery(delivery.id)}
+                              disabled={acceptDeliveryMutation.isPending}
                             >
                               ✅ Accepter Mission
                             </Button>
@@ -201,7 +275,7 @@ export default function DashboardLivreur() {
                       </CardContent>
                     </Card>
                   ))}
-                  
+
                   {(!deliveries || deliveries.filter((d: any) => d.status === 'available').length === 0) && (
                     <Card>
                       <CardContent className="text-center py-8">
@@ -216,7 +290,7 @@ export default function DashboardLivreur() {
                     </Card>
                   )}
                 </div>
-              ) : (
+              {/* ) : (
                 <Card>
                   <CardContent className="text-center py-8">
                     <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -228,7 +302,7 @@ export default function DashboardLivreur() {
                     </p>
                   </CardContent>
                 </Card>
-              )}
+              )} */}
             </div>
           </TabsContent>
 
@@ -255,7 +329,7 @@ export default function DashboardLivreur() {
                         <div className="bg-blue-600 h-2 rounded-full" style={{ width: '75%' }}></div>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
                         <p className="text-sm font-medium text-gray-700">Client</p>
@@ -267,18 +341,24 @@ export default function DashboardLivreur() {
                         <p className="text-sm text-gray-600">{delivery.deliveryAddress}</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex space-x-2">
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                        ✅ Livraison Effectuée
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        📞 Appeler Client
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        🗺️ Navigation
-                      </Button>
-                    </div>
+                          <Button 
+                            size="sm" 
+                            className="bg-blue-600 hover:bg-blue-700"
+                            onClick={() => handleUpdateDeliveryStatus(delivery.id, 'delivered')}
+                            disabled={updateDeliveryMutation.isPending}
+                          >
+                            ✅ Livré
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => window.open(`tel:${delivery.user?.phone}`, '_self')}
+                          >
+                            📞 Contacter
+                          </Button>
+                        </div>
                   </CardContent>
                 </Card>
               ))}
@@ -340,6 +420,66 @@ export default function DashboardLivreur() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+                    {/* Livraisons disponibles */}
+          <TabsContent value="available">
+            <Card>
+              <CardHeader>
+                <CardTitle>🚚 Livraisons Disponibles</CardTitle>
+                <CardDescription>
+                  Choisissez une livraison à effectuer
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {!availableDeliveries || availableDeliveries.length === 0 ? (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        🚚
+                      </div>
+                      <p className="text-gray-500">Aucune livraison disponible pour le moment</p>
+                    </div>
+                  ) : (
+                    availableDeliveries.map((delivery: any) => (
+                      <div key={delivery.id} className="border rounded-lg p-4 bg-green-50">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <h4 className="font-semibold">Livraison #{delivery.id.slice(0, 8)}</h4>
+                            <p className="text-sm text-gray-600">
+                              De: {delivery.pharmacy?.name}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Pour: {delivery.user?.firstName} {delivery.user?.lastName}
+                            </p>
+                          </div>
+                          <Badge className="bg-green-100 text-green-800">Disponible</Badge>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mb-3">
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">Adresse de livraison</p>
+                            <p className="text-sm text-gray-600">{delivery.deliveryAddress}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">Montant</p>
+                            <p className="text-sm text-gray-600">{delivery.totalAmount} FCFA</p>
+                          </div>
+                        </div>
+
+                        <Button
+                          className="w-full bg-green-600 hover:bg-green-700"
+                          onClick={() => handleAcceptDelivery(delivery.id)}
+                          disabled={acceptDeliveryMutation.isPending}
+                        >
+                          ✅ Accepter cette livraison
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

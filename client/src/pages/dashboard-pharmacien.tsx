@@ -1,14 +1,49 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import BottomNavigation from "@/components/bottom-navigation";
 
 export default function DashboardPharmacien() {
-  const { data: user } = useQuery({ queryKey: ["/api/auth/user"] });
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("new-orders");
+
+  // Mutation pour mettre à jour le statut des commandes
+  const updateOrderMutation = useMutation({
+    mutationFn: ({ orderId, status }: { orderId: string; status: string }) =>
+      apiRequest(`/api/pharmacien/orders/${orderId}/status`, {
+        method: "POST",
+        body: JSON.stringify({ status }),
+      }),
+    onSuccess: (data, variables) => {
+      toast({
+        title: "Commande mise à jour",
+        description: `Commande ${variables.status === 'confirmed' ? 'validée' : variables.status === 'rejected' ? 'rejetée' : 'mise à jour'} avec succès`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/pharmacien/orders"] });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour la commande",
+        variant: "destructive",
+      });
+    },
+  });
   const { data: orders } = useQuery({ queryKey: ["/api/pharmacien/orders"] });
   const { data: prescriptions } = useQuery({ queryKey: ["/api/pharmacien/prescriptions"] });
+  const { data: user } = useQuery({ queryKey: ["/api/auth/user"] });
+
+  const handleOrderUpdate = (orderId: string, status: string) => {
+    updateOrderMutation.mutate({ orderId, status });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -136,10 +171,22 @@ export default function DashboardPharmacien() {
                       <Button size="sm" data-testid={`button-view-prescription-${order.id}`}>
                         👁️ Voir Ordonnance
                       </Button>
-                      <Button size="sm" variant="outline" data-testid={`button-accept-order-${order.id}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        data-testid={`button-accept-order-${order.id}`}
+                        onClick={() => handleOrderUpdate(order.id, 'confirmed')}
+                        disabled={updateOrderMutation.isPending}
+                      >
                         ✅ Accepter
                       </Button>
-                      <Button size="sm" variant="destructive" data-testid={`button-reject-order-${order.id}`}>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        data-testid={`button-reject-order-${order.id}`}
+                        onClick={() => handleOrderUpdate(order.id, 'rejected')}
+                        disabled={updateOrderMutation.isPending}
+                      >
                         ❌ Refuser
                       </Button>
                     </div>
@@ -171,7 +218,7 @@ export default function DashboardPharmacien() {
                         </div>
                         <Badge variant="outline">À vérifier</Badge>
                       </div>
-                      
+
                       <div className="bg-gray-50 rounded-lg p-3 mb-3">
                         <p className="text-sm font-medium mb-2">Médicaments prescrits:</p>
                         <div className="space-y-1">
@@ -185,11 +232,24 @@ export default function DashboardPharmacien() {
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="flex space-x-2">
-                        <Button size="sm">✅ Valider</Button>
-                        <Button size="sm" variant="outline">💊 Proposer Alternative</Button>
-                        <Button size="sm" variant="destructive">❌ Non Conforme</Button>
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700"
+                          onClick={() => handleOrderUpdate(prescription.id, 'confirmed')}
+                          disabled={updateOrderMutation.isPending}
+                        >
+                          ✅ Valider
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleOrderUpdate(prescription.id, 'rejected')}
+                          disabled={updateOrderMutation.isPending}
+                        >
+                          ❌ Rejeter
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -243,22 +303,24 @@ export default function DashboardPharmacien() {
                         </div>
                         <Badge>En préparation</Badge>
                       </div>
-                      
+
                       <div className="flex items-center space-x-4 mb-3">
                         <div className="text-sm">
                           <span className="font-medium">Montant total:</span> {order.totalAmount} FCFA
                         </div>
                         <div className="text-sm">
-                          <span className="font-medium">Livraison estimée:</span> 30 min
+                          <span className="font-medium">Adresse:</span> {order.deliveryAddress}
                         </div>
                       </div>
-                      
+
                       <div className="flex space-x-2">
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                          ✅ Prêt pour Livraison
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          💬 Contacter Patient
+                        <Button
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700"
+                          onClick={() => handleOrderUpdate(order.id, 'ready_for_delivery')}
+                          disabled={updateOrderMutation.isPending}
+                        >
+                          📦 Prêt pour livraison
                         </Button>
                       </div>
                     </div>

@@ -1,14 +1,74 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import BottomNavigation from "@/components/bottom-navigation";
 
 export default function DashboardPatient() {
-  const { data: user } = useQuery({ queryKey: ["/api/auth/user"] });
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("pharmacies");
+  const [selectedPharmacy, setSelectedPharmacy] = useState<any>(null);
+  const [orderData, setOrderData] = useState({
+    deliveryAddress: '',
+    notes: '',
+    totalAmount: 0
+  });
+
+  // Mutation pour créer une commande
+  const createOrderMutation = useMutation({
+    mutationFn: (orderDetails: any) =>
+      apiRequest("/api/orders", {
+        method: "POST",
+        body: JSON.stringify(orderDetails),
+      }),
+    onSuccess: () => {
+      toast({
+        title: "Commande créée",
+        description: "Votre commande a été envoyée à la pharmacie",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      setActiveTab("orders");
+      setSelectedPharmacy(null);
+      setOrderData({ deliveryAddress: '', notes: '', totalAmount: 0 });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer la commande",
+        variant: "destructive",
+      });
+    },
+  });
+
   const { data: orders } = useQuery({ queryKey: ["/api/orders"] });
   const { data: pharmacies } = useQuery({ queryKey: ["/api/pharmacies"] });
+
+  const handleCreateOrder = () => {
+    if (selectedPharmacy && orderData.deliveryAddress && orderData.totalAmount > 0) {
+      createOrderMutation.mutate({
+        pharmacyId: selectedPharmacy.id,
+        deliveryAddress: orderData.deliveryAddress,
+        notes: orderData.notes,
+        totalAmount: orderData.totalAmount,
+        status: 'pending'
+      });
+    } else {
+      toast({
+        title: "Informations manquantes",
+        description: "Veuillez remplir tous les champs obligatoires",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -42,7 +102,7 @@ export default function DashboardPatient() {
                   <p className="text-sm text-gray-600 mb-4">
                     Envoyez votre ordonnance et passez commande
                   </p>
-                  <Button data-testid="button-new-order">
+                  <Button data-testid="button-new-order" onClick={() => setActiveTab("pharmacies")}>
                     Nouvelle Commande
                   </Button>
                 </CardContent>
@@ -127,13 +187,41 @@ export default function DashboardPatient() {
                           <span>⭐ {pharmacy.rating}/5</span>
                           <span>🚚 {pharmacy.deliveryTime} min</span>
                         </div>
-                        <Button className="w-full mt-3" size="sm">
+                        <Button className="w-full mt-3" size="sm" onClick={() => setSelectedPharmacy(pharmacy)}>
                           Sélectionner
                         </Button>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
+                {selectedPharmacy && (
+                  <div className="mt-4">
+                    <h3 className="text-lg font-semibold">Commande à la pharmacie: {selectedPharmacy.name}</h3>
+                    <Input
+                      type="text"
+                      placeholder="Adresse de livraison"
+                      value={orderData.deliveryAddress}
+                      onChange={(e) => setOrderData({ ...orderData, deliveryAddress: e.target.value })}
+                      className="mb-2"
+                    />
+                    <Textarea
+                      placeholder="Notes supplémentaires"
+                      value={orderData.notes}
+                      onChange={(e) => setOrderData({ ...orderData, notes: e.target.value })}
+                      className="mb-2"
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Montant total"
+                      value={orderData.totalAmount}
+                      onChange={(e) => setOrderData({ ...orderData, totalAmount: parseFloat(e.target.value) })}
+                      className="mb-2"
+                    />
+                    <Button onClick={handleCreateOrder} disabled={createOrderMutation.isPending}>
+                      {createOrderMutation.isPending ? "En cours..." : "Confirmer la commande"}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -162,6 +250,7 @@ export default function DashboardPatient() {
           </TabsContent>
         </Tabs>
       </div>
+      <BottomNavigation />
     </div>
   );
 }

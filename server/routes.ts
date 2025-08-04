@@ -467,12 +467,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session.userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    
+
     const user = await storage.getUser(req.session.userId);
     if (!user || user.role !== 'admin') {
       return res.status(403).json({ message: 'Admin access required' });
     }
-    
+
     next();
   };
 
@@ -491,14 +491,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/validate-user', requireAdmin, async (req, res) => {
     try {
       const { userId, action } = req.body;
-      
+
       if (!userId || !action || !['approve', 'reject'].includes(action)) {
         return res.status(400).json({ message: 'Invalid request data' });
       }
 
       const newStatus = action === 'approve' ? 'approved' : 'rejected';
       const updatedUser = await storage.updateUserVerificationStatus(userId, newStatus);
-      
+
       if (!updatedUser) {
         return res.status(404).json({ message: 'User not found' });
       }
@@ -518,6 +518,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching stats:', error);
       res.status(500).json({ message: 'Failed to fetch statistics' });
+    }
+  });
+
+  // Get pharmacist orders
+  app.get('/api/pharmacien/orders', requireAuth, async (req, res) => {
+    try {
+      if (req.user?.role !== 'pharmacien') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const orders = await storage.getPharmacistOrders(req.user.id);
+      res.json(orders);
+    } catch (error) {
+      console.error('Error fetching pharmacist orders:', error);
+      res.status(500).json({ message: 'Failed to fetch orders' });
+    }
+  });
+
+  // Update order status (pharmacist)
+  app.post('/api/pharmacien/orders/:orderId/status', requireAuth, async (req, res) => {
+    try {
+      if (req.user?.role !== 'pharmacien') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { orderId } = req.params;
+      const { status } = req.body;
+
+      const updatedOrder = await storage.updateOrderStatus(orderId, status);
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      res.status(500).json({ message: 'Failed to update order status' });
+    }
+  });
+
+  // Get delivery orders (livreur)
+  app.get('/api/livreur/deliveries', requireAuth, async (req, res) => {
+    try {
+      if (req.user?.role !== 'livreur') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const deliveries = await storage.getDeliveryOrders(req.user.id);
+      res.json(deliveries);
+    } catch (error) {
+      console.error('Error fetching deliveries:', error);
+      res.status(500).json({ message: 'Failed to fetch deliveries' });
+    }
+  });
+
+  // Get available deliveries (livreur)
+  app.get('/api/livreur/available-deliveries', requireAuth, async (req, res) => {
+    try {
+      if (req.user?.role !== 'livreur') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const availableDeliveries = await storage.getDeliveryOrders();
+      res.json(availableDeliveries);
+    } catch (error) {
+      console.error('Error fetching available deliveries:', error);
+      res.status(500).json({ message: 'Failed to fetch available deliveries' });
+    }
+  });
+
+  // Accept delivery (livreur)
+  app.post('/api/livreur/deliveries/:orderId/accept', requireAuth, async (req, res) => {
+    try {
+      if (req.user?.role !== 'livreur') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { orderId } = req.params;
+      const updatedOrder = await storage.assignDeliveryPerson(orderId, req.user.id);
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error('Error accepting delivery:', error);
+      res.status(500).json({ message: 'Failed to accept delivery' });
+    }
+  });
+
+  // Update delivery status (livreur)
+  app.post('/api/livreur/deliveries/:orderId/status', requireAuth, async (req, res) => {
+    try {
+      if (req.user?.role !== 'livreur') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { orderId } = req.params;
+      const { status } = req.body;
+
+      const updatedOrder = await storage.updateOrderStatus(orderId, status);
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error('Error updating delivery status:', error);
+      res.status(500).json({ message: 'Failed to update delivery status' });
+    }
+  });
+  // Get all orders
+  app.get('/api/orders', requireAuth, async (req, res) => {
+    try {
+      const orders = await storage.getUserOrders(req.user!.id);
+      res.json(orders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      res.status(500).json({ message: 'Failed to fetch orders' });
+    }
+  });
+
+  // Create new order
+  app.post('/api/orders', requireAuth, async (req, res) => {
+    try {
+      const { pharmacyId, deliveryAddress, notes, totalAmount, status } = req.body;
+
+      if (!pharmacyId || !deliveryAddress || !totalAmount) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      const newOrder = await storage.createOrder({
+        userId: req.user!.id,
+        pharmacyId,
+        deliveryAddress,
+        notes: notes || '',
+        totalAmount: parseFloat(totalAmount),
+        status: status || 'pending'
+      });
+
+      res.status(201).json(newOrder);
+    } catch (error) {
+      console.error('Error creating order:', error);
+      res.status(500).json({ message: 'Failed to create order' });
     }
   });
 
