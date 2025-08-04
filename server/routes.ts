@@ -573,13 +573,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get delivery orders (livreur)
-  app.get('/api/livreur/deliveries', requireAuth, async (req, res) => {
+  app.get('/api/livreur/deliveries', requireAuth, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'livreur') {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'livreur') {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      const deliveries = await storage.getDeliveryOrders(req.user.id);
+      const deliveries = await storage.getDeliveryOrders(user.id);
       res.json(deliveries);
     } catch (error) {
       console.error('Error fetching deliveries:', error);
@@ -588,9 +589,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get available deliveries (livreur)
-  app.get('/api/livreur/available-deliveries', requireAuth, async (req, res) => {
+  app.get('/api/livreur/available-deliveries', requireAuth, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'livreur') {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'livreur') {
         return res.status(403).json({ message: 'Access denied' });
       }
 
@@ -603,14 +605,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Accept delivery (livreur)
-  app.post('/api/livreur/deliveries/:orderId/accept', requireAuth, async (req, res) => {
+  app.post('/api/livreur/deliveries/:orderId/accept', requireAuth, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'livreur') {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'livreur') {
         return res.status(403).json({ message: 'Access denied' });
       }
 
       const { orderId } = req.params;
-      const updatedOrder = await storage.assignDeliveryPerson(orderId, req.user.id);
+      const updatedOrder = await storage.assignDeliveryPerson(orderId, user.id);
       res.json(updatedOrder);
     } catch (error) {
       console.error('Error accepting delivery:', error);
@@ -619,9 +622,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update delivery status (livreur)
-  app.post('/api/livreur/deliveries/:orderId/status', requireAuth, async (req, res) => {
+  app.post('/api/livreur/deliveries/:orderId/status', requireAuth, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'livreur') {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'livreur') {
         return res.status(403).json({ message: 'Access denied' });
       }
 
@@ -636,9 +640,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   // Get all orders
-  app.get('/api/orders', requireAuth, async (req, res) => {
+  app.get('/api/orders', requireAuth, async (req: any, res) => {
     try {
-      const orders = await storage.getUserOrders(req.user!.id);
+      const orders = await storage.getUserOrders(req.session.userId);
       res.json(orders);
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -647,7 +651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new order
-  app.post('/api/orders', requireAuth, async (req, res) => {
+  app.post('/api/orders', requireAuth, async (req: any, res) => {
     try {
       const { pharmacyId, deliveryAddress, notes, totalAmount, status } = req.body;
 
@@ -656,11 +660,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const newOrder = await storage.createOrder({
-        userId: req.user!.id,
+        userId: req.session.userId,
         pharmacyId,
         deliveryAddress,
         notes: notes || '',
-        totalAmount: parseFloat(totalAmount),
+        totalAmount: totalAmount.toString(),
         status: status || 'pending'
       });
 

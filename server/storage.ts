@@ -129,6 +129,10 @@ export class MemStorage implements IStorage {
         profileImageUrl: null,
         pharmacyId: null,
         isActive: true,
+        idDocumentUrl: null,
+        professionalDocumentUrl: null,
+        drivingLicenseUrl: null,
+        verificationStatus: "approved",
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -267,7 +271,7 @@ export class MemStorage implements IStorage {
         pharmacyId: orderData.pharmacyId,
         prescriptionId: null,
         status: orderData.status,
-        totalAmount: orderData.totalAmount,
+        totalAmount: orderData.totalAmount.toString(),
         deliveryAddress: orderData.deliveryAddress,
         deliveryNotes: orderData.deliveryNotes,
         estimatedDelivery: new Date(Date.now() + 30 * 60 * 1000),
@@ -391,6 +395,10 @@ export class MemStorage implements IStorage {
       profileImageUrl: insertUser.profileImageUrl ?? null,
       pharmacyId: insertUser.pharmacyId ?? null,
       isActive: insertUser.isActive ?? true,
+      idDocumentUrl: insertUser.idDocumentUrl ?? null,
+      professionalDocumentUrl: insertUser.professionalDocumentUrl ?? null,
+      drivingLicenseUrl: insertUser.drivingLicenseUrl ?? null,
+      verificationStatus: insertUser.verificationStatus ?? "approved",
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -669,63 +677,7 @@ export class MemStorage implements IStorage {
     return prescriptionsWithUserDetails.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
   }
 
-  // Create new pharmacy
-  async createPharmacy(pharmacyData: any): Promise<any> {
-    const id = randomUUID();
-    const pharmacy: Pharmacy = {
-      id,
-      name: pharmacyData.name,
-      address: pharmacyData.address,
-      latitude: pharmacyData.latitude ?? null,
-      longitude: pharmacyData.longitude ?? null,
-      phone: pharmacyData.phone ?? null,
-      rating: pharmacyData.rating ?? null,
-      deliveryTime: pharmacyData.deliveryTime ?? null,
-      isOpen: pharmacyData.isOpen ?? null,
-      openingHours: pharmacyData.openingHours ?? null,
-      createdAt: new Date()
-    };
-    this.pharmacies.set(id, pharmacy);
-    return pharmacy;
-  }
 
-  // Create new order
-  async createOrder(orderData: any): Promise<any> {
-    const id = randomUUID();
-    const deliveryPersonId = Array.from(this.deliveryPersons.values())
-    .find(dp => dp.isAvailable)?.id ?? null;
-
-    const order: Order = {
-      id,
-      userId: orderData.userId,
-      pharmacyId: orderData.pharmacyId,
-      prescriptionId: orderData.prescriptionId ?? null,
-      status: orderData.status ?? null,
-      totalAmount: orderData.totalAmount ?? null,
-      deliveryAddress: orderData.deliveryAddress,
-      deliveryNotes: orderData.deliveryNotes ?? null,
-      estimatedDelivery: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes from now
-      deliveredAt: null,
-      deliveryPersonId,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.orders.set(id, order);
-    return order;
-  }
-
-  async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
-    const order = this.orders.get(id);
-    if (order) {
-      order.status = status;
-      order.updatedAt = new Date();
-      if (status === 'delivered') {
-        order.deliveredAt = new Date();
-      }
-      this.orders.set(id, order);
-    }
-    return order;
-  }
 
   // Delivery person operations
   async getDeliveryPerson(id: string): Promise<DeliveryPerson | undefined> {
