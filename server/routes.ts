@@ -81,7 +81,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Démarrer la session
       req.session.userId = user.id;
-      req.session.language = user.language;
+      req.session.language = user.language || "fr";
 
       // Retourner les infos utilisateur (sans le mot de passe)
       const { password, ...userInfo } = user;
@@ -106,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Démarrer la session
       req.session.userId = user.id;
-      req.session.language = user.language;
+      req.session.language = user.language || "fr";
 
       // Retourner les infos utilisateur (sans le mot de passe)
       const { password, ...userInfo } = user;

@@ -61,7 +61,67 @@ export class MemStorage implements IStorage {
     this.seedData();
   }
 
-  private seedData() {
+  private async seedData() {
+    // Seed utilisateurs de test pour chaque rôle
+    const testUsers = [
+      {
+        firstName: "Admin",
+        lastName: "YahoPharma",
+        phone: "+225 01 23 45 67",
+        address: "Siège YahoPharma, Abidjan",
+        password: "admin123",
+        role: "admin",
+        language: "fr"
+      },
+      {
+        firstName: "Dr. Marie",
+        lastName: "Kouassi",
+        phone: "+225 07 11 22 33",
+        address: "Pharmacie de la Paix, Abidjan",
+        password: "pharma123",
+        role: "pharmacien",
+        language: "fr"
+      },
+      {
+        firstName: "Jean-Claude",
+        lastName: "Koffi",
+        phone: "+225 07 44 55 66",
+        address: "Zone livraison Abidjan",
+        password: "livreur123",
+        role: "livreur",
+        language: "fr"
+      },
+      {
+        firstName: "Aya",
+        lastName: "Diallo",
+        phone: "+225 05 77 88 99",
+        address: "Cocody, Abidjan",
+        password: "patient123",
+        role: "patient",
+        language: "fr"
+      }
+    ];
+
+    for (const userData of testUsers) {
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      const user: User = {
+        id: randomUUID(),
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        phone: userData.phone,
+        address: userData.address,
+        password: hashedPassword,
+        role: userData.role as any,
+        language: userData.language,
+        profileImageUrl: null,
+        pharmacyId: null,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      this.users.set(user.id, user);
+    }
+
     // Seed pharmacies
     const pharmaciesData: Pharmacy[] = [
       {
@@ -172,7 +232,11 @@ export class MemStorage implements IStorage {
       phone: insertUser.phone,
       address: insertUser.address,
       password: hashedPassword,
+      role: insertUser.role ?? "patient",
       language: insertUser.language ?? "fr",
+      profileImageUrl: insertUser.profileImageUrl ?? null,
+      pharmacyId: insertUser.pharmacyId ?? null,
+      isActive: insertUser.isActive ?? true,
       createdAt: new Date(),
       updatedAt: new Date()
     };

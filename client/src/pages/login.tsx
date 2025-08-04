@@ -60,13 +60,23 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            Pharma Express CI
+            YahoPharma+
           </CardTitle>
           <CardDescription>
             Connectez-vous à votre compte
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Comptes de test */}
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h3 className="font-semibold text-blue-900 mb-2">Comptes de test disponibles:</h3>
+            <div className="text-sm text-blue-800 space-y-1">
+              <div><strong>Patient:</strong> +225 05 77 88 99 / patient123</div>
+              <div><strong>Pharmacien:</strong> +225 07 11 22 33 / pharma123</div>
+              <div><strong>Livreur:</strong> +225 07 44 55 66 / livreur123</div>
+              <div><strong>Admin:</strong> +225 01 23 45 67 / admin123</div>
+            </div>
+          </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField

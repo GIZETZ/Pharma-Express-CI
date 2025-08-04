@@ -10,8 +10,11 @@ export const users = pgTable("users", {
   phone: varchar("phone").notNull().unique(),
   address: varchar("address").notNull(),
   password: varchar("password").notNull(), // Mot de passe haché
+  role: varchar("role").notNull().default("patient"), // patient, pharmacien, livreur, admin
   language: varchar("language").default("fr"),
   profileImageUrl: text("profile_image_url"),
+  pharmacyId: varchar("pharmacy_id").references(() => pharmacies.id), // Pour les pharmaciens
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -91,6 +94,7 @@ export const registerSchema = createInsertSchema(users).omit({
   updatedAt: true,
 }).extend({
   confirmPassword: z.string().min(6),
+  role: z.enum(["patient", "pharmacien", "livreur", "admin"]).default("patient"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],

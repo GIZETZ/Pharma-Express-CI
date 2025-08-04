@@ -19,7 +19,29 @@ import DeliveryAddress from "@/pages/delivery-address";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import NotFound from "@/pages/not-found";
+import DashboardPatient from "@/pages/dashboard-patient";
+import DashboardPharmacien from "@/pages/dashboard-pharmacien";
+import DashboardLivreur from "@/pages/dashboard-livreur";
+import DashboardAdmin from "@/pages/dashboard-admin";
 import PWAInstallPrompt from "@/components/pwa-install-prompt";
+
+function RoleDashboard() {
+  const { user } = useAuth();
+  
+  if (!user) return null;
+  
+  switch (user.role) {
+    case "admin":
+      return <DashboardAdmin />;
+    case "pharmacien":
+      return <DashboardPharmacien />;
+    case "livreur":
+      return <DashboardLivreur />;
+    case "patient":
+    default:
+      return <DashboardPatient />;
+  }
+}
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -45,8 +67,9 @@ function Router() {
       {/* Routes protégées - nécessitent l'authentification */}
       {isAuthenticated ? (
         <>
-          <Route path="/" component={Home} />
-          <Route path="/home" component={Home} />
+          <Route path="/" component={RoleDashboard} />
+          <Route path="/home" component={RoleDashboard} />
+          <Route path="/dashboard" component={RoleDashboard} />
           <Route path="/camera" component={Camera} />
           <Route path="/pharmacies" component={Pharmacies} />
           <Route path="/delivery" component={DeliveryTracking} />
