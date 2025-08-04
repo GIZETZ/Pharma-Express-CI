@@ -82,6 +82,11 @@ function Router() {
           <Route path="/" component={RoleDashboard} />
           <Route path="/home" component={RoleDashboard} />
           <Route path="/dashboard" component={RoleDashboard} />
+          <Route path="/dashboard-patient" component={DashboardPatient} />
+          <Route path="/dashboard-pharmacien" component={DashboardPharmacien} />
+          <Route path="/dashboard-livreur" component={DashboardLivreur} />
+          <Route path="/dashboard-admin" component={DashboardAdmin} />
+          <Route path="/pending-validation" component={PendingValidation} />
           <Route path="/camera" component={Camera} />
           <Route path="/pharmacies" component={Pharmacies} />
           <Route path="/delivery" component={DeliveryTracking} />
