@@ -47,14 +47,14 @@ export default function Login() {
           window.location.href = '/supervisorlock';
           break;
         case "pharmacien":
-          window.location.href = '/dashboard';
+          window.location.href = '/dashboard-pharmacien';
           break;
         case "livreur":
-          window.location.href = '/delivery';
+          window.location.href = '/dashboard-livreur';
           break;
         case "patient":
         default:
-          window.location.href = '/dashboard';
+          window.location.href = '/dashboard-patient';
           break;
       }
     },
