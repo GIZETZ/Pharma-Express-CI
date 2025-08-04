@@ -278,7 +278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Orders endpoints
   app.post('/api/orders', requireAuth, async (req: any, res) => {
     try {
-      const orderData = insertOrderSchema.parse(req.body);
+      const orderData = { ...req.body, userId: req.session.userId };
       const order = await storage.createOrder(orderData);
       
       // Send confirmation notification
@@ -301,10 +301,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/orders', async (req, res) => {
+  app.get('/api/orders', requireAuth, async (req: any, res) => {
     try {
-      const userId = 'current-user'; // In real app, get from session/auth
-      const orders = await storage.getUserOrders(userId);
+      const orders = await storage.getUserOrders(req.session.userId);
       res.json(orders);
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -312,10 +311,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/orders/current', async (req, res) => {
+  app.get('/api/orders/current', requireAuth, async (req: any, res) => {
     try {
-      const userId = 'current-user'; // In real app, get from session/auth
-      const order = await storage.getCurrentOrder(userId);
+      const order = await storage.getCurrentOrder(req.session.userId);
       res.json(order);
     } catch (error) {
       console.error('Error fetching current order:', error);
@@ -375,10 +373,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Notifications endpoints
-  app.get('/api/notifications', async (req, res) => {
+  app.get('/api/notifications', requireAuth, async (req: any, res) => {
     try {
-      const userId = 'current-user'; // In real app, get from session/auth
-      const notifications = await storage.getUserNotifications(userId);
+      const notifications = await storage.getUserNotifications(req.session.userId);
       res.json(notifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -396,27 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User endpoints (mock for demo)
-  app.get('/api/user', async (req, res) => {
-    try {
-      // Mock user data - in real app this would come from authentication
-      const user = {
-        id: 'current-user',
-        email: 'david.kouame@email.com',
-        firstName: 'David',
-        lastName: 'Kouame',
-        phone: '+225 01 02 03 04 05',
-        profileImageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100',
-        language: 'fr',
-        createdAt: new Date('2023-01-01'),
-        updatedAt: new Date(),
-      };
-      res.json(user);
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      res.status(500).json({ message: 'Failed to fetch user' });
-    }
-  });
+  
 
   // Geolocation helper endpoint
   app.get('/api/location/reverse', async (req, res) => {
