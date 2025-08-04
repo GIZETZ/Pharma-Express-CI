@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useGeolocation } from "@/hooks/use-geolocation";
+
 import BottomNavigation from "@/components/bottom-navigation";
 import { MapPin, Clock, Star, Phone, Camera, Upload } from "lucide-react";
 
@@ -93,11 +93,15 @@ export default function DashboardPatient() {
   // Pharmacies triées par distance si géolocalisation disponible
   const { data: pharmacies, isLoading: pharmaciesLoading } = useQuery({ 
     queryKey: ["/api/pharmacies", userLocation],
-    queryFn: () => {
+    queryFn: async () => {
       const url = userLocation 
         ? `/api/pharmacies?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=10`
         : `/api/pharmacies`;
-      return apiRequest(url);
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Erreur lors du chargement des pharmacies');
+      }
+      return response.json();
     },
     enabled: true
   });
