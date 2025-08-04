@@ -1,16 +1,79 @@
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import BottomNavigation from "@/components/bottom-navigation";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
 
 export default function Profile() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ['/api/auth/user'],
   });
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('profileImage', file);
+      
+      const response = await fetch('/api/auth/upload-profile-image', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'upload de l\'image');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (updatedUser) => {
+      toast({
+        title: "Photo mise à jour",
+        description: "Votre photo de profil a été mise à jour avec succès.",
+      });
+      queryClient.setQueryData(['/api/auth/user'], updatedUser);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Une erreur est survenue lors de l'upload.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Vérifier le type de fichier
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Erreur",
+          description: "Veuillez sélectionner un fichier image valide.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Vérifier la taille (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Erreur",
+          description: "L'image ne doit pas dépasser 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      uploadImageMutation.mutate(file);
+    }
+  };
 
   const goBack = () => {
     setLocation("/home");
@@ -60,12 +123,33 @@ export default function Profile() {
         <Card className="shadow-sm mb-6">
           <CardContent className="p-6">
             <div className="flex items-center space-x-4 mb-6">
-              <img 
-                src={user?.profileImageUrl || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
-                alt="Profile" 
-                className="w-20 h-20 rounded-full object-cover border-4 border-gray-100" 
-                data-testid="img-profile"
-              />
+              <div className="relative">
+                <img 
+                  src={user?.profileImageUrl || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
+                  alt="Profile" 
+                  className="w-20 h-20 rounded-full object-cover border-4 border-gray-100 cursor-pointer" 
+                  data-testid="img-profile"
+                  onClick={() => document.getElementById('profile-image-input')?.click()}
+                />
+                <div className="absolute bottom-0 right-0 w-6 h-6 bg-pharma-green rounded-full flex items-center justify-center border-2 border-white cursor-pointer"
+                     onClick={() => document.getElementById('profile-image-input')?.click()}>
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <input
+                  id="profile-image-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                {uploadImageMutation.isPending && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+              </div>
               <div className="flex-1">
                 <h2 className="text-xl font-semibold text-gray-900" data-testid="text-user-name">
                   {user ? `${user.firstName} ${user.lastName}` : 'Chargement...'}
@@ -136,7 +220,11 @@ export default function Profile() {
               </svg>
             </button>
             
-            <button className="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors" data-testid="button-delivery-addresses">
+            <button 
+              className="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors" 
+              data-testid="button-delivery-addresses"
+              onClick={() => setLocation("/delivery-address")}
+            >
               <div className="flex items-center space-x-3">
                 <svg className="w-5 h-5 text-pharma-green" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />

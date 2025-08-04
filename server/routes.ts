@@ -68,7 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/register', async (req, res) => {
     try {
       const validatedData = registerSchema.parse(req.body);
-      
+
       // Vérifier si l'utilisateur existe déjà
       const existingUser = await storage.getUserByPhone(validatedData.phone);
       if (existingUser) {
@@ -98,7 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/login', async (req, res) => {
     try {
       const validatedData = loginSchema.parse(req.body);
-      
+
       const user = await storage.loginUser(validatedData.phone, validatedData.password);
       if (!user) {
         return res.status(400).json({ message: 'Numéro de téléphone ou mot de passe incorrect' });
@@ -135,7 +135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ message: 'Utilisateur non trouvé' });
       }
-      
+
       // Retourner les infos utilisateur (sans le mot de passe)
       const { password, ...userInfo } = user;
       res.json(userInfo);
@@ -149,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const updates = req.body;
       const updatedUser = await storage.updateUser(req.session.userId, updates);
-      
+
       if (!updatedUser) {
         return res.status(404).json({ message: 'Utilisateur non trouvé' });
       }
@@ -165,6 +165,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Erreur lors de la mise à jour du profil:', error);
       res.status(500).json({ message: 'Erreur lors de la mise à jour' });
+    }
+  });
+
+  // Upload profile image
+  app.post('/api/auth/upload-profile-image', requireAuth, upload.single('profileImage'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'Aucun fichier fourni' });
+      }
+
+      // Simuler la sauvegarde de l'image (en production, vous sauvegarderez sur un service cloud)
+      const imageUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+
+      const updatedUser = await storage.updateUser(req.session.userId, { 
+        profileImageUrl: imageUrl 
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'Utilisateur non trouvé' });
+      }
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Erreur lors de l\'upload de l\'image:', error);
+      res.status(500).json({ message: 'Erreur lors de l\'upload de l\'image' });
     }
   });
 
@@ -225,7 +250,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // For now, we'll simulate storing the image URL
       const imageUrl = `/uploads/prescriptions/${Date.now()}-${req.file.originalname}`;
-      
+
       const prescriptionData = {
         userId: req.session.userId, // Utiliser l'ID de l'utilisateur connecté
         imageUrl,
@@ -234,7 +259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const prescription = await storage.createPrescription(prescriptionData);
-      
+
       // Simulate OCR processing with a delay
       setTimeout(async () => {
         try {
@@ -280,7 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const orderData = { ...req.body, userId: req.session.userId };
       const order = await storage.createOrder(orderData);
-      
+
       // Send confirmation notification
       await storage.createNotification({
         userId: order.userId,
@@ -338,7 +363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { status } = req.body;
       const order = await storage.updateOrderStatus(req.params.id, status);
-      
+
       if (order) {
         // Send status update notification
         await storage.createNotification({
@@ -393,7 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  
+
 
   // Geolocation helper endpoint
   app.get('/api/location/reverse', async (req, res) => {

@@ -15,6 +15,7 @@ import Pharmacies from "@/pages/pharmacies";
 import DeliveryTracking from "@/pages/delivery-tracking";
 import Profile from "@/pages/profile";
 import EditProfile from "@/pages/edit-profile";
+import DeliveryAddress from "@/pages/delivery-address";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import NotFound from "@/pages/not-found";
@@ -51,6 +52,7 @@ function Router() {
           <Route path="/delivery" component={DeliveryTracking} />
           <Route path="/profile" component={Profile} />
           <Route path="/edit-profile" component={EditProfile} />
+          <Route path="/delivery-address" component={DeliveryAddress} />
           <Route component={NotFound} />
         </>
       ) : (

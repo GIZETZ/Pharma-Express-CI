@@ -11,6 +11,7 @@ export const users = pgTable("users", {
   address: varchar("address").notNull(),
   password: varchar("password").notNull(), // Mot de passe haché
   language: varchar("language").default("fr"),
+  profileImageUrl: text("profile_image_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
