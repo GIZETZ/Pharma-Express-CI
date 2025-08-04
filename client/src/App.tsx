@@ -14,6 +14,7 @@ import Camera from "@/pages/camera";
 import Pharmacies from "@/pages/pharmacies";
 import DeliveryTracking from "@/pages/delivery-tracking";
 import Profile from "@/pages/profile";
+import EditProfile from "@/pages/edit-profile";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import NotFound from "@/pages/not-found";
@@ -39,7 +40,7 @@ function Router() {
       {/* Routes publiques - pages d'auth */}
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      
+
       {/* Routes protégées - nécessitent l'authentification */}
       {isAuthenticated ? (
         <>
@@ -49,6 +50,8 @@ function Router() {
           <Route path="/pharmacies" component={Pharmacies} />
           <Route path="/delivery" component={DeliveryTracking} />
           <Route path="/profile" component={Profile} />
+          <Route path="/edit-profile" component={EditProfile} />
+          <Route component={NotFound} />
         </>
       ) : (
         <>
@@ -57,7 +60,7 @@ function Router() {
           <Route path="/onboarding" component={Onboarding} />
         </>
       )}
-      
+
       <Route component={NotFound} />
     </Switch>
   );

@@ -9,7 +9,7 @@ export default function Profile() {
   const [, setLocation] = useLocation();
 
   const { data: user, isLoading } = useQuery<User>({
-    queryKey: ['/api/user'],
+    queryKey: ['/api/auth/user'],
   });
 
   const goBack = () => {
@@ -68,10 +68,10 @@ export default function Profile() {
               />
               <div className="flex-1">
                 <h2 className="text-xl font-semibold text-gray-900" data-testid="text-user-name">
-                  {user ? `${user.firstName} ${user.lastName}` : 'David Kouame'}
+                  {user ? `${user.firstName} ${user.lastName}` : 'Chargement...'}
                 </h2>
                 <p className="text-gray-600" data-testid="text-user-email">
-                  {user?.email || 'david.kouame@email.com'}
+                  {user?.email || 'Chargement...'}
                 </p>
                 <p className="text-pharma-green text-sm font-medium">
                   Membre depuis 2023
@@ -82,6 +82,7 @@ export default function Profile() {
                 size="icon"
                 className="text-pharma-green"
                 data-testid="button-edit-profile"
+                onClick={() => setLocation("/edit-profile")}
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -119,7 +120,11 @@ export default function Profile() {
               <h3 className="font-semibold text-gray-900">Compte</h3>
             </div>
             
-            <button className="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors" data-testid="button-personal-info">
+            <button 
+              className="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors" 
+              data-testid="button-personal-info"
+              onClick={() => setLocation("/edit-profile")}
+            >
               <div className="flex items-center space-x-3">
                 <svg className="w-5 h-5 text-pharma-green" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
