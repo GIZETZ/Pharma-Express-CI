@@ -549,8 +549,18 @@ export class MemStorage implements IStorage {
 
   async getCurrentOrder(userId: string): Promise<Order | undefined> {
     return Array.from(this.orders.values())
-      .filter(o => o.userId === userId && ['pending', 'confirmed', 'preparing', 'in_transit'].includes(o.status || ''))
+      .filter(o => o.userId === userId && !['delivered', 'cancelled'].includes(o.status || ''))
       .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))[0];
+  }
+
+  async getPharmacistOrders(pharmacistId: string): Promise<Order[]> {
+    // For now, return all orders since we don't have pharmacy-specific assignment
+    // In a real app, you'd filter by pharmacyId
+    return Array.from(this.orders.values());
+  }
+
+  async getAllPrescriptions(): Promise<Prescription[]> {
+    return Array.from(this.prescriptions.values());
   }
 
   // Create new pharmacy

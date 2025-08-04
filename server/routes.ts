@@ -522,13 +522,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get pharmacist orders
-  app.get('/api/pharmacien/orders', requireAuth, async (req, res) => {
+  app.get('/api/pharmacien/orders', requireAuth, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'pharmacien') {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'pharmacien') {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      const orders = await storage.getPharmacistOrders(req.user.id);
+      const orders = await storage.getPharmacistOrders(user.id);
       res.json(orders);
     } catch (error) {
       console.error('Error fetching pharmacist orders:', error);
@@ -536,10 +537,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update order status (pharmacist)
-  app.post('/api/pharmacien/orders/:orderId/status', requireAuth, async (req, res) => {
+  // Get pharmacist prescriptions
+  app.get('/api/pharmacien/prescriptions', requireAuth, async (req: any, res) => {
     try {
-      if (req.user?.role !== 'pharmacien') {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'pharmacien') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const allPrescriptions = await storage.getAllPrescriptions();
+      res.json(allPrescriptions);
+    } catch (error) {
+      console.error('Error fetching pharmacist prescriptions:', error);
+      res.status(500).json({ message: 'Failed to fetch prescriptions' });
+    }
+  });
+
+  // Update order status (pharmacist)
+  app.post('/api/pharmacien/orders/:orderId/status', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'pharmacien') {
         return res.status(403).json({ message: 'Access denied' });
       }
 

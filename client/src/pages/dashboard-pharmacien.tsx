@@ -37,8 +37,14 @@ export default function DashboardPharmacien() {
       });
     },
   });
-  const { data: orders } = useQuery({ queryKey: ["/api/pharmacien/orders"] });
-  const { data: prescriptions } = useQuery({ queryKey: ["/api/pharmacien/prescriptions"] });
+  const { data: orders, isLoading: ordersLoading } = useQuery({ 
+    queryKey: ["/api/pharmacien/orders"],
+    refetchInterval: 5000 // Refresh every 5 seconds
+  });
+  const { data: prescriptions, isLoading: prescriptionsLoading } = useQuery({ 
+    queryKey: ["/api/pharmacien/prescriptions"],
+    refetchInterval: 5000
+  });
 
   const handleOrderUpdate = (orderId: string, status: string) => {
     updateOrderMutation.mutate({ orderId, status });
@@ -75,13 +81,17 @@ export default function DashboardPharmacien() {
           <TabsContent value="orders">
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <Card>
+                <Card 
+                  className="cursor-pointer hover:shadow-lg transition-shadow" 
+                  onClick={() => setActiveTab("orders")}
+                  data-testid="card-nouvelles-commandes"
+                >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">Nouvelles Commandes</p>
                         <p className="text-2xl font-bold text-orange-600">
-                          {orders?.filter((o: any) => o.status === 'pending')?.length || 0}
+                          {ordersLoading ? "..." : (orders?.filter((o: any) => o.status === 'pending')?.length || 0)}
                         </p>
                       </div>
                       <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
@@ -91,13 +101,17 @@ export default function DashboardPharmacien() {
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card 
+                  className="cursor-pointer hover:shadow-lg transition-shadow" 
+                  onClick={() => setActiveTab("preparation")}
+                  data-testid="card-en-preparation"
+                >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">En Préparation</p>
                         <p className="text-2xl font-bold text-blue-600">
-                          {orders?.filter((o: any) => o.status === 'preparing')?.length || 0}
+                          {ordersLoading ? "..." : (orders?.filter((o: any) => o.status === 'confirmed' || o.status === 'preparing')?.length || 0)}
                         </p>
                       </div>
                       <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -107,13 +121,17 @@ export default function DashboardPharmacien() {
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card 
+                  className="cursor-pointer hover:shadow-lg transition-shadow" 
+                  onClick={() => setActiveTab("preparation")}
+                  data-testid="card-pretes"
+                >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">Prêtes</p>
                         <p className="text-2xl font-bold text-green-600">
-                          {orders?.filter((o: any) => o.status === 'ready')?.length || 0}
+                          {ordersLoading ? "..." : (orders?.filter((o: any) => o.status === 'ready_for_delivery')?.length || 0)}
                         </p>
                       </div>
                       <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
@@ -123,13 +141,16 @@ export default function DashboardPharmacien() {
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card 
+                  className="cursor-pointer hover:shadow-lg transition-shadow" 
+                  data-testid="card-livrees"
+                >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">Livrées</p>
                         <p className="text-2xl font-bold text-purple-600">
-                          {orders?.filter((o: any) => o.status === 'delivered')?.length || 0}
+                          {ordersLoading ? "..." : (orders?.filter((o: any) => o.status === 'delivered')?.length || 0)}
                         </p>
                       </div>
                       <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
@@ -140,7 +161,22 @@ export default function DashboardPharmacien() {
                 </Card>
               </div>
 
-              {orders?.filter((order: any) => order.status === 'pending').map((order: any) => (
+              {ordersLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+                  <p className="mt-4 text-gray-600">Chargement des commandes...</p>
+                </div>
+              ) : orders?.filter((order: any) => order.status === 'pending').length === 0 ? (
+                <Card className="text-center py-8">
+                  <CardContent>
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      📋
+                    </div>
+                    <h3 className="font-semibold mb-2">Aucune nouvelle commande</h3>
+                    <p className="text-sm text-gray-600">Les nouvelles commandes apparaîtront ici</p>
+                  </CardContent>
+                </Card>
+              ) : orders?.filter((order: any) => order.status === 'pending').map((order: any) => (
                 <Card key={order.id} className="border-l-4 border-l-orange-500">
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -206,7 +242,20 @@ export default function DashboardPharmacien() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {prescriptions?.map((prescription: any) => (
+                  {prescriptionsLoading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                      <p className="mt-4 text-gray-600">Chargement des prescriptions...</p>
+                    </div>
+                  ) : prescriptions?.length === 0 ? (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        🔍
+                      </div>
+                      <h3 className="font-semibold mb-2">Aucune prescription à vérifier</h3>
+                      <p className="text-sm text-gray-600">Les prescriptions à vérifier apparaîtront ici</p>
+                    </div>
+                  ) : prescriptions?.map((prescription: any) => (
                     <div key={prescription.id} className="border rounded-lg p-4">
                       <div className="flex items-start justify-between mb-3">
                         <div>
