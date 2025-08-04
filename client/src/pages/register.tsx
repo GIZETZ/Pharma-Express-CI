@@ -14,8 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
 type RegisterFormData = z.infer<typeof registerSchema>;
+type UserRole = "patient" | "pharmacien" | "livreur";
 
 export default function Register() {
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -29,7 +31,7 @@ export default function Register() {
       address: "",
       password: "",
       confirmPassword: "",
-      role: "patient",
+      role: selectedRole || "patient",
       language: "fr",
     },
   });
@@ -62,6 +64,90 @@ export default function Register() {
     setIsLoading(false);
   };
 
+  // Render role selection first
+  if (!selectedRole) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              YahoPharma+
+            </CardTitle>
+            <CardDescription>
+              Choisissez votre profil pour continuer
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center mb-6">
+              <p className="text-sm text-gray-600 mb-4">Sélectionnez votre type de compte :</p>
+            </div>
+            
+            {/* Role Selection Cards */}
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full h-20 flex items-center justify-start space-x-4 hover:bg-blue-50 border-2 hover:border-blue-300"
+                onClick={() => setSelectedRole("patient")}
+                data-testid="button-select-patient"
+              >
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  👥
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-blue-600">Patient</div>
+                  <div className="text-sm text-gray-500">Commander vos médicaments</div>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full h-20 flex items-center justify-start space-x-4 hover:bg-green-50 border-2 hover:border-green-300"
+                onClick={() => setSelectedRole("pharmacien")}
+                data-testid="button-select-pharmacien"
+              >
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  💊
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-green-600">Pharmacien</div>
+                  <div className="text-sm text-gray-500">Gérer votre pharmacie</div>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full h-20 flex items-center justify-start space-x-4 hover:bg-purple-50 border-2 hover:border-purple-300"
+                onClick={() => setSelectedRole("livreur")}
+                data-testid="button-select-livreur"
+              >
+                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                  🚴
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-purple-600">Livreur</div>
+                  <div className="text-sm text-gray-500">500 FCFA par livraison</div>
+                </div>
+              </Button>
+            </div>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Déjà un compte ?{" "}
+                <Link
+                  href="/login"
+                  className="text-blue-600 hover:text-blue-500 dark:text-blue-400 font-medium"
+                  data-testid="link-login"
+                >
+                  Se connecter
+                </Link>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md">
@@ -70,29 +156,17 @@ export default function Register() {
             YahoPharma+
           </CardTitle>
           <CardDescription>
-            Rejoignez notre écosystème de santé digital
+            Inscription - {selectedRole === "patient" ? "👥 Patient" : selectedRole === "pharmacien" ? "💊 Pharmacien" : "🚴 Livreur"}
           </CardDescription>
-          
-          {/* Diagramme des rôles */}
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <div className="grid grid-cols-3 gap-4 text-xs">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2 mx-auto">👥</div>
-                <span className="text-blue-600 font-medium block">Patient</span>
-                <p className="text-gray-500 mt-1 text-xs">Commandes et livraisons</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-2 mx-auto">💊</div>
-                <span className="text-green-600 font-medium block">Pharmacien</span>
-                <p className="text-gray-500 mt-1 text-xs">Gestion pharmacie</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-2 mx-auto">🚴</div>
-                <span className="text-purple-600 font-medium block">Livreur</span>
-                <p className="text-gray-500 mt-1 text-xs">500 FCFA/livraison</p>
-              </div>
-            </div>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedRole(null)}
+            className="mt-2"
+            data-testid="button-back-to-role-selection"
+          >
+            ← Changer de profil
+          </Button>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -156,37 +230,22 @@ export default function Register() {
 
               <FormField
                 control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Type de compte</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-role">
-                          <SelectValue placeholder="Choisir votre profil" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="patient">👥 Patient - Commandez vos médicaments</SelectItem>
-                        <SelectItem value="pharmacien">💊 Pharmacien - Gérez votre pharmacie</SelectItem>
-                        <SelectItem value="livreur">🚴 Livreur - Effectuez les livraisons</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Adresse de domicile</FormLabel>
+                    <FormLabel>
+                      {selectedRole === "pharmacien" ? "Adresse de la pharmacie" : 
+                       selectedRole === "livreur" ? "Adresse de résidence" : 
+                       "Adresse de domicile"}
+                    </FormLabel>
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="Votre adresse complète"
+                        placeholder={
+                          selectedRole === "pharmacien" ? "Adresse complète de votre pharmacie" :
+                          selectedRole === "livreur" ? "Votre adresse de résidence" :
+                          "Votre adresse complète"
+                        }
                         data-testid="input-address"
                       />
                     </FormControl>
@@ -195,28 +254,64 @@ export default function Register() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Type de compte</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-role">
-                          <SelectValue placeholder="Choisir votre rôle" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="patient">👤 Patient - Commander des médicaments</SelectItem>
-                        <SelectItem value="pharmacien">💊 Pharmacien - Gérer une pharmacie</SelectItem>
-                        <SelectItem value="livreur">🚗 Livreur - Effectuer des livraisons</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Champ spécial pour Pharmaciens et Livreurs : Pièce d'identité */}
+              {(selectedRole === "pharmacien" || selectedRole === "livreur") && (
+                <div className="space-y-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-yellow-800 font-medium">
+                      Vérification d'identité requise
+                    </p>
+                  </div>
+                  <p className="text-xs text-yellow-700">
+                    {selectedRole === "pharmacien" 
+                      ? "Joignez une copie de votre carte d'identité nationale et diplôme de pharmacien. Un admin validera votre compte."
+                      : "Joignez une copie de votre carte d'identité nationale et permis de conduire. Un admin validera votre compte."
+                    }
+                  </p>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Document d'identité *</label>
+                    <Input
+                      type="file"
+                      accept="image/*,.pdf"
+                      data-testid="input-id-document"
+                      className="cursor-pointer"
+                    />
+                    <p className="text-xs text-gray-500">Formats acceptés: JPG, PNG, PDF (max 5MB)</p>
+                  </div>
+
+                  {selectedRole === "pharmacien" && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Diplôme de pharmacien *</label>
+                      <Input
+                        type="file"
+                        accept="image/*,.pdf"
+                        data-testid="input-professional-document"
+                        className="cursor-pointer"
+                      />
+                      <p className="text-xs text-gray-500">Diplôme ou certification professionnelle</p>
+                    </div>
+                  )}
+
+                  {selectedRole === "livreur" && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Permis de conduire *</label>
+                      <Input
+                        type="file"
+                        accept="image/*,.pdf"
+                        data-testid="input-driving-license"
+                        className="cursor-pointer"
+                      />
+                      <p className="text-xs text-gray-500">Permis de conduire valide</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <FormField
                 control={form.control}
@@ -284,8 +379,18 @@ export default function Register() {
                 disabled={isLoading}
                 data-testid="button-register"
               >
-                {isLoading ? "Inscription..." : "S'inscrire"}
+                {isLoading ? "Inscription..." : 
+                 selectedRole === "patient" ? "Créer mon compte" :
+                 `Soumettre pour validation`}
               </Button>
+
+              {(selectedRole === "pharmacien" || selectedRole === "livreur") && (
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-blue-700">
+                    ⏳ Votre compte sera activé après validation par notre équipe (24-48h)
+                  </p>
+                </div>
+              )}
             </form>
           </Form>
 

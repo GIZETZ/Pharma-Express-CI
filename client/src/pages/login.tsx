@@ -13,8 +13,10 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
 type LoginFormData = z.infer<typeof loginSchema>;
+type UserRole = "patient" | "pharmacien" | "livreur";
 
 export default function Login() {
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -55,6 +57,90 @@ export default function Login() {
     setIsLoading(false);
   };
 
+  // Render role selection first
+  if (!selectedRole) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              YahoPharma+
+            </CardTitle>
+            <CardDescription>
+              Connectez-vous à votre compte
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center mb-6">
+              <p className="text-sm text-gray-600 mb-4">Sélectionnez votre profil :</p>
+            </div>
+            
+            {/* Role Selection Cards */}
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full h-20 flex items-center justify-start space-x-4 hover:bg-blue-50 border-2 hover:border-blue-300"
+                onClick={() => setSelectedRole("patient")}
+                data-testid="button-login-patient"
+              >
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  👥
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-blue-600">Patient</div>
+                  <div className="text-sm text-gray-500">Commander vos médicaments</div>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full h-20 flex items-center justify-start space-x-4 hover:bg-green-50 border-2 hover:border-green-300"
+                onClick={() => setSelectedRole("pharmacien")}
+                data-testid="button-login-pharmacien"
+              >
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  💊
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-green-600">Pharmacien</div>
+                  <div className="text-sm text-gray-500">Gérer votre pharmacie</div>
+                </div>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full h-20 flex items-center justify-start space-x-4 hover:bg-purple-50 border-2 hover:border-purple-300"
+                onClick={() => setSelectedRole("livreur")}
+                data-testid="button-login-livreur"
+              >
+                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                  🚴
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-purple-600">Livreur</div>
+                  <div className="text-sm text-gray-500">500 FCFA par livraison</div>
+                </div>
+              </Button>
+            </div>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Pas encore de compte ?{" "}
+                <Link
+                  href="/register"
+                  className="text-blue-600 hover:text-blue-500 dark:text-blue-400 font-medium"
+                  data-testid="link-register"
+                >
+                  S'inscrire
+                </Link>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md">
@@ -63,36 +149,26 @@ export default function Login() {
             YahoPharma+
           </CardTitle>
           <CardDescription>
-            Plateforme unifiée pour Patients, Pharmaciens et Livreurs
+            Connexion - {selectedRole === "patient" ? "👥 Patient" : selectedRole === "pharmacien" ? "💊 Pharmacien" : "🚴 Livreur"}
           </CardDescription>
-          
-          {/* Diagramme des rôles */}
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <div className="flex justify-center items-center space-x-4 text-xs">
-              <div className="text-center">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mb-1">👥</div>
-                <span className="text-blue-600 font-medium">Patient</span>
-              </div>
-              <div className="text-center">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mb-1">💊</div>
-                <span className="text-green-600 font-medium">Pharmacien</span>
-              </div>
-              <div className="text-center">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mb-1">🚴</div>
-                <span className="text-purple-600 font-medium">Livreur</span>
-              </div>
-            </div>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedRole(null)}
+            className="mt-2"
+            data-testid="button-back-to-role-selection"
+          >
+            ← Changer de profil
+          </Button>
         </CardHeader>
         <CardContent>
-          {/* Comptes de test */}
+          {/* Comptes de test pour le rôle sélectionné */}
           <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h3 className="font-semibold text-blue-900 mb-2">Comptes de test disponibles:</h3>
-            <div className="text-sm text-blue-800 space-y-1">
-              <div><strong>Patient:</strong> +225 05 77 88 99 / patient123</div>
-              <div><strong>Pharmacien:</strong> +225 07 11 22 33 / pharma123</div>
-              <div><strong>Livreur:</strong> +225 07 44 55 66 / livreur123</div>
-              <div><strong>Admin:</strong> +225 01 23 45 67 / admin123</div>
+            <h3 className="font-semibold text-blue-900 mb-2">Compte de test {selectedRole} :</h3>
+            <div className="text-sm text-blue-800">
+              {selectedRole === "patient" && <div><strong>Patient:</strong> +225 05 77 88 99 / patient123</div>}
+              {selectedRole === "pharmacien" && <div><strong>Pharmacien:</strong> +225 07 11 22 33 / pharma123</div>}
+              {selectedRole === "livreur" && <div><strong>Livreur:</strong> +225 07 44 55 66 / livreur123</div>}
             </div>
           </div>
           <Form {...form}>

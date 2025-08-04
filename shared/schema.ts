@@ -15,6 +15,11 @@ export const users = pgTable("users", {
   profileImageUrl: text("profile_image_url"),
   pharmacyId: varchar("pharmacy_id").references(() => pharmacies.id), // Pour les pharmaciens
   isActive: boolean("is_active").default(true),
+  // Champs pour validation d'identité (Pharmaciens et Livreurs)
+  idDocumentUrl: text("id_document_url"), // Carte d'identité
+  professionalDocumentUrl: text("professional_document_url"), // Diplôme pharmacien
+  drivingLicenseUrl: text("driving_license_url"), // Permis de conduire
+  verificationStatus: varchar("verification_status").default("pending"), // pending, approved, rejected
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -92,9 +97,17 @@ export const registerSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  idDocumentUrl: true,
+  professionalDocumentUrl: true,
+  drivingLicenseUrl: true,
+  verificationStatus: true,
 }).extend({
   confirmPassword: z.string().min(6),
   role: z.enum(["patient", "pharmacien", "livreur", "admin"]).default("patient"),
+  // Files pour validation d'identité (optionnels mais requis selon le rôle)
+  idDocument: z.any().optional(),
+  professionalDocument: z.any().optional(),
+  drivingLicense: z.any().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],
