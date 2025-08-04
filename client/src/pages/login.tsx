@@ -40,7 +40,23 @@ export default function Login() {
         description: `Bienvenue ${user.firstName} ${user.lastName}!`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      window.location.href = '/';
+      
+      // Redirection selon le rôle de l'utilisateur
+      switch (user.role) {
+        case "admin":
+          window.location.href = '/supervisorlock';
+          break;
+        case "pharmacien":
+          window.location.href = '/dashboard';
+          break;
+        case "livreur":
+          window.location.href = '/delivery';
+          break;
+        case "patient":
+        default:
+          window.location.href = '/dashboard';
+          break;
+      }
     },
     onError: (error: any) => {
       toast({
