@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -36,6 +36,13 @@ export default function Register() {
     },
   });
 
+  // Mettre à jour le rôle dans le formulaire quand selectedRole change
+  React.useEffect(() => {
+    if (selectedRole) {
+      form.setValue('role', selectedRole);
+    }
+  }, [selectedRole, form]);
+
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterFormData) => {
       const response = await apiRequest('POST', '/api/auth/register', data);
@@ -47,7 +54,33 @@ export default function Register() {
         description: `Bienvenue ${user.firstName} ${user.lastName}!`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      window.location.href = '/';
+      
+      // Redirection selon le rôle après inscription  
+      switch (user.role) {
+        case "admin":
+          window.location.href = '/supervisorlock';
+          break;
+        case "pharmacien":
+          // Les pharmaciens doivent être validés d'abord
+          if (user.verificationStatus === 'pending') {
+            window.location.href = '/pending-validation';
+          } else {
+            window.location.href = '/dashboard-pharmacien';
+          }
+          break;
+        case "livreur":
+          // Les livreurs doivent être validés d'abord
+          if (user.verificationStatus === 'pending') {
+            window.location.href = '/pending-validation';
+          } else {
+            window.location.href = '/dashboard-livreur';
+          }
+          break;
+        case "patient":
+        default:
+          window.location.href = '/dashboard-patient';
+          break;
+      }
     },
     onError: (error: any) => {
       toast({
@@ -171,6 +204,9 @@ export default function Register() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {/* Champ caché pour le rôle */}
+              <input type="hidden" {...form.register("role")} value={selectedRole} />
+              
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
