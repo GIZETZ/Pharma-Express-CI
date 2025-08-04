@@ -63,8 +63,26 @@ export default function Login() {
             YahoPharma+
           </CardTitle>
           <CardDescription>
-            Connectez-vous à votre compte
+            Plateforme unifiée pour Patients, Pharmaciens et Livreurs
           </CardDescription>
+          
+          {/* Diagramme des rôles */}
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div className="flex justify-center items-center space-x-4 text-xs">
+              <div className="text-center">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mb-1">👥</div>
+                <span className="text-blue-600 font-medium">Patient</span>
+              </div>
+              <div className="text-center">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mb-1">💊</div>
+                <span className="text-green-600 font-medium">Pharmacien</span>
+              </div>
+              <div className="text-center">
+                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mb-1">🚴</div>
+                <span className="text-purple-600 font-medium">Livreur</span>
+              </div>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {/* Comptes de test */}

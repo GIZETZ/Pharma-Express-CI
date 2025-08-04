@@ -70,8 +70,29 @@ export default function Register() {
             YahoPharma+
           </CardTitle>
           <CardDescription>
-            Créez votre compte
+            Rejoignez notre écosystème de santé digital
           </CardDescription>
+          
+          {/* Diagramme des rôles */}
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-3 gap-4 text-xs">
+              <div className="text-center">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2 mx-auto">👥</div>
+                <span className="text-blue-600 font-medium block">Patient</span>
+                <p className="text-gray-500 mt-1 text-xs">Commandes et livraisons</p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-2 mx-auto">💊</div>
+                <span className="text-green-600 font-medium block">Pharmacien</span>
+                <p className="text-gray-500 mt-1 text-xs">Gestion pharmacie</p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-2 mx-auto">🚴</div>
+                <span className="text-purple-600 font-medium block">Livreur</span>
+                <p className="text-gray-500 mt-1 text-xs">500 FCFA/livraison</p>
+              </div>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -128,6 +149,29 @@ export default function Register() {
                         data-testid="input-phone"
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type de compte</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-role">
+                          <SelectValue placeholder="Choisir votre profil" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="patient">👥 Patient - Commandez vos médicaments</SelectItem>
+                        <SelectItem value="pharmacien">💊 Pharmacien - Gérez votre pharmacie</SelectItem>
+                        <SelectItem value="livreur">🚴 Livreur - Effectuez les livraisons</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
