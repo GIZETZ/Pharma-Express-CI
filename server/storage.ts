@@ -882,18 +882,80 @@ class PostgresStorage implements IStorage {
     return order;
   }
 
-  async getUserOrders(userId: string): Promise<Order[]> {
-    return await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+  async getUserOrders(userId: string): Promise<any[]> {
+    return await db.select({
+      id: orders.id,
+      userId: orders.userId,
+      pharmacyId: orders.pharmacyId,
+      medications: orders.medications,
+      deliveryAddress: orders.deliveryAddress,
+      deliveryNotes: orders.deliveryNotes,
+      totalAmount: orders.totalAmount,
+      status: orders.status,
+      createdAt: orders.createdAt,
+      updatedAt: orders.updatedAt,
+      deliveryLatitude: orders.deliveryLatitude,
+      deliveryLongitude: orders.deliveryLongitude,
+      prescriptionId: orders.prescriptionId,
+      bonDocuments: orders.bonDocuments,
+      estimatedDelivery: orders.estimatedDelivery,
+      deliveredAt: orders.deliveredAt,
+      deliveryPersonId: orders.deliveryPersonId,
+      pharmacy: {
+        id: pharmacies.id,
+        name: pharmacies.name,
+        address: pharmacies.address,
+        phone: pharmacies.phone,
+        latitude: pharmacies.latitude,
+        longitude: pharmacies.longitude,
+        openingHours: pharmacies.openingHours,
+        rating: pharmacies.rating
+      }
+    })
+    .from(orders)
+    .leftJoin(pharmacies, eq(orders.pharmacyId, pharmacies.id))
+    .where(eq(orders.userId, userId))
+    .orderBy(desc(orders.createdAt));
   }
 
-  async getCurrentOrder(userId: string): Promise<Order | undefined> {
-    const result = await db.select().from(orders)
-      .where(and(
-        eq(orders.userId, userId),
-        sql`${orders.status} IN ('pending', 'confirmed', 'preparing', 'in_transit')`
-      ))
-      .orderBy(desc(orders.createdAt))
-      .limit(1);
+  async getCurrentOrder(userId: string): Promise<any | undefined> {
+    const result = await db.select({
+      id: orders.id,
+      userId: orders.userId,
+      pharmacyId: orders.pharmacyId,
+      medications: orders.medications,
+      deliveryAddress: orders.deliveryAddress,
+      deliveryNotes: orders.deliveryNotes,
+      totalAmount: orders.totalAmount,
+      status: orders.status,
+      createdAt: orders.createdAt,
+      updatedAt: orders.updatedAt,
+      deliveryLatitude: orders.deliveryLatitude,
+      deliveryLongitude: orders.deliveryLongitude,
+      prescriptionId: orders.prescriptionId,
+      bonDocuments: orders.bonDocuments,
+      estimatedDelivery: orders.estimatedDelivery,
+      deliveredAt: orders.deliveredAt,
+      deliveryPersonId: orders.deliveryPersonId,
+      pharmacy: {
+        id: pharmacies.id,
+        name: pharmacies.name,
+        address: pharmacies.address,
+        phone: pharmacies.phone,
+        latitude: pharmacies.latitude,
+        longitude: pharmacies.longitude,
+        openingHours: pharmacies.openingHours,
+        rating: pharmacies.rating
+      }
+    })
+    .from(orders)
+    .leftJoin(pharmacies, eq(orders.pharmacyId, pharmacies.id))
+    .where(and(
+      eq(orders.userId, userId),
+      sql`${orders.status} IN ('pending', 'confirmed', 'preparing', 'in_transit')`
+    ))
+    .orderBy(desc(orders.createdAt))
+    .limit(1);
     return result[0];
   }
 
@@ -914,13 +976,76 @@ class PostgresStorage implements IStorage {
   }
 
   // Additional methods needed by routes
-  async getPharmacistOrders(pharmacyId: string): Promise<Order[]> {
-    return await db.select().from(orders).where(eq(orders.pharmacyId, pharmacyId)).orderBy(desc(orders.createdAt));
+  async getPharmacistOrders(pharmacyId: string): Promise<any[]> {
+    return await db.select({
+      id: orders.id,
+      userId: orders.userId,
+      pharmacyId: orders.pharmacyId,
+      medications: orders.medications,
+      deliveryAddress: orders.deliveryAddress,
+      deliveryNotes: orders.deliveryNotes,
+      totalAmount: orders.totalAmount,
+      status: orders.status,
+      createdAt: orders.createdAt,
+      updatedAt: orders.updatedAt,
+      deliveryLatitude: orders.deliveryLatitude,
+      deliveryLongitude: orders.deliveryLongitude,
+      prescriptionId: orders.prescriptionId,
+      bonDocuments: orders.bonDocuments,
+      estimatedDelivery: orders.estimatedDelivery,
+      deliveredAt: orders.deliveredAt,
+      deliveryPersonId: orders.deliveryPersonId,
+      pharmacy: {
+        id: pharmacies.id,
+        name: pharmacies.name,
+        address: pharmacies.address,
+        phone: pharmacies.phone,
+        latitude: pharmacies.latitude,
+        longitude: pharmacies.longitude,
+        openingHours: pharmacies.openingHours,
+        rating: pharmacies.rating
+      }
+    })
+    .from(orders)
+    .leftJoin(pharmacies, eq(orders.pharmacyId, pharmacies.id))
+    .where(eq(orders.pharmacyId, pharmacyId))
+    .orderBy(desc(orders.createdAt));
   }
 
   // Get orders for any pharmacy (for pharmacists to see all orders)
-  async getAllPharmacistOrders(): Promise<Order[]> {
-    return await db.select().from(orders).orderBy(desc(orders.createdAt));
+  async getAllPharmacistOrders(): Promise<any[]> {
+    return await db.select({
+      id: orders.id,
+      userId: orders.userId,
+      pharmacyId: orders.pharmacyId,
+      medications: orders.medications,
+      deliveryAddress: orders.deliveryAddress,
+      deliveryNotes: orders.deliveryNotes,
+      totalAmount: orders.totalAmount,
+      status: orders.status,
+      createdAt: orders.createdAt,
+      updatedAt: orders.updatedAt,
+      deliveryLatitude: orders.deliveryLatitude,
+      deliveryLongitude: orders.deliveryLongitude,
+      prescriptionId: orders.prescriptionId,
+      bonDocuments: orders.bonDocuments,
+      estimatedDelivery: orders.estimatedDelivery,
+      deliveredAt: orders.deliveredAt,
+      deliveryPersonId: orders.deliveryPersonId,
+      pharmacy: {
+        id: pharmacies.id,
+        name: pharmacies.name,
+        address: pharmacies.address,
+        phone: pharmacies.phone,
+        latitude: pharmacies.latitude,
+        longitude: pharmacies.longitude,
+        openingHours: pharmacies.openingHours,
+        rating: pharmacies.rating
+      }
+    })
+    .from(orders)
+    .leftJoin(pharmacies, eq(orders.pharmacyId, pharmacies.id))
+    .orderBy(desc(orders.createdAt));
   }
 
   async getAllPrescriptions(): Promise<Prescription[]> {
