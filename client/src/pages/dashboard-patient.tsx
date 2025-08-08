@@ -6,12 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 import BottomNavigation from "@/components/bottom-navigation";
-import { MapPin, Clock, Star, Phone, Camera, Upload } from "lucide-react";
+import { MapPin, Clock, Star, Phone, Camera, Upload, Plus, X, FileText } from "lucide-react";
 
 export default function DashboardPatient() {
   const { user } = useAuth();
@@ -23,11 +25,51 @@ export default function DashboardPatient() {
   const [currentAddress, setCurrentAddress] = useState<string>("");
   const [orderData, setOrderData] = useState({
     deliveryAddress: '',
-    notes: '',
-    totalAmount: 0
+    medications: [{ name: '', surBon: false }],
+    pharmacyMessage: '',
+    bonDocuments: [] as File[]
   });
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
   
+  // Helper functions for medication management
+  const addMedication = () => {
+    setOrderData(prev => ({
+      ...prev,
+      medications: [...prev.medications, { name: '', surBon: false }]
+    }));
+  };
+
+  const removeMedication = (index: number) => {
+    setOrderData(prev => ({
+      ...prev,
+      medications: prev.medications.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateMedication = (index: number, field: 'name' | 'surBon', value: string | boolean) => {
+    setOrderData(prev => ({
+      ...prev,
+      medications: prev.medications.map((med, i) => 
+        i === index ? { ...med, [field]: value } : med
+      )
+    }));
+  };
+
+  const handleDocumentUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setOrderData(prev => ({
+      ...prev,
+      bonDocuments: [...prev.bonDocuments, ...files]
+    }));
+  };
+
+  const removeDocument = (index: number) => {
+    setOrderData(prev => ({
+      ...prev,
+      bonDocuments: prev.bonDocuments.filter((_, i) => i !== index)
+    }));
+  };
+
   // Géolocalisation automatique
   useEffect(() => {
     if (navigator.geolocation) {
@@ -70,7 +112,7 @@ export default function DashboardPatient() {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       setActiveTab("orders");
       setSelectedPharmacy(null);
-      setOrderData({ deliveryAddress: '', notes: '', totalAmount: 0 });
+      setOrderData({ deliveryAddress: '', medications: [{ name: '', surBon: false }], pharmacyMessage: '', bonDocuments: [] });
     },
     onError: () => {
       toast({
@@ -109,12 +151,13 @@ export default function DashboardPatient() {
   });
 
   const handleCreateOrder = () => {
-    if (selectedPharmacy && orderData.deliveryAddress && orderData.totalAmount > 0) {
+    if (selectedPharmacy && orderData.deliveryAddress && orderData.medications.some(med => med.name.trim())) {
       createOrderMutation.mutate({
         pharmacyId: selectedPharmacy.id,
         deliveryAddress: orderData.deliveryAddress,
-        deliveryNotes: orderData.notes,
-        totalAmount: orderData.totalAmount.toString(),
+        deliveryNotes: orderData.pharmacyMessage,
+        medications: orderData.medications.filter(med => med.name.trim()),
+        bonDocuments: orderData.bonDocuments.length > 0 ? 'documents-uploaded' : null,
         status: 'pending'
       });
     } else {
@@ -461,36 +504,121 @@ export default function DashboardPatient() {
                         />
                       </div>
                       
+                      {/* Liste des médicaments */}
                       <div>
-                        <label className="block text-sm font-medium mb-1">Notes pour la pharmacie</label>
+                        <label className="block text-sm font-medium mb-3">Liste des médicaments *</label>
+                        <div className="space-y-3">
+                          {orderData.medications.map((medication, index) => (
+                            <div key={index} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
+                              <div className="flex-1">
+                                <Input
+                                  type="text"
+                                  placeholder="Nom du médicament"
+                                  value={medication.name}
+                                  onChange={(e) => updateMedication(index, 'name', e.target.value)}
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={medication.surBon}
+                                  onCheckedChange={(checked) => updateMedication(index, 'surBon', checked)}
+                                />
+                                <Label className="text-sm font-medium whitespace-nowrap">
+                                  Sur BON
+                                </Label>
+                              </div>
+                              {orderData.medications.length > 1 && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => removeMedication(index)}
+                                  className="p-2 h-8 w-8"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={addMedication}
+                            className="w-full flex items-center gap-2"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Ajouter un médicament
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Documents pour validation BON */}
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Documents pour validation BON</label>
+                        <div className="space-y-3">
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                            <div className="text-center">
+                              <FileText className="mx-auto h-12 w-12 text-gray-400 mb-2" />
+                              <div className="text-sm text-gray-600 mb-2">
+                                Ajoutez vos documents (carte d'assurance, prescription, etc.)
+                              </div>
+                              <label className="cursor-pointer">
+                                <Button type="button" variant="outline" size="sm">
+                                  <Upload className="h-4 w-4 mr-2" />
+                                  Choisir des fichiers
+                                </Button>
+                                <input
+                                  type="file"
+                                  multiple
+                                  accept="image/*,.pdf"
+                                  onChange={handleDocumentUpload}
+                                  className="hidden"
+                                />
+                              </label>
+                            </div>
+                          </div>
+                          {orderData.bonDocuments.length > 0 && (
+                            <div className="space-y-2">
+                              {orderData.bonDocuments.map((file, index) => (
+                                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                  <span className="text-sm text-gray-700 truncate">{file.name}</span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeDocument(index)}
+                                    className="p-1 h-6 w-6"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Message pour la pharmacie */}
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Message pour la pharmacie</label>
                         <Textarea
-                          placeholder="Précisez vos besoins, médicaments sur BON, etc."
-                          value={orderData.notes}
-                          onChange={(e) => setOrderData({ ...orderData, notes: e.target.value })}
+                          placeholder="Instructions spéciales, questions, ou informations supplémentaires..."
+                          value={orderData.pharmacyMessage}
+                          onChange={(e) => setOrderData({ ...orderData, pharmacyMessage: e.target.value })}
                           rows={3}
                         />
                       </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Montant estimé (FCFA) *</label>
-                        <Input
-                          type="number"
-                          placeholder="Montant total estimé"
-                          value={orderData.totalAmount || ''}
-                          onChange={(e) => setOrderData({ ...orderData, totalAmount: parseFloat(e.target.value) || 0 })}
-                        />
-                      </div>
-                      
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                        <p className="text-sm text-yellow-800">
-                          💡 <strong>Astuce:</strong> Mentionnez dans les notes si certains médicaments 
-                          doivent "passer sur BON" pour prise en charge par l'assurance.
+
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p className="text-sm text-blue-800">
+                          💡 <strong>Info:</strong> La pharmacie déterminera le prix final en fonction des médicaments disponibles. 
+                          Les médicaments marqués "Sur BON" nécessitent une validation de vos documents d'assurance.
                         </p>
                       </div>
                       
                       <Button 
                         onClick={handleCreateOrder} 
-                        disabled={createOrderMutation.isPending || !orderData.deliveryAddress || orderData.totalAmount <= 0}
+                        disabled={createOrderMutation.isPending || !orderData.deliveryAddress || !orderData.medications.some(med => med.name.trim())}
                         className="w-full"
                       >
                         {createOrderMutation.isPending ? "Envoi en cours..." : "📤 Confirmer la commande"}

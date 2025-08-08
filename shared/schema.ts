@@ -56,6 +56,8 @@ export const orders = pgTable("orders", {
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }),
   deliveryAddress: text("delivery_address").notNull(),
   deliveryNotes: text("delivery_notes"),
+  medications: jsonb("medications"), // Array of {name: string, surBon: boolean}
+  bonDocuments: text("bon_documents"), // Reference to uploaded documents
   estimatedDelivery: timestamp("estimated_delivery"),
   deliveredAt: timestamp("delivered_at"),
   deliveryPersonId: varchar("delivery_person_id"),
