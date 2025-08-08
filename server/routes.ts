@@ -663,7 +663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.session.userId,
         pharmacyId,
         deliveryAddress,
-        notes: notes || '',
+        deliveryNotes: notes || '',
         totalAmount: totalAmount.toString(),
         status: status || 'pending'
       });

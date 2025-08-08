@@ -874,10 +874,36 @@ class PostgresStorage implements IStorage {
     return result[0];
   }
 
+  async updateOrderWithDeliveryNotes(id: string, deliveryNotes: string): Promise<Order | undefined> {
+    const result = await db.update(orders).set({ deliveryNotes }).where(eq(orders.id, id)).returning();
+    return result[0];
+  }
+
   // Delivery person operations
   async getDeliveryPerson(id: string): Promise<DeliveryPerson | undefined> {
     // For now, return undefined as delivery_persons table is separate
     return undefined;
+  }
+
+  // Additional methods needed by routes
+  async getPharmacistOrders(pharmacyId: string): Promise<Order[]> {
+    return await db.select().from(orders).where(eq(orders.pharmacyId, pharmacyId)).orderBy(desc(orders.createdAt));
+  }
+
+  async getAllPrescriptions(): Promise<Prescription[]> {
+    return await db.select().from(prescriptions).orderBy(desc(prescriptions.createdAt));
+  }
+
+  async getDeliveryOrders(): Promise<Order[]> {
+    return await db.select().from(orders).where(sql`${orders.status} IN ('ready_for_delivery', 'in_delivery')`);
+  }
+
+  async assignDeliveryPerson(orderId: string, deliveryPersonId: string): Promise<Order | undefined> {
+    const result = await db.update(orders).set({ 
+      deliveryPersonId,
+      status: 'in_delivery'
+    }).where(eq(orders.id, orderId)).returning();
+    return result[0];
   }
 
   // Notification operations
