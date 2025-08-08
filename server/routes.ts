@@ -653,20 +653,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new order
   app.post('/api/orders', requireAuth, async (req: any, res) => {
     try {
-      const { pharmacyId, deliveryAddress, notes, totalAmount, status } = req.body;
+      const { 
+        pharmacyId, 
+        deliveryAddress, 
+        deliveryLatitude, 
+        deliveryLongitude, 
+        medications, 
+        pharmacyMessage, 
+        notes, 
+        totalAmount, 
+        status 
+      } = req.body;
 
-      if (!pharmacyId || !deliveryAddress || !totalAmount) {
+      if (!pharmacyId || !deliveryAddress) {
         return res.status(400).json({ message: 'Missing required fields' });
       }
 
-      const newOrder = await storage.createOrder({
+      const orderData: any = {
         userId: req.session.userId,
         pharmacyId,
         deliveryAddress,
-        deliveryNotes: notes || '',
-        totalAmount: totalAmount.toString(),
+        deliveryNotes: notes || pharmacyMessage || '',
+        totalAmount: totalAmount ? totalAmount.toString() : '0',
         status: status || 'pending'
-      });
+      };
+
+      // Ajouter les coordonnées si disponibles
+      if (deliveryLatitude) {
+        orderData.deliveryLatitude = deliveryLatitude;
+      }
+      if (deliveryLongitude) {
+        orderData.deliveryLongitude = deliveryLongitude;
+      }
+
+      // Ajouter les médicaments si disponibles
+      if (medications) {
+        orderData.medications = typeof medications === 'string' 
+          ? JSON.parse(medications) 
+          : medications;
+      }
+
+      const newOrder = await storage.createOrder(orderData);
 
       res.status(201).json(newOrder);
     } catch (error) {

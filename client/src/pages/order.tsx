@@ -24,11 +24,17 @@ export default function OrderPage() {
   
   const [orderData, setOrderData] = useState({
     deliveryAddress: '',
+    deliveryLatitude: null as number | null,
+    deliveryLongitude: null as number | null,
     medications: [{ name: '', surBon: false }],
     pharmacyMessage: '',
     bonDocuments: [] as File[],
     prescriptionPhoto: null as File | null
   });
+
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [currentAddress, setCurrentAddress] = useState<string>("");
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
   useEffect(() => {
     // Try to get pharmacy data from localStorage (set when navigating from pharmacy list)
@@ -42,6 +48,55 @@ export default function OrderPage() {
       navigate('/pharmacies');
     }
   }, [navigate]);
+
+  // Géolocalisation automatique
+  useEffect(() => {
+    if (navigator.geolocation) {
+      setIsDetectingLocation(true);
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ lat: latitude, lng: longitude });
+          setOrderData(prev => ({
+            ...prev,
+            deliveryLatitude: latitude,
+            deliveryLongitude: longitude
+          }));
+          
+          // Reverse geocoding pour obtenir l'adresse
+          try {
+            const response = await fetch(`/api/location/reverse?lat=${latitude}&lng=${longitude}`);
+            const addressData = await response.json();
+            setCurrentAddress(addressData.formatted_address);
+            setOrderData(prev => ({ ...prev, deliveryAddress: addressData.formatted_address }));
+            
+            toast({
+              title: "Position détectée",
+              description: "Votre adresse a été automatiquement remplie.",
+            });
+          } catch (error) {
+            console.error("Erreur géolocalisation:", error);
+          } finally {
+            setIsDetectingLocation(false);
+          }
+        },
+        (error) => {
+          console.error("Erreur de géolocalisation:", error);
+          setIsDetectingLocation(false);
+          toast({
+            title: "Géolocalisation",
+            description: "Impossible d'obtenir votre position. Veuillez saisir votre adresse manuellement.",
+            variant: "destructive",
+          });
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000
+        }
+      );
+    }
+  }, [toast]);
 
   // Helper functions for medication management
   const addMedication = () => {
@@ -104,6 +159,14 @@ export default function OrderPage() {
       formData.append('deliveryAddress', orderData.deliveryAddress);
       formData.append('medications', JSON.stringify(orderData.medications));
       formData.append('pharmacyMessage', orderData.pharmacyMessage);
+      
+      // Ajouter les coordonnées de géolocalisation
+      if (orderData.deliveryLatitude) {
+        formData.append('deliveryLatitude', orderData.deliveryLatitude.toString());
+      }
+      if (orderData.deliveryLongitude) {
+        formData.append('deliveryLongitude', orderData.deliveryLongitude.toString());
+      }
       
       if (orderData.prescriptionPhoto) {
         formData.append('prescriptionPhoto', orderData.prescriptionPhoto);
@@ -313,6 +376,36 @@ export default function OrderPage() {
             {/* Adresse de livraison */}
             <div>
               <label className="block text-sm font-medium mb-2">Adresse de livraison *</label>
+              
+              {/* Zone d'affichage de la géolocalisation */}
+              {isDetectingLocation && (
+                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-blue-700 text-sm">Détection de votre position...</span>
+                  </div>
+                </div>
+              )}
+              
+              {userLocation && (
+                <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-green-700 text-sm font-medium">Position détectée</p>
+                        <p className="text-green-600 text-xs">
+                          📍 {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
+                        </p>
+                        {currentAddress && (
+                          <p className="text-green-600 text-xs mt-1">{currentAddress}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <Input
                 type="text"
                 placeholder="Saisissez votre adresse complète"
@@ -320,6 +413,9 @@ export default function OrderPage() {
                 onChange={(e) => setOrderData(prev => ({ ...prev, deliveryAddress: e.target.value }))}
                 className="w-full"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                L'adresse sera automatiquement remplie si la géolocalisation est autorisée
+              </p>
             </div>
 
             {/* Liste des médicaments */}

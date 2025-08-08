@@ -55,6 +55,8 @@ export const orders = pgTable("orders", {
   status: varchar("status").default("pending"), // pending, confirmed, preparing, in_transit, delivered, cancelled
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }),
   deliveryAddress: text("delivery_address").notNull(),
+  deliveryLatitude: decimal("delivery_latitude", { precision: 10, scale: 8 }),
+  deliveryLongitude: decimal("delivery_longitude", { precision: 11, scale: 8 }),
   deliveryNotes: text("delivery_notes"),
   medications: jsonb("medications"), // Array of {name: string, surBon: boolean}
   bonDocuments: text("bon_documents"), // Reference to uploaded documents

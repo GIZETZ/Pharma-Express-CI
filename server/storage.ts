@@ -290,7 +290,7 @@ export class MemStorage implements IStorage {
         totalAmount: orderData.totalAmount.toString(),
         deliveryAddress: orderData.deliveryAddress,
         deliveryNotes: orderData.deliveryNotes,
-        estimatedDelivery: new Date(Date.now() + 30 * 60 * 1000),
+        estimatedDelivery: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes from now
         deliveredAt: orderData.status === 'delivered' ? new Date() : null,
         deliveryPersonId: orderData.status === 'delivered' ? Array.from(this.deliveryPersons.values())[0]?.id : null,
         createdAt: new Date(),
@@ -573,7 +573,7 @@ export class MemStorage implements IStorage {
   async getPharmacistOrders(pharmacistId: string): Promise<any[]> {
     const ordersArray = Array.from(this.orders.values());
     const usersArray = Array.from(this.users.values());
-    
+
     // Pour l'instant, retourner toutes les commandes car nous n'avons pas encore
     // d'association directe entre pharmacien et pharmacie
     const ordersWithUserDetails = ordersArray.map(order => {
@@ -667,12 +667,12 @@ export class MemStorage implements IStorage {
       .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))[0];
   }
 
-  
+
 
   async getAllPrescriptions(): Promise<any[]> {
     const prescriptionsArray = Array.from(this.prescriptions.values());
     const usersArray = Array.from(this.users.values());
-    
+
     const prescriptionsWithUserDetails = prescriptionsArray.map(prescription => {
       const user = usersArray.find(user => user.id === prescription.userId);
       return {
@@ -762,10 +762,10 @@ class PostgresStorage implements IStorage {
   async loginUser(phone: string, password: string): Promise<User | null> {
     const user = await this.getUserByPhone(phone);
     if (!user) return null;
-    
+
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) return null;
-    
+
     return user;
   }
 
@@ -849,9 +849,29 @@ class PostgresStorage implements IStorage {
     return result[0];
   }
 
-  async createOrder(order: InsertOrder): Promise<Order> {
-    const result = await db.insert(orders).values(order).returning();
-    return result[0];
+  async createOrder(orderData: InsertOrder): Promise<Order> {
+    const orderValues: any = {
+      userId: orderData.userId,
+      pharmacyId: orderData.pharmacyId,
+      deliveryAddress: orderData.deliveryAddress,
+      deliveryNotes: orderData.deliveryNotes || null,
+      totalAmount: orderData.totalAmount || "0",
+      status: orderData.status || "pending",
+      medications: orderData.medications || null,
+      bonDocuments: orderData.bonDocuments || null,
+    };
+
+    // Ajouter les coordonnées de géolocalisation si disponibles
+    if (orderData.deliveryLatitude) {
+      orderValues.deliveryLatitude = orderData.deliveryLatitude.toString();
+    }
+    if (orderData.deliveryLongitude) {
+      orderValues.deliveryLongitude = orderData.deliveryLongitude.toString();
+    }
+
+    const [order] = await db.insert(orders).values(orderValues).returning();
+
+    return order;
   }
 
   async getUserOrders(userId: string): Promise<Order[]> {
