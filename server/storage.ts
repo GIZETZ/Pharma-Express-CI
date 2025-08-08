@@ -9,8 +9,15 @@ import {
   type InsertOrder,
   type DeliveryPerson,
   type Notification,
-  type InsertNotification
+  type InsertNotification,
+  users,
+  pharmacies,
+  prescriptions,
+  orders,
+  notifications
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, sql, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 
@@ -726,4 +733,168 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+class PostgresStorage implements IStorage {
+  // User operations
+  async getUser(id: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getUserByPhone(phone: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
+    return result[0];
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    const result = await db.insert(users).values({
+      ...user,
+      password: hashedPassword
+    }).returning();
+    return result[0];
+  }
+
+  async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {
+    const result = await db.update(users).set(updates).where(eq(users.id, id)).returning();
+    return result[0];
+  }
+
+  async loginUser(phone: string, password: string): Promise<User | null> {
+    const user = await this.getUserByPhone(phone);
+    if (!user) return null;
+    
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) return null;
+    
+    return user;
+  }
+
+  // Admin operations
+  async getPendingUsers(): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.verificationStatus, 'pending'));
+  }
+
+  async updateUserVerificationStatus(userId: string, status: "approved" | "rejected" | "pending"): Promise<User | null> {
+    const result = await db.update(users).set({ verificationStatus: status }).where(eq(users.id, userId)).returning();
+    return result[0] || null;
+  }
+
+  async getApplicationStats(): Promise<{
+    patients: number;
+    pharmaciens: number;
+    livreurs: number;
+    orders: number;
+    pendingOrders: number;
+    activeDeliveries: number;
+    completedDeliveries: number;
+  }> {
+    const [patientsCount] = await db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.role, 'patient'));
+    const [pharmaciensCount] = await db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.role, 'pharmacien'));
+    const [livreursCount] = await db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.role, 'livreur'));
+    const [ordersCount] = await db.select({ count: sql<number>`count(*)` }).from(orders);
+    const [pendingOrdersCount] = await db.select({ count: sql<number>`count(*)` }).from(orders).where(eq(orders.status, 'pending'));
+    const [activeDeliveriesCount] = await db.select({ count: sql<number>`count(*)` }).from(orders).where(eq(orders.status, 'in_delivery'));
+    const [completedDeliveriesCount] = await db.select({ count: sql<number>`count(*)` }).from(orders).where(eq(orders.status, 'delivered'));
+
+    return {
+      patients: patientsCount.count,
+      pharmaciens: pharmaciensCount.count,
+      livreurs: livreursCount.count,
+      orders: ordersCount.count,
+      pendingOrders: pendingOrdersCount.count,
+      activeDeliveries: activeDeliveriesCount.count,
+      completedDeliveries: completedDeliveriesCount.count,
+    };
+  }
+
+  // Pharmacy operations
+  async getPharmacies(lat?: number, lng?: number, radius?: number): Promise<Pharmacy[]> {
+    const result = await db.select().from(pharmacies);
+    return result;
+  }
+
+  async getPharmacy(id: string): Promise<Pharmacy | undefined> {
+    const result = await db.select().from(pharmacies).where(eq(pharmacies.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createPharmacy(pharmacy: InsertPharmacy): Promise<Pharmacy> {
+    const result = await db.insert(pharmacies).values(pharmacy).returning();
+    return result[0];
+  }
+
+  // Prescription operations
+  async getPrescription(id: string): Promise<Prescription | undefined> {
+    const result = await db.select().from(prescriptions).where(eq(prescriptions.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createPrescription(prescription: InsertPrescription): Promise<Prescription> {
+    const result = await db.insert(prescriptions).values(prescription).returning();
+    return result[0];
+  }
+
+  async getUserPrescriptions(userId: string): Promise<Prescription[]> {
+    return await db.select().from(prescriptions).where(eq(prescriptions.userId, userId)).orderBy(desc(prescriptions.createdAt));
+  }
+
+  async updatePrescriptionStatus(id: string, status: string): Promise<Prescription | undefined> {
+    const result = await db.update(prescriptions).set({ status }).where(eq(prescriptions.id, id)).returning();
+    return result[0];
+  }
+
+  // Order operations
+  async getOrder(id: string): Promise<Order | undefined> {
+    const result = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const result = await db.insert(orders).values(order).returning();
+    return result[0];
+  }
+
+  async getUserOrders(userId: string): Promise<Order[]> {
+    return await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+  }
+
+  async getCurrentOrder(userId: string): Promise<Order | undefined> {
+    const result = await db.select().from(orders)
+      .where(and(
+        eq(orders.userId, userId),
+        sql`${orders.status} IN ('pending', 'confirmed', 'preparing', 'in_transit')`
+      ))
+      .orderBy(desc(orders.createdAt))
+      .limit(1);
+    return result[0];
+  }
+
+  async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
+    const result = await db.update(orders).set({ status }).where(eq(orders.id, id)).returning();
+    return result[0];
+  }
+
+  // Delivery person operations
+  async getDeliveryPerson(id: string): Promise<DeliveryPerson | undefined> {
+    // For now, return undefined as delivery_persons table is separate
+    return undefined;
+  }
+
+  // Notification operations
+  async getUserNotifications(userId: string): Promise<Notification[]> {
+    return await db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt));
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const result = await db.insert(notifications).values(notification).returning();
+    return result[0];
+  }
+
+  async markNotificationAsRead(id: string): Promise<Notification | undefined> {
+    const result = await db.update(notifications).set({ isRead: true }).where(eq(notifications.id, id)).returning();
+    return result[0];
+  }
+}
+
+// Use PostgresStorage instead of MemStorage
+export const storage = new PostgresStorage();
