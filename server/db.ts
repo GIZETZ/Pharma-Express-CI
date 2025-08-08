@@ -11,5 +11,12 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Clean the DATABASE_URL if it has the psql command prefix
+let cleanDatabaseUrl = process.env.DATABASE_URL;
+if (cleanDatabaseUrl.startsWith("psql '") && cleanDatabaseUrl.endsWith("'")) {
+  // Extract URL from "psql 'postgresql://...'"
+  cleanDatabaseUrl = cleanDatabaseUrl.slice(6, -1); // Remove "psql '" and trailing "'"
+}
+
+export const pool = new Pool({ connectionString: cleanDatabaseUrl });
 export const db = drizzle({ client: pool, schema });

@@ -289,7 +289,11 @@ export class MemStorage implements IStorage {
         status: orderData.status,
         totalAmount: orderData.totalAmount.toString(),
         deliveryAddress: orderData.deliveryAddress,
+        deliveryLatitude: null,
+        deliveryLongitude: null,
         deliveryNotes: orderData.deliveryNotes,
+        medications: null,
+        bonDocuments: null,
         estimatedDelivery: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes from now
         deliveredAt: orderData.status === 'delivered' ? new Date() : null,
         deliveryPersonId: orderData.status === 'delivered' ? Array.from(this.deliveryPersons.values())[0]?.id : null,
@@ -552,7 +556,11 @@ export class MemStorage implements IStorage {
       status: insertOrder.status ?? null,
       totalAmount: insertOrder.totalAmount ?? null,
       deliveryAddress: insertOrder.deliveryAddress,
+      deliveryLatitude: insertOrder.deliveryLatitude ?? null,
+      deliveryLongitude: insertOrder.deliveryLongitude ?? null,
       deliveryNotes: insertOrder.deliveryNotes ?? null,
+      medications: insertOrder.medications ?? null,
+      bonDocuments: insertOrder.bonDocuments ?? null,
       estimatedDelivery: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes from now
       deliveredAt: null,
       deliveryPersonId,

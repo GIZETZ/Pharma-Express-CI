@@ -610,7 +610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      const deliveries = await storage.getDeliveryOrders(user.id);
+      const deliveries = await storage.getDeliveryOrders();
       res.json(deliveries);
     } catch (error) {
       console.error('Error fetching deliveries:', error);
