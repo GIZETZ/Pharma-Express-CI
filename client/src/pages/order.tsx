@@ -157,8 +157,9 @@ export default function OrderPage() {
       const formData = new FormData();
       formData.append('pharmacyId', selectedPharmacy.id);
       formData.append('deliveryAddress', orderData.deliveryAddress);
+      formData.append('deliveryNotes', orderData.pharmacyMessage || '');
       formData.append('medications', JSON.stringify(orderData.medications));
-      formData.append('pharmacyMessage', orderData.pharmacyMessage);
+      formData.append('status', 'pending');
       
       // Ajouter les coordonnées de géolocalisation
       if (orderData.deliveryLatitude) {
@@ -206,6 +207,15 @@ export default function OrderPage() {
   });
 
   const handleCreateOrder = () => {
+    if (!selectedPharmacy) {
+      toast({
+        variant: "destructive",
+        title: "Pharmacie requise",
+        description: "Aucune pharmacie sélectionnée",
+      });
+      return;
+    }
+
     if (!orderData.deliveryAddress.trim()) {
       toast({
         variant: "destructive",
@@ -224,7 +234,15 @@ export default function OrderPage() {
       return;
     }
 
-    createOrderMutation.mutate(orderData);
+    // Include pharmacy ID in the order data
+    const orderPayload = {
+      ...orderData,
+      pharmacyId: selectedPharmacy.id,
+      medications: orderData.medications.filter(med => med.name.trim()),
+      status: 'pending'
+    };
+
+    createOrderMutation.mutate(orderPayload);
   };
 
   if (!selectedPharmacy) {

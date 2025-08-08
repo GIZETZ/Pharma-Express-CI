@@ -918,6 +918,11 @@ class PostgresStorage implements IStorage {
     return await db.select().from(orders).where(eq(orders.pharmacyId, pharmacyId)).orderBy(desc(orders.createdAt));
   }
 
+  // Get orders for any pharmacy (for pharmacists to see all orders)
+  async getAllPharmacistOrders(): Promise<Order[]> {
+    return await db.select().from(orders).orderBy(desc(orders.createdAt));
+  }
+
   async getAllPrescriptions(): Promise<Prescription[]> {
     return await db.select().from(prescriptions).orderBy(desc(prescriptions.createdAt));
   }

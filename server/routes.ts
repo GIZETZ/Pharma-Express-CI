@@ -322,7 +322,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Orders endpoints
   app.post('/api/orders', requireAuth, async (req: any, res) => {
     try {
+      console.log('Order request body:', req.body);
       const orderData = { ...req.body, userId: req.session.userId };
+      
+      // Ensure pharmacyId is present
+      if (!orderData.pharmacyId) {
+        return res.status(400).json({ message: 'Pharmacy ID is required' });
+      }
+      
       const order = await storage.createOrder(orderData);
 
       // Send confirmation notification
@@ -559,7 +566,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      const orders = await storage.getPharmacistOrders(user.id);
+      // If user has a pharmacyId, get orders for that pharmacy
+      // Otherwise get all orders (for now, until we properly associate pharmacists with pharmacies)
+      const orders = user.pharmacyId 
+        ? await storage.getPharmacistOrders(user.pharmacyId)
+        : await storage.getAllPharmacistOrders();
+        
       res.json(orders);
     } catch (error) {
       console.error('Error fetching pharmacist orders:', error);
