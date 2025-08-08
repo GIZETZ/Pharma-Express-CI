@@ -320,7 +320,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Orders endpoints
-  app.post('/api/orders', requireAuth, async (req: any, res) => {
+  app.post('/api/orders', requireAuth, upload.fields([
+    { name: 'prescriptionPhoto', maxCount: 1 },
+    { name: 'bonDocument0', maxCount: 1 },
+    { name: 'bonDocument1', maxCount: 1 },
+    { name: 'bonDocument2', maxCount: 1 },
+    { name: 'bonDocument3', maxCount: 1 },
+    { name: 'bonDocument4', maxCount: 1 }
+  ]), async (req: any, res) => {
     try {
       console.log('Order request body:', req.body);
       const orderData = { ...req.body, userId: req.session.userId };
