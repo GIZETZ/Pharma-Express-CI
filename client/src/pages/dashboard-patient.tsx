@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 import BottomNavigation from "@/components/bottom-navigation";
 import { MapPin, Clock, Star, Phone, Camera, Upload, Plus, X, FileText } from "lucide-react";
@@ -19,6 +20,7 @@ export default function DashboardPatient() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [location, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("orders");
   const [selectedPharmacy, setSelectedPharmacy] = useState<any>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
@@ -285,10 +287,8 @@ export default function DashboardPatient() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="orders">Mes Commandes</TabsTrigger>
-            <TabsTrigger value="prescriptions">Ordonnances</TabsTrigger>
-            <TabsTrigger value="pharmacies">Pharmacies</TabsTrigger>
             <TabsTrigger value="tracking">Suivi Livraison</TabsTrigger>
           </TabsList>
 
@@ -304,7 +304,7 @@ export default function DashboardPatient() {
                   <p className="text-sm text-gray-600 mb-4">
                     Localisez une pharmacie et passez commande
                   </p>
-                  <Button data-testid="button-new-order" onClick={() => setActiveTab("pharmacies")}>
+                  <Button data-testid="button-new-order" onClick={() => navigate("/pharmacies")}>
                     Nouvelle Commande
                   </Button>
                 </CardContent>
@@ -361,351 +361,12 @@ export default function DashboardPatient() {
                   <p className="text-sm text-gray-600 mb-4">
                     Vous n'avez pas encore passé de commande
                   </p>
-                  <Button onClick={() => setActiveTab("pharmacies")}>
+                  <Button onClick={() => navigate("/pharmacies")}>
                     Créer ma première commande
                   </Button>
                 </div>
               )}
             </div>
-          </TabsContent>
-
-          {/* Ordonnances */}
-          <TabsContent value="prescriptions">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  📋 Envoyer une Ordonnance
-                </CardTitle>
-                <CardDescription>
-                  Photographiez ou téléchargez une photo de votre ordonnance médicale
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Camera className="h-8 w-8 text-blue-600" />
-                  </div>
-                  <h3 className="font-semibold mb-2">Prendre une Photo</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Photographiez votre ordonnance avec un éclairage optimal pour une meilleure lecture
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                    <Button 
-                      data-testid="button-camera" 
-                      onClick={openCamera}
-                      className="flex items-center gap-2"
-                    >
-                      <Camera className="h-4 w-4" />
-                      Utiliser la Caméra
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      data-testid="button-upload"
-                      onClick={selectFile}
-                      className="flex items-center gap-2"
-                    >
-                      <Upload className="h-4 w-4" />
-                      Choisir un Fichier
-                    </Button>
-                  </div>
-                  {prescriptionFile && (
-                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-sm text-green-800">
-                        ✅ Ordonnance "{prescriptionFile.name}" envoyée avec succès
-                      </p>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="font-semibold text-blue-900 mb-2">Conseils pour une bonne photo :</h4>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Utilisez un bon éclairage naturel</li>
-                    <li>• Vérifiez que le texte est bien lisible</li>
-                    <li>• Évitez les reflets et les ombres</li>
-                    <li>• Photographiez l'ordonnance entière</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Localiser Pharmacie */}
-          <TabsContent value="pharmacies">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Localiser une Pharmacie
-                </CardTitle>
-                <CardDescription>
-                  {userLocation 
-                    ? "Pharmacies triées par proximité selon votre position" 
-                    : "Trouvez les pharmacies disponibles"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {pharmaciesLoading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p>Localisation des pharmacies...</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {pharmacies?.map((pharmacy: any, index: number) => (
-                      <Card key={pharmacy.id} className="hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-lg">{pharmacy.name}</h4>
-                              <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                                <MapPin className="h-3 w-3" />
-                                {pharmacy.address}
-                              </p>
-                              <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                                <Phone className="h-3 w-3" />
-                                {pharmacy.phone}
-                              </p>
-                            </div>
-                            <div className="flex flex-col items-end gap-1">
-                              <Badge variant={pharmacy.isOpen ? 'default' : 'secondary'}>
-                                {pharmacy.isOpen ? 'Ouvert' : 'Fermé'}
-                              </Badge>
-                              {index === 0 && userLocation && (
-                                <Badge variant="outline" className="text-xs">
-                                  Plus proche
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between text-sm mb-3">
-                            <span className="flex items-center gap-1">
-                              <Star className="h-3 w-3 text-yellow-500" />
-                              {pharmacy.rating}/5
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {pharmacy.deliveryTime} min
-                            </span>
-                          </div>
-                          <Button 
-                            className="w-full" 
-                            size="sm" 
-                            onClick={() => setSelectedPharmacy(pharmacy)}
-                            disabled={!pharmacy.isOpen}
-                          >
-                            {pharmacy.isOpen ? 'Sélectionner' : 'Fermée'}
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-                
-                {selectedPharmacy && (
-                  <Card className="mt-6 border-2 border-blue-200">
-                    <CardHeader>
-                      <CardTitle className="text-lg">
-                        📋 Commande à {selectedPharmacy.name}
-                      </CardTitle>
-                      <CardDescription>
-                        Frais de livraison: 1000 FCFA (500 FCFA plateforme + 500 FCFA livreur)
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {/* Photo de l'ordonnance */}
-                      <div>
-                        <label className="block text-sm font-medium mb-3">Photo de l'ordonnance</label>
-                        <div className="space-y-3">
-                          {!orderData.prescriptionPhoto ? (
-                            <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50">
-                              <div className="text-center">
-                                <Camera className="mx-auto h-16 w-16 text-blue-500 mb-3" />
-                                <div className="text-lg font-medium text-blue-900 mb-2">
-                                  Envoyer la photo de l'ordonnance
-                                </div>
-                                <div className="text-sm text-blue-700 mb-4">
-                                  Prenez une photo claire de votre ordonnance en format portrait
-                                </div>
-                                <label className="cursor-pointer">
-                                  <Button type="button" className="bg-blue-600 hover:bg-blue-700">
-                                    <Camera className="h-4 w-4 mr-2" />
-                                    Prendre une photo
-                                  </Button>
-                                  <input
-                                    type="file"
-                                    accept="image/png,image/jpeg,image/jpg"
-                                    capture="environment"
-                                    onChange={handlePrescriptionPhoto}
-                                    className="hidden"
-                                  />
-                                </label>
-                                <div className="text-xs text-blue-600 mt-2">
-                                  Formats acceptés: PNG, JPEG, JPG
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="border border-green-200 rounded-lg p-4 bg-green-50">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                                    <Camera className="h-6 w-6 text-green-600" />
-                                  </div>
-                                  <div>
-                                    <p className="font-medium text-green-900">Photo ajoutée</p>
-                                    <p className="text-sm text-green-700 truncate max-w-48">{orderData.prescriptionPhoto.name}</p>
-                                  </div>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={removePrescriptionPhoto}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Adresse de livraison *</label>
-                        <Input
-                          type="text"
-                          placeholder="Saisissez votre adresse de livraison"
-                          value={orderData.deliveryAddress}
-                          onChange={(e) => setOrderData({ ...orderData, deliveryAddress: e.target.value })}
-                        />
-                      </div>
-                      
-                      {/* Liste des médicaments */}
-                      <div>
-                        <label className="block text-sm font-medium mb-3">Liste des médicaments *</label>
-                        <div className="space-y-3">
-                          {orderData.medications.map((medication, index) => (
-                            <div key={index} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
-                              <div className="flex-1">
-                                <Input
-                                  type="text"
-                                  placeholder="Nom du médicament"
-                                  value={medication.name}
-                                  onChange={(e) => updateMedication(index, 'name', e.target.value)}
-                                />
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Switch
-                                  checked={medication.surBon}
-                                  onCheckedChange={(checked) => updateMedication(index, 'surBon', checked)}
-                                />
-                                <Label className="text-sm font-medium whitespace-nowrap">
-                                  Sur BON
-                                </Label>
-                              </div>
-                              {orderData.medications.length > 1 && (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => removeMedication(index)}
-                                  className="p-2 h-8 w-8"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          ))}
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={addMedication}
-                            className="w-full flex items-center gap-2"
-                          >
-                            <Plus className="h-4 w-4" />
-                            Ajouter un médicament
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Documents pour validation BON */}
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Documents pour validation BON</label>
-                        <div className="space-y-3">
-                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                            <div className="text-center">
-                              <FileText className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                              <div className="text-sm text-gray-600 mb-2">
-                                Ajoutez vos documents (carte d'assurance, prescription, etc.)
-                              </div>
-                              <label className="cursor-pointer">
-                                <Button type="button" variant="outline" size="sm">
-                                  <Upload className="h-4 w-4 mr-2" />
-                                  Choisir des fichiers
-                                </Button>
-                                <input
-                                  type="file"
-                                  multiple
-                                  accept="image/*,.pdf"
-                                  onChange={handleDocumentUpload}
-                                  className="hidden"
-                                />
-                              </label>
-                            </div>
-                          </div>
-                          {orderData.bonDocuments.length > 0 && (
-                            <div className="space-y-2">
-                              {orderData.bonDocuments.map((file, index) => (
-                                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                  <span className="text-sm text-gray-700 truncate">{file.name}</span>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeDocument(index)}
-                                    className="p-1 h-6 w-6"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Message pour la pharmacie */}
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Message pour la pharmacie</label>
-                        <Textarea
-                          placeholder="Instructions spéciales, questions, ou informations supplémentaires..."
-                          value={orderData.pharmacyMessage}
-                          onChange={(e) => setOrderData({ ...orderData, pharmacyMessage: e.target.value })}
-                          rows={3}
-                        />
-                      </div>
-
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <p className="text-sm text-blue-800">
-                          💡 <strong>Info:</strong> La pharmacie déterminera le prix final en fonction des médicaments disponibles. 
-                          Les médicaments marqués "Sur BON" nécessitent une validation de vos documents d'assurance.
-                        </p>
-                      </div>
-                      
-                      <Button 
-                        onClick={handleCreateOrder} 
-                        disabled={createOrderMutation.isPending || !orderData.deliveryAddress || !orderData.medications.some(med => med.name.trim())}
-                        className="w-full"
-                      >
-                        {createOrderMutation.isPending ? "Envoi en cours..." : "📤 Confirmer la commande"}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* Suivi Livraison */}
