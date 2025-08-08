@@ -78,11 +78,11 @@ export default function OrderPage() {
     setOrderData(prev => ({ ...prev, prescriptionPhoto: null }));
   };
 
-  const navigateToCamera = () => {
-    // Sauvegarder les données actuelles
-    localStorage.setItem('orderData', JSON.stringify(orderData));
-    localStorage.setItem('selectedPharmacy', JSON.stringify(selectedPharmacy));
-    navigate('/camera');
+  const triggerCameraInput = () => {
+    const input = document.getElementById('camera-input') as HTMLInputElement;
+    if (input) {
+      input.click();
+    }
   };
 
   const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -262,21 +262,6 @@ export default function OrderPage() {
                       </div>
                       <div>
                         <input
-                          ref={(input) => {
-                            if (input) {
-                              input.onclick = () => {
-                                // Force la permission de la caméra
-                                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                                  navigator.mediaDevices.getUserMedia({ video: true })
-                                    .then(stream => {
-                                      // Arrêter le stream immédiatement après permission
-                                      stream.getTracks().forEach(track => track.stop());
-                                    })
-                                    .catch(err => console.log('Camera permission:', err));
-                                }
-                              };
-                            }
-                          }}
                           type="file"
                           accept="image/*"
                           capture="environment"
@@ -284,23 +269,14 @@ export default function OrderPage() {
                           className="hidden"
                           id="camera-input"
                         />
-                        <div className="flex gap-2">
-                          <label htmlFor="camera-input" className="cursor-pointer flex-1">
-                            <Button type="button" className="bg-blue-600 hover:bg-blue-700 w-full">
-                              <Camera className="h-4 w-4 mr-2" />
-                              Prendre une photo
-                            </Button>
-                          </label>
-                          <Button 
-                            type="button" 
-                            variant="outline"
-                            onClick={navigateToCamera}
-                            className="px-3"
-                            title="Ouvrir l'appareil photo"
-                          >
-                            <Camera className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button 
+                          type="button" 
+                          className="bg-blue-600 hover:bg-blue-700 w-full"
+                          onClick={triggerCameraInput}
+                        >
+                          <Camera className="h-4 w-4 mr-2" />
+                          Prendre une photo
+                        </Button>
                       </div>
                       <div className="text-xs text-blue-600 mt-2">
                         Formats acceptés: PNG, JPEG, JPG
