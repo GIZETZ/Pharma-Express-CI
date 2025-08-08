@@ -260,7 +260,7 @@ export default function OrderPage() {
                         </Button>
                         <input
                           type="file"
-                          accept="image/png,image/jpeg,image/jpg"
+                          accept="image/*"
                           capture="environment"
                           onChange={handlePrescriptionPhoto}
                           className="hidden"
