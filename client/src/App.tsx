@@ -12,6 +12,7 @@ import Onboarding from "@/pages/onboarding";
 import Home from "@/pages/home";
 import Camera from "@/pages/camera";
 import Pharmacies from "@/pages/pharmacies";
+import Order from "@/pages/order";
 import DeliveryTracking from "@/pages/delivery-tracking";
 import Profile from "@/pages/profile";
 import EditProfile from "@/pages/edit-profile";
@@ -89,6 +90,7 @@ function Router() {
           <Route path="/pending-validation" component={PendingValidation} />
           <Route path="/camera" component={Camera} />
           <Route path="/pharmacies" component={Pharmacies} />
+          <Route path="/order" component={Order} />
           <Route path="/delivery" component={DeliveryTracking} />
           <Route path="/profile" component={Profile} />
           <Route path="/edit-profile" component={EditProfile} />
