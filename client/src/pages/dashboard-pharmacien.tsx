@@ -4,6 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +17,8 @@ export default function DashboardPharmacien() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("new-orders");
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [medicationStatuses, setMedicationStatuses] = useState<Record<string, {available: boolean, surBon: boolean}>>({});
 
   // Mutation pour mettre à jour le statut des commandes
   const updateOrderMutation = useMutation({
@@ -37,6 +42,29 @@ export default function DashboardPharmacien() {
       });
     },
   });
+
+  // Mutation pour mettre à jour les médicaments
+  const updateMedicationsMutation = useMutation({
+    mutationFn: ({ orderId, medications }: { orderId: string; medications: any[] }) =>
+      apiRequest(`/api/pharmacien/orders/${orderId}/medications`, {
+        method: "POST",
+        body: JSON.stringify({ medications }),
+      }),
+    onSuccess: () => {
+      toast({
+        title: "Médicaments mis à jour",
+        description: "Les informations des médicaments ont été sauvegardées",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/pharmacien/orders"] });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour les médicaments",
+        variant: "destructive",
+      });
+    },
+  });
   const { data: orders, isLoading: ordersLoading } = useQuery({ 
     queryKey: ["/api/pharmacien/orders"],
     refetchInterval: 5000 // Refresh every 5 seconds
@@ -48,6 +76,21 @@ export default function DashboardPharmacien() {
 
   const handleOrderUpdate = (orderId: string, status: string) => {
     updateOrderMutation.mutate({ orderId, status });
+  };
+
+  const handleMedicationUpdate = (orderId: string, medications: any[]) => {
+    updateMedicationsMutation.mutate({ orderId, medications });
+  };
+
+  const toggleMedicationStatus = (orderId: string, medIndex: number, field: 'available' | 'surBon', value: boolean) => {
+    const key = `${orderId}-${medIndex}`;
+    setMedicationStatuses(prev => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        [field]: value
+      }
+    }));
   };
 
   return (
@@ -231,10 +274,165 @@ export default function DashboardPharmacien() {
                         )}
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <Button size="sm" data-testid={`button-view-prescription-${order.id}`}>
-                        👁️ Voir Ordonnance
-                      </Button>
+                    <div className="flex space-x-2 flex-wrap gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="sm" data-testid={`button-view-prescription-${order.id}`}>
+                            👁️ Voir Ordonnance
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Ordonnance - Commande #{order.id.slice(0, 8)}</DialogTitle>
+                            <DialogDescription>
+                              Patient: {order.user?.firstName} {order.user?.lastName}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            {/* Affichage de l'image d'ordonnance si disponible */}
+                            {order.prescriptionId ? (
+                              <div>
+                                <h4 className="font-medium mb-2">Photo de l'ordonnance</h4>
+                                <div className="border rounded-lg p-4 bg-gray-50">
+                                  <p className="text-sm text-gray-600 mb-2">Ordonnance ID: {order.prescriptionId}</p>
+                                  <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                                    <span className="text-4xl mb-2 block">📄</span>
+                                    <p className="text-sm text-gray-500">Photo de l'ordonnance uploadée</p>
+                                    <p className="text-xs text-gray-400 mt-1">Cliquez pour agrandir l'image</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div>
+                                <h4 className="font-medium mb-2">Commande sans ordonnance</h4>
+                                <div className="border rounded-lg p-4 bg-yellow-50">
+                                  <p className="text-sm text-yellow-700">Cette commande a été passée sans ordonnance photographiée.</p>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Gestion des médicaments */}
+                            <div>
+                              <h4 className="font-medium mb-3">Gestion des médicaments</h4>
+                              <div className="space-y-3">
+                                {order.medications && typeof order.medications === 'string' ? (
+                                  JSON.parse(order.medications).map((med: any, index: number) => {
+                                    const statusKey = `${order.id}-${index}`;
+                                    const currentStatus = medicationStatuses[statusKey] || { available: true, surBon: med.surBon || false };
+                                    
+                                    return (
+                                      <div key={index} className="border rounded-lg p-4 bg-white">
+                                        <div className="flex items-center justify-between mb-3">
+                                          <h5 className="font-medium">{med.name}</h5>
+                                          <Badge variant={currentStatus.available ? "default" : "destructive"}>
+                                            {currentStatus.available ? "Disponible" : "Indisponible"}
+                                          </Badge>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 gap-4">
+                                          <div className="flex items-center space-x-2">
+                                            <Switch
+                                              id={`available-${statusKey}`}
+                                              checked={currentStatus.available}
+                                              onCheckedChange={(checked) => 
+                                                toggleMedicationStatus(order.id, index, 'available', checked)
+                                              }
+                                            />
+                                            <Label htmlFor={`available-${statusKey}`} className="text-sm">
+                                              Disponible en stock
+                                            </Label>
+                                          </div>
+                                          
+                                          <div className="flex items-center space-x-2">
+                                            <Switch
+                                              id={`surbon-${statusKey}`}
+                                              checked={currentStatus.surBon}
+                                              onCheckedChange={(checked) => 
+                                                toggleMedicationStatus(order.id, index, 'surBon', checked)
+                                              }
+                                            />
+                                            <Label htmlFor={`surbon-${statusKey}`} className="text-sm">
+                                              Sur BON (remboursable)
+                                            </Label>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })
+                                ) : order.medications && Array.isArray(order.medications) ? (
+                                  order.medications.map((med: any, index: number) => {
+                                    const statusKey = `${order.id}-${index}`;
+                                    const currentStatus = medicationStatuses[statusKey] || { available: true, surBon: med.surBon || false };
+                                    
+                                    return (
+                                      <div key={index} className="border rounded-lg p-4 bg-white">
+                                        <div className="flex items-center justify-between mb-3">
+                                          <h5 className="font-medium">{med.name}</h5>
+                                          <Badge variant={currentStatus.available ? "default" : "destructive"}>
+                                            {currentStatus.available ? "Disponible" : "Indisponible"}
+                                          </Badge>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 gap-4">
+                                          <div className="flex items-center space-x-2">
+                                            <Switch
+                                              id={`available-${statusKey}`}
+                                              checked={currentStatus.available}
+                                              onCheckedChange={(checked) => 
+                                                toggleMedicationStatus(order.id, index, 'available', checked)
+                                              }
+                                            />
+                                            <Label htmlFor={`available-${statusKey}`} className="text-sm">
+                                              Disponible en stock
+                                            </Label>
+                                          </div>
+                                          
+                                          <div className="flex items-center space-x-2">
+                                            <Switch
+                                              id={`surbon-${statusKey}`}
+                                              checked={currentStatus.surBon}
+                                              onCheckedChange={(checked) => 
+                                                toggleMedicationStatus(order.id, index, 'surBon', checked)
+                                              }
+                                            />
+                                            <Label htmlFor={`surbon-${statusKey}`} className="text-sm">
+                                              Sur BON (remboursable)
+                                            </Label>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })
+                                ) : (
+                                  <p className="text-sm text-gray-500">Aucun médicament spécifié</p>
+                                )}
+                              </div>
+                              
+                              <div className="flex space-x-2 mt-4 pt-4 border-t">
+                                <Button
+                                  onClick={() => {
+                                    const medications = order.medications && typeof order.medications === 'string' 
+                                      ? JSON.parse(order.medications) 
+                                      : order.medications || [];
+                                    
+                                    const updatedMeds = medications.map((med: any, index: number) => {
+                                      const statusKey = `${order.id}-${index}`;
+                                      const status = medicationStatuses[statusKey] || { available: true, surBon: med.surBon || false };
+                                      return { ...med, ...status };
+                                    });
+                                    
+                                    handleMedicationUpdate(order.id, updatedMeds);
+                                  }}
+                                  disabled={updateMedicationsMutation.isPending}
+                                >
+                                  💾 Sauvegarder les modifications
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      
                       <Button
                         size="sm"
                         variant="outline"

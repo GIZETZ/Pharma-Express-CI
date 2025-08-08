@@ -59,6 +59,7 @@ export interface IStorage {
   getUserOrders(userId: string): Promise<Order[]>;
   getCurrentOrder(userId: string): Promise<Order | undefined>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  updateOrderMedications(id: string, medications: any[]): Promise<Order | undefined>;
 
   // Delivery person operations
   getDeliveryPerson(id: string): Promise<DeliveryPerson | undefined>;
@@ -961,6 +962,11 @@ class PostgresStorage implements IStorage {
 
   async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
     const result = await db.update(orders).set({ status }).where(eq(orders.id, id)).returning();
+    return result[0];
+  }
+
+  async updateOrderMedications(id: string, medications: any[]): Promise<Order | undefined> {
+    const result = await db.update(orders).set({ medications }).where(eq(orders.id, id)).returning();
     return result[0];
   }
 

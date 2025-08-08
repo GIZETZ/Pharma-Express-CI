@@ -621,6 +621,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update order medications (pharmacist)
+  app.post('/api/pharmacien/orders/:orderId/medications', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'pharmacien') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { orderId } = req.params;
+      const { medications } = req.body;
+
+      if (!Array.isArray(medications)) {
+        return res.status(400).json({ message: 'Medications must be an array' });
+      }
+
+      const updatedOrder = await storage.updateOrderMedications(orderId, medications);
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error('Error updating order medications:', error);
+      res.status(500).json({ message: 'Failed to update medications' });
+    }
+  });
+
   // Get delivery orders (livreur)
   app.get('/api/livreur/deliveries', requireAuth, async (req: any, res) => {
     try {
