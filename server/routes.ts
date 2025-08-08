@@ -447,18 +447,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Latitude and longitude are required' });
       }
 
-      // Mock reverse geocoding - in real app would use Google Maps API, etc.
+      // Using OpenStreetMap Nominatim for free reverse geocoding
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
+        {
+          headers: {
+            'User-Agent': 'PharmaExpressCI/1.0'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Geocoding service unavailable');
+      }
+
+      const data = await response.json();
+      
+      if (!data || !data.display_name) {
+        throw new Error('No address found for these coordinates');
+      }
+
       const address = {
-        formatted_address: 'Avenue Félix Houphouët-Boigny, Abidjan, Côte d\'Ivoire',
-        city: 'Abidjan',
-        country: 'Côte d\'Ivoire',
-        postal_code: '',
+        formatted_address: data.display_name,
+        city: data.address?.city || data.address?.town || data.address?.village || '',
+        country: data.address?.country || 'Côte d\'Ivoire',
+        postal_code: data.address?.postcode || '',
+        state: data.address?.state || '',
+        region: data.address?.region || ''
       };
 
       res.json(address);
     } catch (error) {
       console.error('Error with reverse geocoding:', error);
-      res.status(500).json({ message: 'Failed to get address' });
+      
+      // Fallback to a generic response
+      const fallbackAddress = {
+        formatted_address: `Position GPS: ${req.query.lat}, ${req.query.lng}`,
+        city: '',
+        country: 'Côte d\'Ivoire',
+        postal_code: '',
+      };
+      
+      res.json(fallbackAddress);
     }
   });
 
