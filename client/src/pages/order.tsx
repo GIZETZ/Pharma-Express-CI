@@ -389,19 +389,23 @@ export default function OrderPage() {
                   <p className="text-sm text-gray-600 mb-2">
                     Ajoutez les documents nécessaires pour valider les médicaments sur BON
                   </p>
-                  <label className="cursor-pointer">
-                    <Button type="button" variant="outline" size="sm">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Choisir des fichiers
-                    </Button>
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*,.pdf"
-                      onChange={handleDocumentUpload}
-                      className="hidden"
-                    />
-                  </label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf"
+                    onChange={handleDocumentUpload}
+                    className="hidden"
+                    id="bon-documents-input"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => document.getElementById('bon-documents-input')?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Choisir des fichiers
+                  </Button>
                 </div>
                 {orderData.bonDocuments.length > 0 && (
                   <div className="mt-4 space-y-2">
