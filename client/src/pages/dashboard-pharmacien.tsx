@@ -166,24 +166,29 @@ export default function DashboardPharmacien() {
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
                   <p className="mt-4 text-gray-600">Chargement des commandes...</p>
                 </div>
-              ) : orders?.filter((order: any) => order.status === 'pending').length === 0 ? (
+              ) : !orders || orders?.length === 0 ? (
                 <Card className="text-center py-8">
                   <CardContent>
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       📋
                     </div>
-                    <h3 className="font-semibold mb-2">Aucune nouvelle commande</h3>
-                    <p className="text-sm text-gray-600">Les nouvelles commandes apparaîtront ici</p>
+                    <h3 className="font-semibold mb-2">Aucune commande</h3>
+                    <p className="text-sm text-gray-600">Les commandes apparaîtront ici</p>
                   </CardContent>
                 </Card>
-              ) : orders?.filter((order: any) => order.status === 'pending').map((order: any) => (
+              ) : orders?.map((order: any) => (
                 <Card key={order.id} className="border-l-4 border-l-orange-500">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">
                         Commande #{order.id.slice(0, 8)}
                       </CardTitle>
-                      <Badge variant="secondary">Nouvelle</Badge>
+                      <Badge variant={order.status === 'pending' ? "secondary" : "outline"}>
+                        {order.status === 'pending' ? 'Nouvelle' : 
+                         order.status === 'confirmed' ? 'Confirmée' :
+                         order.status === 'preparing' ? 'En préparation' :
+                         order.status}
+                      </Badge>
                     </div>
                     <CardDescription>
                       Patient: {order.user?.firstName} {order.user?.lastName} • {order.user?.phone}
@@ -200,6 +205,30 @@ export default function DashboardPharmacien() {
                         <p className="text-sm text-gray-600">
                           {new Date(order.createdAt).toLocaleDateString("fr-FR")}
                         </p>
+                      </div>
+                    </div>
+                    
+                    {/* Médicaments demandés */}
+                    <div className="mb-4">
+                      <p className="text-sm font-medium text-gray-700 mb-2">Médicaments demandés</p>
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        {order.medications && typeof order.medications === 'string' ? (
+                          JSON.parse(order.medications).map((med: any, index: number) => (
+                            <div key={index} className="flex items-center justify-between text-sm py-1">
+                              <span>{med.name}</span>
+                              {med.surBon && <Badge variant="outline" className="text-xs">Sur BON</Badge>}
+                            </div>
+                          ))
+                        ) : order.medications && Array.isArray(order.medications) ? (
+                          order.medications.map((med: any, index: number) => (
+                            <div key={index} className="flex items-center justify-between text-sm py-1">
+                              <span>{med.name}</span>
+                              {med.surBon && <Badge variant="outline" className="text-xs">Sur BON</Badge>}
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">Aucun médicament spécifié</p>
+                        )}
                       </div>
                     </div>
                     <div className="flex space-x-2">
