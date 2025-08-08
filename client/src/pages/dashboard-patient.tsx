@@ -27,7 +27,8 @@ export default function DashboardPatient() {
     deliveryAddress: '',
     medications: [{ name: '', surBon: false }],
     pharmacyMessage: '',
-    bonDocuments: [] as File[]
+    bonDocuments: [] as File[],
+    prescriptionPhoto: null as File | null
   });
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
   
@@ -67,6 +68,23 @@ export default function DashboardPatient() {
     setOrderData(prev => ({
       ...prev,
       bonDocuments: prev.bonDocuments.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handlePrescriptionPhoto = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setOrderData(prev => ({
+        ...prev,
+        prescriptionPhoto: file
+      }));
+    }
+  };
+
+  const removePrescriptionPhoto = () => {
+    setOrderData(prev => ({
+      ...prev,
+      prescriptionPhoto: null
     }));
   };
 
@@ -112,7 +130,7 @@ export default function DashboardPatient() {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       setActiveTab("orders");
       setSelectedPharmacy(null);
-      setOrderData({ deliveryAddress: '', medications: [{ name: '', surBon: false }], pharmacyMessage: '', bonDocuments: [] });
+      setOrderData({ deliveryAddress: '', medications: [{ name: '', surBon: false }], pharmacyMessage: '', bonDocuments: [], prescriptionPhoto: null });
     },
     onError: () => {
       toast({
@@ -158,6 +176,7 @@ export default function DashboardPatient() {
         deliveryNotes: orderData.pharmacyMessage,
         medications: orderData.medications.filter(med => med.name.trim()),
         bonDocuments: orderData.bonDocuments.length > 0 ? 'documents-uploaded' : null,
+        prescriptionPhoto: orderData.prescriptionPhoto ? 'prescription-photo-uploaded' : null,
         status: 'pending'
       });
     } else {
@@ -494,6 +513,65 @@ export default function DashboardPatient() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                      {/* Photo de l'ordonnance */}
+                      <div>
+                        <label className="block text-sm font-medium mb-3">Photo de l'ordonnance</label>
+                        <div className="space-y-3">
+                          {!orderData.prescriptionPhoto ? (
+                            <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50">
+                              <div className="text-center">
+                                <Camera className="mx-auto h-16 w-16 text-blue-500 mb-3" />
+                                <div className="text-lg font-medium text-blue-900 mb-2">
+                                  Envoyer la photo de l'ordonnance
+                                </div>
+                                <div className="text-sm text-blue-700 mb-4">
+                                  Prenez une photo claire de votre ordonnance en format portrait
+                                </div>
+                                <label className="cursor-pointer">
+                                  <Button type="button" className="bg-blue-600 hover:bg-blue-700">
+                                    <Camera className="h-4 w-4 mr-2" />
+                                    Prendre une photo
+                                  </Button>
+                                  <input
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/jpg"
+                                    capture="environment"
+                                    onChange={handlePrescriptionPhoto}
+                                    className="hidden"
+                                  />
+                                </label>
+                                <div className="text-xs text-blue-600 mt-2">
+                                  Formats acceptés: PNG, JPEG, JPG
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="border border-green-200 rounded-lg p-4 bg-green-50">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <Camera className="h-6 w-6 text-green-600" />
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-green-900">Photo ajoutée</p>
+                                    <p className="text-sm text-green-700 truncate max-w-48">{orderData.prescriptionPhoto.name}</p>
+                                  </div>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={removePrescriptionPhoto}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
                       <div>
                         <label className="block text-sm font-medium mb-1">Adresse de livraison *</label>
                         <Input
