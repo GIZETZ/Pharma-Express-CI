@@ -1,177 +1,529 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import BottomNavigation from "@/components/bottom-navigation";
-import type { Pharmacy } from "@shared/schema";
+import { MapPin, Clock, Star, Phone, Camera, Upload, Plus, X, FileText } from "lucide-react";
 
 export default function Pharmacies() {
-  const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
+  const queryClient = useQueryClient();
+  const [selectedPharmacy, setSelectedPharmacy] = useState<any>(null);
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [currentAddress, setCurrentAddress] = useState<string>("");
+  const [orderData, setOrderData] = useState({
+    deliveryAddress: '',
+    medications: [{ name: '', surBon: false }],
+    pharmacyMessage: '',
+    bonDocuments: [] as File[],
+    prescriptionPhoto: null as File | null
+  });
+  const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
+  
+  // Helper functions for medication management
+  const addMedication = () => {
+    setOrderData(prev => ({
+      ...prev,
+      medications: [...prev.medications, { name: '', surBon: false }]
+    }));
+  };
 
-  const { data: pharmacies, isLoading } = useQuery<Pharmacy[]>({
-    queryKey: ['/api/pharmacies'],
+  const removeMedication = (index: number) => {
+    setOrderData(prev => ({
+      ...prev,
+      medications: prev.medications.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateMedication = (index: number, field: 'name' | 'surBon', value: string | boolean) => {
+    setOrderData(prev => ({
+      ...prev,
+      medications: prev.medications.map((med, i) => 
+        i === index ? { ...med, [field]: value } : med
+      )
+    }));
+  };
+
+  const handleDocumentUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setOrderData(prev => ({
+      ...prev,
+      bonDocuments: [...prev.bonDocuments, ...files]
+    }));
+  };
+
+  const removeDocument = (index: number) => {
+    setOrderData(prev => ({
+      ...prev,
+      bonDocuments: prev.bonDocuments.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handlePrescriptionPhoto = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setOrderData(prev => ({
+        ...prev,
+        prescriptionPhoto: file
+      }));
+    }
+  };
+
+  const removePrescriptionPhoto = () => {
+    setOrderData(prev => ({
+      ...prev,
+      prescriptionPhoto: null
+    }));
+  };
+
+  // Géolocalisation automatique
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ lat: latitude, lng: longitude });
+          
+          // Reverse geocoding pour obtenir l'adresse
+          try {
+            const response = await fetch(`/api/location/reverse?lat=${latitude}&lng=${longitude}`);
+            const addressData = await response.json();
+            setCurrentAddress(addressData.formatted_address);
+            setOrderData(prev => ({ ...prev, deliveryAddress: addressData.formatted_address }));
+          } catch (error) {
+            console.error("Erreur géolocalisation:", error);
+          }
+        },
+        (error) => {
+          console.error("Erreur de géolocalisation:", error);
+          toast({
+            title: "Géolocalisation",
+            description: "Impossible d'obtenir votre position. Veuillez saisir votre adresse manuellement.",
+            variant: "destructive",
+          });
+        }
+      );
+    }
+  }, []);
+
+  // Mutation pour créer une commande
+  const createOrderMutation = useMutation({
+    mutationFn: (orderDetails: any) =>
+      apiRequest("/api/orders", "POST", orderDetails),
+    onSuccess: () => {
+      toast({
+        title: "Commande créée",
+        description: "Votre commande a été envoyée à la pharmacie",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      setSelectedPharmacy(null);
+      setOrderData({ deliveryAddress: '', medications: [{ name: '', surBon: false }], pharmacyMessage: '', bonDocuments: [], prescriptionPhoto: null });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer la commande",
+        variant: "destructive",
+      });
+    },
   });
 
-  const selectPharmacy = (pharmacy: Pharmacy) => {
-    localStorage.setItem('selected-pharmacy', JSON.stringify(pharmacy));
-    toast({
-      title: "Pharmacie sélectionnée",
-      description: "Votre commande est en cours de traitement",
-    });
-    setLocation("/delivery");
+  // Pharmacies triées par distance si géolocalisation disponible
+  const { data: pharmacies, isLoading: pharmaciesLoading } = useQuery({ 
+    queryKey: ["/api/pharmacies", userLocation],
+    queryFn: async () => {
+      const url = userLocation 
+        ? `/api/pharmacies?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=10`
+        : `/api/pharmacies`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Erreur lors du chargement des pharmacies');
+      }
+      return response.json();
+    },
+    enabled: true
+  });
+
+  const handleCreateOrder = () => {
+    if (selectedPharmacy && orderData.deliveryAddress && orderData.medications.some(med => med.name.trim())) {
+      createOrderMutation.mutate({
+        pharmacyId: selectedPharmacy.id,
+        deliveryAddress: orderData.deliveryAddress,
+        deliveryNotes: orderData.pharmacyMessage,
+        medications: orderData.medications.filter(med => med.name.trim()),
+        bonDocuments: orderData.bonDocuments.length > 0 ? 'documents-uploaded' : null,
+        prescriptionPhoto: orderData.prescriptionPhoto ? 'prescription-photo-uploaded' : null,
+        status: 'pending'
+      });
+    } else {
+      toast({
+        title: "Informations manquantes",
+        description: "Veuillez remplir tous les champs obligatoires",
+        variant: "destructive",
+      });
+    }
   };
 
-  const goBack = () => {
-    setLocation("/home");
+  const handlePrescriptionUpload = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('prescription', file);
+      
+      const response = await fetch('/api/prescriptions/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Ordonnance envoyée",
+          description: "Votre ordonnance a été téléchargée avec succès",
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'envoyer l'ordonnance",
+        variant: "destructive",
+      });
+    }
   };
 
-  const filteredPharmacies = pharmacies?.filter(pharmacy =>
-    pharmacy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    pharmacy.address.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  const openCamera = () => {
+    // Ouvrir la caméra pour prendre une photo
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment';
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (file) {
+        setPrescriptionFile(file);
+        handlePrescriptionUpload(file);
+      }
+    };
+    input.click();
+  };
+
+  const selectFile = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (file) {
+        setPrescriptionFile(file);
+        handlePrescriptionUpload(file);
+      }
+    };
+    input.click();
+  };
 
   return (
-    <div className="min-h-screen bg-pharma-bg pb-20">
-      {/* Header */}
-      <header className="bg-white px-4 py-3 shadow-sm sticky top-0 z-10">
-        <div className="flex items-center space-x-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={goBack}
-            className="w-10 h-10"
-            data-testid="button-back"
-          >
-            <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
-          </Button>
-          <h1 className="text-xl font-bold text-gray-900" data-testid="text-page-title">
-            Pharmacies à proximité
+    <div className="min-h-screen bg-gray-50 p-6 pb-20">
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-blue-600 mb-2">
+            🏥 Pharmacies & Commandes
           </h1>
-        </div>
-      </header>
-
-      {/* Search Bar */}
-      <div className="px-4 py-4">
-        <div className="relative">
-          <Input
-            type="text"
-            placeholder="Rechercher une pharmacie..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-pharma-green focus:bg-white transition-all"
-            data-testid="input-search-pharmacy"
-          />
-          <svg className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-          </svg>
-        </div>
-      </div>
-
-      {/* Map */}
-      <div className="px-4 mb-4">
-        <div className="map-container">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-gray-600">
-              <svg className="w-12 h-12 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-              </svg>
-              <p className="font-medium">Carte interactive</p>
-              <p className="text-sm">Localisation des pharmacies</p>
+          <p className="text-gray-600">
+            Bienvenue {user?.firstName} ! Localisez une pharmacie et passez commande
+          </p>
+          {currentAddress && (
+            <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+              <MapPin className="h-4 w-4" />
+              <span>Votre position: {currentAddress}</span>
             </div>
-          </div>
-          {/* Mock location pins */}
-          <div className="absolute top-6 left-8 w-3 h-3 bg-pharma-green rounded-full animate-pulse"></div>
-          <div className="absolute top-16 right-12 w-3 h-3 bg-pharma-green rounded-full animate-pulse"></div>
-          <div className="absolute bottom-8 left-16 w-3 h-3 bg-pharma-green rounded-full animate-pulse"></div>
+          )}
         </div>
-      </div>
 
-      {/* Pharmacy List */}
-      <div className="px-4 space-y-4">
-        {isLoading ? (
-          <div className="text-center py-8">
-            <div className="w-8 h-8 mx-auto border-4 border-pharma-green border-t-transparent rounded-full animate-spin mb-2"></div>
-            <p className="text-gray-600">Chargement des pharmacies...</p>
-          </div>
-        ) : filteredPharmacies.length === 0 ? (
-          <div className="text-center py-8">
-            <svg className="w-12 h-12 mx-auto text-gray-400 mb-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-            </svg>
-            <p className="text-gray-600">Aucune pharmacie trouvée</p>
-          </div>
-        ) : (
-          filteredPharmacies.map((pharmacy) => (
-            <Card key={pharmacy.id} className="shadow-sm" data-testid={`card-pharmacy-${pharmacy.id}`}>
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-pharma-green rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6a2 2 0 104 0 2 2 0 00-4 0zm6 0a2 2 0 104 0 2 2 0 00-4 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900" data-testid={`text-pharmacy-name-${pharmacy.id}`}>
-                      {pharmacy.name}
-                    </h3>
-                    <p className="text-gray-600 text-sm mb-2" data-testid={`text-pharmacy-address-${pharmacy.id}`}>
-                      {pharmacy.address}
-                    </p>
-                    <div className="flex items-center space-x-4 text-xs">
-                      <div className="flex items-center space-x-1">
-                        <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        <span className="font-medium" data-testid={`text-pharmacy-rating-${pharmacy.id}`}>
-                          {pharmacy.rating}
-                        </span>
+        {/* Localiser Pharmacie */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Localiser une Pharmacie
+            </CardTitle>
+            <CardDescription>
+              {userLocation 
+                ? "Pharmacies triées par proximité selon votre position" 
+                : "Trouvez les pharmacies disponibles"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {pharmaciesLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p>Localisation des pharmacies...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {pharmacies?.map((pharmacy: any, index: number) => (
+                  <Card key={pharmacy.id} className="hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-lg">{pharmacy.name}</h4>
+                          <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                            <MapPin className="h-3 w-3" />
+                            {pharmacy.address}
+                          </p>
+                          <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                            <Phone className="h-3 w-3" />
+                            {pharmacy.phone}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <Badge variant={pharmacy.isOpen ? 'default' : 'secondary'}>
+                            {pharmacy.isOpen ? 'Ouvert' : 'Fermé'}
+                          </Badge>
+                          {index === 0 && userLocation && (
+                            <Badge variant="outline" className="text-xs">
+                              Plus proche
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-gray-600" data-testid={`text-pharmacy-delivery-time-${pharmacy.id}`}>
+                      <div className="flex items-center justify-between text-sm mb-3">
+                        <span className="flex items-center gap-1">
+                          <Star className="h-3 w-3 text-yellow-500" />
+                          {pharmacy.rating}/5
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
                           {pharmacy.deliveryTime} min
                         </span>
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-gray-600">1.2 km</span>
-                      </div>
+                      <Button 
+                        className="w-full" 
+                        size="sm" 
+                        onClick={() => setSelectedPharmacy(pharmacy)}
+                        disabled={!pharmacy.isOpen}
+                      >
+                        {pharmacy.isOpen ? 'Sélectionner' : 'Fermée'}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+            
+            {selectedPharmacy && (
+              <Card className="mt-6 border-2 border-blue-200">
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    📋 Commande à {selectedPharmacy.name}
+                  </CardTitle>
+                  <CardDescription>
+                    Frais de livraison: 1000 FCFA (500 FCFA plateforme + 500 FCFA livreur)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Photo de l'ordonnance */}
+                  <div>
+                    <label className="block text-sm font-medium mb-3">Photo de l'ordonnance</label>
+                    <div className="space-y-3">
+                      {!orderData.prescriptionPhoto ? (
+                        <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50">
+                          <div className="text-center">
+                            <Camera className="mx-auto h-16 w-16 text-blue-500 mb-3" />
+                            <div className="text-lg font-medium text-blue-900 mb-2">
+                              Envoyer la photo de l'ordonnance
+                            </div>
+                            <div className="text-sm text-blue-700 mb-4">
+                              Prenez une photo claire de votre ordonnance en format portrait
+                            </div>
+                            <label className="cursor-pointer">
+                              <Button type="button" className="bg-blue-600 hover:bg-blue-700">
+                                <Camera className="h-4 w-4 mr-2" />
+                                Prendre une photo
+                              </Button>
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/jpg"
+                                capture="environment"
+                                onChange={handlePrescriptionPhoto}
+                                className="hidden"
+                              />
+                            </label>
+                            <div className="text-xs text-blue-600 mt-2">
+                              Formats acceptés: PNG, JPEG, JPG
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="border-2 border-green-200 rounded-lg p-4 bg-green-50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Camera className="h-5 w-5 text-green-600" />
+                              <span className="text-sm font-medium text-green-800">
+                                Photo ajoutée: {orderData.prescriptionPhoto.name}
+                              </span>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={removePrescriptionPhoto}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <Badge
-                      variant={pharmacy.isOpen ? "default" : "secondary"}
-                      className={`mb-2 ${pharmacy.isOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
-                      data-testid={`badge-pharmacy-status-${pharmacy.id}`}
-                    >
-                      {pharmacy.isOpen ? 'Ouvert' : 'Fermé'}
-                    </Badge>
+
+                  {/* Adresse de livraison */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Adresse de livraison *</label>
+                    <Input
+                      type="text"
+                      placeholder="Saisissez votre adresse complète"
+                      value={orderData.deliveryAddress}
+                      onChange={(e) => setOrderData(prev => ({ ...prev, deliveryAddress: e.target.value }))}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Liste des médicaments */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-medium">Médicaments souhaités *</label>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={addMedication}
+                        className="flex items-center gap-1"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Ajouter
+                      </Button>
+                    </div>
+                    <div className="space-y-3">
+                      {orderData.medications.map((medication, index) => (
+                        <div key={index} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
+                          <div className="flex-1">
+                            <Input
+                              type="text"
+                              placeholder="Nom du médicament"
+                              value={medication.name}
+                              onChange={(e) => updateMedication(index, 'name', e.target.value)}
+                              className="w-full"
+                            />
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              id={`sur-bon-${index}`}
+                              checked={medication.surBon}
+                              onCheckedChange={(checked) => updateMedication(index, 'surBon', checked)}
+                            />
+                            <Label 
+                              htmlFor={`sur-bon-${index}`} 
+                              className={`text-sm font-medium ${
+                                medication.surBon ? 'text-green-600' : 'text-gray-600'
+                              }`}
+                            >
+                              Sur BON
+                            </Label>
+                          </div>
+                          {orderData.medications.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeMedication(index)}
+                              className="text-red-600 hover:text-red-800 p-1"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Documents pour BON */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Documents pour validation BON</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                      <div className="text-center">
+                        <FileText className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-600 mb-2">
+                          Ajoutez les documents nécessaires pour valider les médicaments sur BON
+                        </p>
+                        <label className="cursor-pointer">
+                          <Button type="button" variant="outline" size="sm">
+                            <Upload className="h-4 w-4 mr-2" />
+                            Choisir des fichiers
+                          </Button>
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*,.pdf"
+                            onChange={handleDocumentUpload}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                      {orderData.bonDocuments.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          {orderData.bonDocuments.map((doc, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                              <span className="text-sm text-gray-700">{doc.name}</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeDocument(index)}
+                                className="text-red-600 hover:text-red-800 p-1"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Message à la pharmacie */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Message à la pharmacie</label>
+                    <Textarea
+                      placeholder="Informations complémentaires, questions spécifiques..."
+                      value={orderData.pharmacyMessage}
+                      onChange={(e) => setOrderData(prev => ({ ...prev, pharmacyMessage: e.target.value }))}
+                      className="w-full"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="pt-4">
                     <Button
-                      onClick={() => selectPharmacy(pharmacy)}
-                      disabled={!pharmacy.isOpen}
-                      className={`w-full ${pharmacy.isOpen ? 'bg-pharma-green hover:bg-pharma-green/90' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
-                      data-testid={`button-select-pharmacy-${pharmacy.id}`}
+                      onClick={handleCreateOrder}
+                      disabled={createOrderMutation.isPending}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
                     >
-                      {pharmacy.isOpen ? 'Choisir' : 'Fermé'}
+                      {createOrderMutation.isPending ? "Envoi en cours..." : "Envoyer la commande"}
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
+                </CardContent>
+              </Card>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <BottomNavigation currentPage="pharmacies" />
