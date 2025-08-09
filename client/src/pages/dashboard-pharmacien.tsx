@@ -56,16 +56,57 @@ const PrescriptionImage = ({ prescriptionId, className }: { prescriptionId: stri
       src={imageUrl}
       alt="Photo de l'ordonnance"
       className={className}
-      onClick={() => {
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
         // Ouvrir l'image en plein écran
         const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 cursor-pointer p-4';
-        modal.innerHTML = `
+        modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4';
+        modal.style.zIndex = '9999';
+        modal.style.cursor = 'pointer';
+        
+        const modalContent = document.createElement('div');
+        modalContent.className = 'relative max-w-full max-h-full';
+        modalContent.innerHTML = `
           <img src="${imageUrl}" 
                class="max-w-full max-h-full object-contain" 
                alt="Photo de l'ordonnance" />
+          <button class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 text-2xl font-bold">&times;</button>
         `;
-        modal.onclick = () => document.body.removeChild(modal);
+        
+        modal.appendChild(modalContent);
+        
+        const closeModal = () => {
+          if (document.body.contains(modal)) {
+            document.body.removeChild(modal);
+          }
+        };
+        
+        // Empêcher la propagation sur le contenu de l'image
+        modalContent.addEventListener('click', (e) => {
+          e.stopPropagation();
+        });
+        
+        // Fermer avec le bouton X
+        const closeBtn = modalContent.querySelector('button');
+        closeBtn?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          closeModal();
+        });
+        
+        // Fermer en cliquant sur le fond
+        modal.addEventListener('click', closeModal);
+        
+        // Fermer avec Escape
+        const handleEscape = (e: KeyboardEvent) => {
+          if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', handleEscape);
+          }
+        };
+        document.addEventListener('keydown', handleEscape);
+        
         document.body.appendChild(modal);
       }}
     />
@@ -407,9 +448,13 @@ export default function DashboardPharmacien() {
                                             <Button
                                               size="sm"
                                               variant="outline"
-                                              onClick={() => {
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                
                                                 const modal = document.createElement('div');
-                                                modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
+                                                modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4';
+                                                modal.style.zIndex = '9999';
                                                 
                                                 const modalContent = document.createElement('div');
                                                 modalContent.className = 'bg-white rounded-lg max-w-4xl max-h-full overflow-auto relative';
@@ -437,6 +482,11 @@ export default function DashboardPharmacien() {
                                                   }
                                                 };
                                                 
+                                                // Empêcher la propagation sur le contenu
+                                                modalContent.addEventListener('click', (e) => {
+                                                  e.stopPropagation();
+                                                });
+                                                
                                                 // Ajouter les événements de fermeture
                                                 const closeBtnHeader = modalContent.querySelector('.close-btn');
                                                 const closeBtnFooter = modalContent.querySelector('.close-footer-btn');
@@ -451,11 +501,8 @@ export default function DashboardPharmacien() {
                                                   closeModal();
                                                 });
                                                 
-                                                modal.addEventListener('click', (e) => {
-                                                  if (e.target === modal) {
-                                                    closeModal();
-                                                  }
-                                                });
+                                                // Fermer en cliquant sur le fond
+                                                modal.addEventListener('click', closeModal);
                                                 
                                                 // Fermer avec Escape
                                                 const handleEscape = (e: KeyboardEvent) => {
