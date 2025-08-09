@@ -139,7 +139,11 @@ export default function OrderPage() {
     setOrderData(prev => ({ ...prev, prescriptionPhoto: null }));
   };
 
-  const triggerCameraInput = () => {
+  const triggerCameraInput = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     const input = document.getElementById('camera-input') as HTMLInputElement;
     if (input) {
       input.click();
@@ -351,7 +355,6 @@ export default function OrderPage() {
                         <input
                           type="file"
                           accept="image/*"
-                          capture="environment"
                           onChange={handlePrescriptionPhoto}
                           className="hidden"
                           id="camera-input"
@@ -359,7 +362,7 @@ export default function OrderPage() {
                         <Button 
                           type="button" 
                           className="bg-blue-600 hover:bg-blue-700 w-full"
-                          onClick={triggerCameraInput}
+                          onClick={(e) => triggerCameraInput(e)}
                         >
                           <Camera className="h-4 w-4 mr-2" />
                           Prendre une photo

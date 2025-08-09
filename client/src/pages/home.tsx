@@ -9,7 +9,24 @@ export default function Home() {
   const { hasUnread } = useNotifications();
 
   const navigateToCamera = () => {
-    setLocation("/camera");
+    // Au lieu d'aller vers /camera, ouvrir directement l'input file
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment';
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (file) {
+        // Stocker la photo et aller directement aux pharmacies
+        localStorage.setItem('prescriptionPhoto', JSON.stringify({
+          name: file.name,
+          size: file.size,
+          lastModified: file.lastModified
+        }));
+        setLocation("/pharmacies");
+      }
+    };
+    input.click();
   };
 
   const navigateToPharmacies = () => {
