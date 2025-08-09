@@ -29,11 +29,13 @@ Si Render utilise encore le Dockerfile, renommez-le temporairement :
 mv Dockerfile Dockerfile.bak
 ```
 
-## 🔧 Variables d'Environnement
+## 🔧 Variables d'Environnement (SÉCURISÉES)
 Ajoutez dans Render Dashboard :
 - `NODE_ENV` = `production`
-- `DATABASE_URL` = `[votre URL PostgreSQL]`
-- `SESSION_SECRET` = `[clé aléatoire 32+ caractères]`
+- `DATABASE_URL` = `[copiez votre URL Neon complète]`
+- `SESSION_SECRET` = `[générez avec: openssl rand -base64 32]`
+
+⚠️ **Important** : Ne jamais exposer ces variables dans le code source !
 
 ## 🗄️ Base de Données
 1. Créez une PostgreSQL dans Render
