@@ -51,11 +51,10 @@ export default function Camera() {
     onSuccess: () => {
       toast({
         title: "Photo capturée",
-        description: "Analyse de l'ordonnance en cours...",
+        description: "Photo sauvegardée avec succès",
       });
-      setTimeout(() => {
-        setLocation("/pharmacies");
-      }, 2000);
+      // Ne pas rediriger automatiquement - laisser l'utilisateur continuer
+      goBack();
     },
     onError: (error) => {
       toast({

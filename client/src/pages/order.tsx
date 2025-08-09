@@ -126,6 +126,10 @@ export default function OrderPage() {
     const file = e.target.files?.[0];
     if (file) {
       setOrderData(prev => ({ ...prev, prescriptionPhoto: file }));
+      toast({
+        title: "Photo ajoutée",
+        description: "Photo d'ordonnance ajoutée avec succès",
+      });
     }
   };
 
@@ -137,6 +141,19 @@ export default function OrderPage() {
     const input = document.getElementById('camera-input') as HTMLInputElement;
     if (input) {
       input.click();
+    }
+  };
+
+  const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setOrderData(prev => ({ ...prev, prescriptionPhoto: file }));
+      toast({
+        title: "Photo capturée",
+        description: "Photo d'ordonnance ajoutée avec succès",
+      });
+      // Vider l'input pour permettre la reprise de la même photo
+      e.target.value = '';
     }
   };
 
@@ -346,7 +363,7 @@ export default function OrderPage() {
                           type="file"
                           accept="image/*"
                           capture="environment"
-                          onChange={handlePrescriptionPhoto}
+                          onChange={handleCameraCapture}
                           className="hidden"
                           id="camera-input"
                         />
