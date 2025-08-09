@@ -244,11 +244,33 @@ export default function OrderPage() {
       return;
     }
 
+    if (!orderData.prescriptionPhoto) {
+      toast({
+        variant: "destructive",
+        title: "Photo d'ordonnance requise",
+        description: "Veuillez ajouter une photo de votre ordonnance",
+      });
+      return;
+    }
+
+    // Vérifier si des documents BON sont requis
+    const validMedications = orderData.medications.filter(med => med.name.trim());
+    const hasBonMedications = validMedications.some(med => med.surBon);
+    
+    if (hasBonMedications && orderData.bonDocuments.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Documents BON requis",
+        description: "Vous avez des médicaments sur BON, veuillez ajouter les documents nécessaires",
+      });
+      return;
+    }
+
     // Include pharmacy ID in the order data
     const orderPayload = {
       ...orderData,
       pharmacyId: selectedPharmacy.id,
-      medications: orderData.medications.filter(med => med.name.trim()),
+      medications: validMedications,
       status: 'pending'
     };
 
@@ -503,53 +525,71 @@ export default function OrderPage() {
               </div>
             </div>
 
-            {/* Documents pour BON */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Documents pour validation BON</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                <div className="text-center">
-                  <FileText className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600 mb-2">
-                    Ajoutez les documents nécessaires pour valider les médicaments sur BON
-                  </p>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*,.pdf"
-                    onChange={handleDocumentUpload}
-                    className="hidden"
-                    id="bon-documents-input"
-                  />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => document.getElementById('bon-documents-input')?.click()}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Choisir des fichiers
-                  </Button>
-                </div>
-                {orderData.bonDocuments.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    {orderData.bonDocuments.map((doc, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <span className="text-sm text-gray-700">{doc.name}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeDocument(index)}
-                          className="text-red-600 hover:text-red-800 p-1"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+            {/* Documents pour BON - conditionnel */}
+            {(() => {
+              const hasBonMedications = orderData.medications.some(med => med.name.trim() && med.surBon);
+              if (!hasBonMedications) return null;
+              
+              return (
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Documents pour validation BON *
+                    <span className="text-orange-600 text-xs ml-2">
+                      (Requis car vous avez des médicaments sur BON)
+                    </span>
+                  </label>
+                  <div className="border-2 border-dashed border-orange-300 rounded-lg p-4 bg-orange-50">
+                    <div className="text-center">
+                      <FileText className="mx-auto h-8 w-8 text-orange-500 mb-2" />
+                      <p className="text-sm text-orange-800 mb-2 font-medium">
+                        Documents obligatoires pour validation BON
+                      </p>
+                      <p className="text-xs text-orange-700 mb-3">
+                        Carte d'assurance, attestation de prise en charge, etc.
+                      </p>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*,.pdf"
+                        onChange={handleDocumentUpload}
+                        className="hidden"
+                        id="bon-documents-input"
+                      />
+                      <Button 
+                        type="button" 
+                        className="bg-orange-600 hover:bg-orange-700 text-white"
+                        size="sm"
+                        onClick={() => document.getElementById('bon-documents-input')?.click()}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Choisir des fichiers
+                      </Button>
+                    </div>
+                    {orderData.bonDocuments.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        {orderData.bonDocuments.map((doc, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-white rounded border border-orange-200">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-orange-600" />
+                              <span className="text-sm text-gray-700">{doc.name}</span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeDocument(index)}
+                              className="text-red-600 hover:text-red-800 p-1"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
+                </div>
+              );
+            })()}
 
             {/* Message à la pharmacie */}
             <div>
@@ -565,7 +605,8 @@ export default function OrderPage() {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                💡 <strong>Info:</strong> La pharmacie déterminera le prix final en fonction des médicaments disponibles. 
+                💡 <strong>Info:</strong> La photo d'ordonnance est obligatoire pour confirmer votre commande. 
+                La pharmacie déterminera le prix final en fonction des médicaments disponibles. 
                 Les médicaments marqués "Sur BON" nécessitent une validation de vos documents d'assurance.
               </p>
             </div>
@@ -573,11 +614,24 @@ export default function OrderPage() {
             <div className="pt-4">
               <Button
                 onClick={handleCreateOrder}
-                disabled={createOrderMutation.isPending || !orderData.deliveryAddress || !orderData.medications.some(med => med.name.trim())}
+                disabled={createOrderMutation.isPending || !orderData.deliveryAddress || !orderData.medications.some(med => med.name.trim()) || !orderData.prescriptionPhoto}
                 className="w-full bg-blue-600 hover:bg-blue-700"
               >
                 {createOrderMutation.isPending ? "Envoi en cours..." : "📤 Confirmer la commande"}
               </Button>
+              
+              {/* Indicateur de validation */}
+              <div className="mt-2 text-xs text-gray-500 text-center">
+                {!orderData.prescriptionPhoto && (
+                  <span className="text-red-600">⚠️ Photo d'ordonnance requise</span>
+                )}
+                {orderData.prescriptionPhoto && orderData.medications.some(med => med.name.trim() && med.surBon) && orderData.bonDocuments.length === 0 && (
+                  <span className="text-orange-600">⚠️ Documents BON requis</span>
+                )}
+                {orderData.prescriptionPhoto && (!orderData.medications.some(med => med.name.trim() && med.surBon) || orderData.bonDocuments.length > 0) && (
+                  <span className="text-green-600">✅ Prêt à confirmer</span>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
