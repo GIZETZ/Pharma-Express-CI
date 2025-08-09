@@ -20,7 +20,9 @@ const PrescriptionImage = ({ prescriptionId, className }: { prescriptionId: stri
   useEffect(() => {
     const fetchImage = async () => {
       try {
-        const prescription = await apiRequest(`/api/prescriptions/${prescriptionId}`);
+        const prescription = await apiRequest(`/api/prescriptions/${prescriptionId}`, {
+          method: 'GET'
+        });
         setImageUrl(prescription.imageUrl);
       } catch (error) {
         console.error('Error fetching prescription:', error);
