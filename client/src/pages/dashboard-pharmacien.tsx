@@ -409,27 +409,63 @@ export default function DashboardPharmacien() {
                                               variant="outline"
                                               onClick={() => {
                                                 const modal = document.createElement('div');
-                                                modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 cursor-pointer p-4';
-                                                modal.innerHTML = `
-                                                  <div class="bg-white rounded-lg max-w-4xl max-h-full overflow-auto">
-                                                    <div class="p-4 border-b">
-                                                      <h3 class="font-semibold">Document BON: ${doc.name}</h3>
-                                                    </div>
-                                                    <div class="p-4">
-                                                      <img src="${doc.data}" 
-                                                           class="w-full max-h-96 object-contain" 
-                                                           alt="Document BON" />
-                                                    </div>
-                                                    <div class="p-4 border-t text-center">
-                                                      <button class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Fermer</button>
-                                                    </div>
+                                                modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4';
+                                                
+                                                const modalContent = document.createElement('div');
+                                                modalContent.className = 'bg-white rounded-lg max-w-4xl max-h-full overflow-auto relative';
+                                                
+                                                modalContent.innerHTML = `
+                                                  <div class="p-4 border-b flex justify-between items-center">
+                                                    <h3 class="font-semibold">Document BON: ${doc.name}</h3>
+                                                    <button class="close-btn text-gray-500 hover:text-gray-700 text-2xl font-bold">&times;</button>
+                                                  </div>
+                                                  <div class="p-4">
+                                                    <img src="${doc.data}" 
+                                                         class="w-full max-h-96 object-contain" 
+                                                         alt="Document BON" />
+                                                  </div>
+                                                  <div class="p-4 border-t text-center">
+                                                    <button class="close-footer-btn px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Fermer</button>
                                                   </div>
                                                 `;
-                                                const closeBtn = modal.querySelector('button');
-                                                closeBtn?.addEventListener('click', () => document.body.removeChild(modal));
-                                                modal.addEventListener('click', (e) => {
-                                                  if (e.target === modal) document.body.removeChild(modal);
+                                                
+                                                modal.appendChild(modalContent);
+                                                
+                                                const closeModal = () => {
+                                                  if (document.body.contains(modal)) {
+                                                    document.body.removeChild(modal);
+                                                  }
+                                                };
+                                                
+                                                // Ajouter les événements de fermeture
+                                                const closeBtnHeader = modalContent.querySelector('.close-btn');
+                                                const closeBtnFooter = modalContent.querySelector('.close-footer-btn');
+                                                
+                                                closeBtnHeader?.addEventListener('click', (e) => {
+                                                  e.stopPropagation();
+                                                  closeModal();
                                                 });
+                                                
+                                                closeBtnFooter?.addEventListener('click', (e) => {
+                                                  e.stopPropagation();
+                                                  closeModal();
+                                                });
+                                                
+                                                modal.addEventListener('click', (e) => {
+                                                  if (e.target === modal) {
+                                                    closeModal();
+                                                  }
+                                                });
+                                                
+                                                // Fermer avec Escape
+                                                const handleEscape = (e: KeyboardEvent) => {
+                                                  if (e.key === 'Escape') {
+                                                    closeModal();
+                                                    document.removeEventListener('keydown', handleEscape);
+                                                  }
+                                                };
+                                                document.addEventListener('keydown', handleEscape);
+                                                
                                                 document.body.appendChild(modal);
                                               }}
                                             >
