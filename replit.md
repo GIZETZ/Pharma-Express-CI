@@ -5,6 +5,8 @@ Pharma Express CI is a comprehensive pharmacy delivery platform designed for the
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
+Deployment targets: Replit Deployments and Render
+Repository: https://github.com/GIZETZ/Pharma-Express-CI.git
 
 # System Architecture
 
