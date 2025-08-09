@@ -1,0 +1,79 @@
+2025-08-09T14:28:02.149540646Z #10 DONE 0.1s
+2025-08-09T14:28:02.299720003Z 
+2025-08-09T14:28:02.299739453Z #8 [base 2/9] RUN apk add --no-cache libc6-compat
+2025-08-09T14:28:02.401051084Z #8 0.424 (1/3) Installing musl-obstack (1.2.3-r2)
+2025-08-09T14:28:02.401075484Z #8 0.430 (2/3) Installing libucontext (1.3.2-r0)
+2025-08-09T14:28:02.401081685Z #8 0.433 (3/3) Installing gcompat (1.1.0-r4)
+2025-08-09T14:28:02.401087125Z #8 0.440 OK: 10 MiB in 21 packages
+2025-08-09T14:28:02.401093115Z #8 DONE 0.5s
+2025-08-09T14:28:02.501901805Z 
+2025-08-09T14:28:02.501924595Z #11 [base 3/9] WORKDIR /app
+2025-08-09T14:28:02.501928335Z #11 DONE 0.0s
+2025-08-09T14:28:02.501931225Z 
+2025-08-09T14:28:02.501935045Z #12 [base 4/9] COPY package*.json ./
+2025-08-09T14:28:02.501937986Z #12 DONE 0.0s
+2025-08-09T14:28:02.501940736Z 
+2025-08-09T14:28:02.501943496Z #13 [base 5/9] COPY tsconfig.json ./
+2025-08-09T14:28:02.501946306Z #13 DONE 0.0s
+2025-08-09T14:28:02.501948976Z 
+2025-08-09T14:28:02.501951786Z #14 [base 6/9] COPY vite.config.ts ./
+2025-08-09T14:28:02.501954566Z #14 DONE 0.0s
+2025-08-09T14:28:02.501957246Z 
+2025-08-09T14:28:02.501960036Z #15 [base 7/9] COPY tailwind.config.ts ./
+2025-08-09T14:28:02.501962856Z #15 DONE 0.0s
+2025-08-09T14:28:02.652670265Z 
+2025-08-09T14:28:02.652695535Z #16 [base 8/9] COPY postcss.config.js ./
+2025-08-09T14:28:02.652700605Z #16 DONE 0.0s
+2025-08-09T14:28:02.652704785Z 
+2025-08-09T14:28:02.652709436Z #17 [base 9/9] COPY drizzle.config.ts ./
+2025-08-09T14:28:02.652713746Z #17 DONE 0.0s
+2025-08-09T14:28:02.652717616Z 
+2025-08-09T14:28:02.652721736Z #18 [deps 1/1] RUN npm ci --omit=dev && npm ci
+2025-08-09T14:28:11.772028183Z #18 9.174 
+2025-08-09T14:28:11.772049544Z #18 9.174 added 421 packages, and audited 422 packages in 9s
+2025-08-09T14:28:11.772053064Z #18 9.174 
+2025-08-09T14:28:11.772056974Z #18 9.174 56 packages are looking for funding
+2025-08-09T14:28:11.922509166Z #18 9.175   run `npm fund` for details
+2025-08-09T14:28:11.922532227Z #18 9.176 
+2025-08-09T14:28:11.922537667Z #18 9.176 1 low severity vulnerability
+2025-08-09T14:28:11.922542257Z #18 9.176 
+2025-08-09T14:28:11.922546537Z #18 9.176 To address all issues, run:
+2025-08-09T14:28:11.922551347Z #18 9.176   npm audit fix
+2025-08-09T14:28:11.922555658Z #18 9.176 
+2025-08-09T14:28:11.922559798Z #18 9.176 Run `npm audit` for details.
+2025-08-09T14:28:11.922564678Z #18 9.177 npm notice
+2025-08-09T14:28:11.922569428Z #18 9.177 npm notice New major version of npm available! 10.8.2 -> 11.5.2
+2025-08-09T14:28:11.922573758Z #18 9.177 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.5.2
+2025-08-09T14:28:11.922578418Z #18 9.177 npm notice To update run: npm install -g npm@11.5.2
+2025-08-09T14:28:11.922582378Z #18 9.177 npm notice
+2025-08-09T14:28:16.14101862Z #18 13.46 npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+2025-08-09T14:28:16.244019919Z #18 13.65 npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+2025-08-09T14:28:23.931704526Z #18 21.33 npm error code 127
+2025-08-09T14:28:23.931725986Z #18 21.33 npm error path /app/node_modules/drizzle-kit/node_modules/esbuild
+2025-08-09T14:28:24.082319402Z #18 21.33 npm error command failed
+2025-08-09T14:28:24.083829856Z #18 21.33 npm error command sh -c node install.js
+2025-08-09T14:28:24.083837106Z #18 21.33 npm error Error relocating /app/node_modules/node/bin/node: fcntl64: symbol not found
+2025-08-09T14:28:24.083841736Z #18 21.34 npm error A complete log of this run can be found in: /root/.npm/_logs/2025-08-09T14_28_11_878Z-debug-0.log
+2025-08-09T14:28:24.182522318Z #18 ERROR: process "/bin/sh -c npm ci --omit=dev && npm ci" did not complete successfully: exit code: 127
+2025-08-09T14:28:24.219585639Z ------
+2025-08-09T14:28:24.21961633Z  > [deps 1/1] RUN npm ci --omit=dev && npm ci:
+2025-08-09T14:28:24.21962066Z 9.177 npm notice To update run: npm install -g npm@11.5.2
+2025-08-09T14:28:24.21962318Z 9.177 npm notice
+2025-08-09T14:28:24.21962588Z 13.46 npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+2025-08-09T14:28:24.21962827Z 13.65 npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+2025-08-09T14:28:24.21963107Z 21.33 npm error code 127
+2025-08-09T14:28:24.21963396Z 21.33 npm error path /app/node_modules/drizzle-kit/node_modules/esbuild
+2025-08-09T14:28:24.21963646Z 21.33 npm error command failed
+2025-08-09T14:28:24.21963924Z 21.33 npm error command sh -c node install.js
+2025-08-09T14:28:24.21964192Z 21.33 npm error Error relocating /app/node_modules/node/bin/node: fcntl64: symbol not found
+2025-08-09T14:28:24.21964461Z 21.34 npm error A complete log of this run can be found in: /root/.npm/_logs/2025-08-09T14_28_11_878Z-debug-0.log
+2025-08-09T14:28:24.21964693Z ------
+2025-08-09T14:28:24.221030771Z Dockerfile:19
+2025-08-09T14:28:24.221045182Z --------------------
+2025-08-09T14:28:24.221048422Z   17 |     # Stage pour les dépendances
+2025-08-09T14:28:24.221051582Z   18 |     FROM base AS deps
+2025-08-09T14:28:24.221054412Z   19 | >>> RUN npm ci --omit=dev && npm ci
+2025-08-09T14:28:24.221057252Z   20 |     
+2025-08-09T14:28:24.221060322Z   21 |     # Stage pour le build
+2025-08-09T14:28:24.221062352Z --------------------
+2025-08-09T14:28:24.221064372Z error: failed to solve: process "/bin/sh -c npm ci --omit=dev && npm ci" did not complete successfully: exit code: 127

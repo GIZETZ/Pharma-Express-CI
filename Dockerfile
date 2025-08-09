@@ -1,51 +1,23 @@
-# Multi-stage build pour optimiser la taille de l'image
-FROM node:20-alpine AS base
-
-# Installer les dépendances système nécessaires
-RUN apk add --no-cache libc6-compat
+# Dockerfile simplifié pour Render
+FROM node:20-slim
 
 WORKDIR /app
 
-# Copier les fichiers de configuration
+# Copier package.json et installer les dépendances
 COPY package*.json ./
-COPY tsconfig.json ./
-COPY vite.config.ts ./
-COPY tailwind.config.ts ./
-COPY postcss.config.js ./
-COPY drizzle.config.ts ./
+RUN npm install --production=false
 
-# Stage pour les dépendances
-FROM base AS deps
-RUN npm ci --omit=dev && npm ci
-
-# Stage pour le build
-FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
+# Copier le code source
 COPY . .
 
 # Build de l'application
 RUN npm run build
 
-# Stage final de production
-FROM node:20-alpine AS runner
-WORKDIR /app
-
-ENV NODE_ENV=production
-
-# Créer un utilisateur non-root
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Copier les fichiers nécessaires
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/dist-client ./dist-client
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-
-USER nextjs
-
+# Exposer le port
 EXPOSE 10000
 
+ENV NODE_ENV=production
 ENV PORT=10000
 
+# Démarrer l'application
 CMD ["npm", "run", "start"]
