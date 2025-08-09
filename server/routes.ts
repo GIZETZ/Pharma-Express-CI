@@ -40,6 +40,12 @@ declare module 'express-session' {
 
 // Middleware d'authentification
 const requireAuth = (req: any, res: any, next: any) => {
+  console.log('Auth Check:', {
+    sessionID: req.sessionID,
+    userId: req.session?.userId,
+    hasSession: !!req.session
+  });
+  
   if (!req.session.userId) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
@@ -47,17 +53,39 @@ const requireAuth = (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configuration CORS pour les cookies
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    next();
+  });
+
   // Configuration des sessions
   app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key-development-only',
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // true en production avec HTTPS
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
-    }
+      secure: false, // Désactivé temporairement pour débugger
+      httpOnly: false, // Permettre l'accès côté client pour débugger
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+      sameSite: 'lax' // Important pour le cross-origin
+    },
+    name: 'pharma-session' // Nom personnalisé pour éviter les conflits
   }));
+
+  // Middleware de débogage des sessions
+  app.use((req: any, res, next) => {
+    console.log('Session Debug:', {
+      sessionID: req.sessionID,
+      userId: req.session?.userId,
+      cookies: req.headers.cookie,
+      path: req.path
+    });
+    next();
+  });
 
   // Health check
   app.get('/api/health', (req, res) => {
@@ -113,13 +141,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Numéro de téléphone ou mot de passe incorrect' });
       }
 
-      // Démarrer la session
+      // Démarrer la session avec callback pour assurer la sauvegarde
       req.session.userId = user.id;
       req.session.language = user.language || "fr";
-
-      // Retourner les infos utilisateur (sans le mot de passe)
-      const { password, ...userInfo } = user;
-      res.json(userInfo);
+      
+      // Sauvegarder explicitement la session
+      req.session.save((err) => {
+        if (err) {
+          console.error('Erreur sauvegarde session:', err);
+          return res.status(500).json({ message: 'Erreur de session' });
+        }
+        
+        console.log('Session sauvegardée pour utilisateur:', user.id);
+        
+        // Retourner les infos utilisateur (sans le mot de passe)
+        const { password, ...userInfo } = user;
+        res.json(userInfo);
+      });
     } catch (error) {
       console.error('Erreur lors de la connexion:', error);
       if (error instanceof z.ZodError) {
