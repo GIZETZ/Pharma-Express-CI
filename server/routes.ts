@@ -330,11 +330,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   ]), async (req: any, res) => {
     try {
       console.log('Order request body:', req.body);
+      console.log('Order files:', req.files);
+      
       const orderData = { ...req.body, userId: req.session.userId };
       
       // Ensure pharmacyId is present
       if (!orderData.pharmacyId) {
         return res.status(400).json({ message: 'Pharmacy ID is required' });
+      }
+
+      // Handle prescription photo upload
+      let prescriptionId = null;
+      if (req.files && req.files['prescriptionPhoto'] && req.files['prescriptionPhoto'][0]) {
+        const prescriptionFile = req.files['prescriptionPhoto'][0];
+        console.log('Prescription photo found:', prescriptionFile.originalname);
+        
+        // Create a prescription record
+        const prescriptionData = {
+          userId: req.session.userId,
+          imageUrl: `data:${prescriptionFile.mimetype};base64,${prescriptionFile.buffer.toString('base64')}`,
+          status: 'processed' as const,
+          medications: null,
+        };
+        
+        const prescription = await storage.createPrescription(prescriptionData);
+        prescriptionId = prescription.id;
+        console.log('Created prescription with ID:', prescriptionId);
+      }
+
+      // Add prescription ID to order data
+      if (prescriptionId) {
+        orderData.prescriptionId = prescriptionId;
+      }
+
+      // Handle BON documents
+      const bonDocuments = [];
+      for (let i = 0; i < 5; i++) {
+        const fieldName = `bonDocument${i}`;
+        if (req.files && req.files[fieldName] && req.files[fieldName][0]) {
+          const bonFile = req.files[fieldName][0];
+          bonDocuments.push({
+            name: bonFile.originalname,
+            data: `data:${bonFile.mimetype};base64,${bonFile.buffer.toString('base64')}`,
+          });
+        }
+      }
+
+      if (bonDocuments.length > 0) {
+        orderData.bonDocuments = JSON.stringify(bonDocuments);
       }
       
       const order = await storage.createOrder(orderData);

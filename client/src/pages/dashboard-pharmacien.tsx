@@ -290,11 +290,13 @@ export default function DashboardPharmacien() {
                           </DialogHeader>
                           <div className="space-y-4">
                             {/* Affichage de l'image d'ordonnance si disponible */}
-                            {order.prescriptionId ? (
+                            {order.prescriptionId || (order.medications && JSON.stringify(order.medications).includes('prescriptionPhoto')) ? (
                               <div>
                                 <h4 className="font-medium mb-2">Photo de l'ordonnance</h4>
                                 <div className="border rounded-lg p-4 bg-gray-50">
-                                  <p className="text-sm text-gray-600 mb-2">Ordonnance ID: {order.prescriptionId}</p>
+                                  {order.prescriptionId && (
+                                    <p className="text-sm text-gray-600 mb-2">Ordonnance ID: {order.prescriptionId}</p>
+                                  )}
                                   <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                                     <span className="text-4xl mb-2 block">📄</span>
                                     <p className="text-sm text-gray-500">Photo de l'ordonnance uploadée</p>

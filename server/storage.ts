@@ -1,11 +1,11 @@
-import { 
-  type User, 
+import {
+  type User,
   type InsertUser,
-  type Pharmacy, 
+  type Pharmacy,
   type InsertPharmacy,
-  type Prescription, 
+  type Prescription,
   type InsertPrescription,
-  type Order, 
+  type Order,
   type InsertOrder,
   type DeliveryPerson,
   type Notification,
@@ -349,8 +349,8 @@ export class MemStorage implements IStorage {
   }
 
   async getPendingUsers(): Promise<User[]> {
-    return Array.from(this.users.values()).filter(user => 
-      (user.role === "pharmacien" || user.role === "livreur") && 
+    return Array.from(this.users.values()).filter(user =>
+      (user.role === "pharmacien" || user.role === "livreur") &&
       user.verificationStatus === "pending"
     );
   }
@@ -404,7 +404,7 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const hashedPassword = await bcrypt.hash(insertUser.password, 10);
 
-    const user: User = { 
+    const user: User = {
       id,
       firstName: insertUser.firstName,
       lastName: insertUser.lastName,
@@ -459,11 +459,11 @@ export class MemStorage implements IStorage {
     if (lat && lng) {
       pharmacies = pharmacies.sort((a, b) => {
         const distA = Math.sqrt(
-          Math.pow(parseFloat(a.latitude || "0") - lat, 2) + 
+          Math.pow(parseFloat(a.latitude || "0") - lat, 2) +
           Math.pow(parseFloat(a.longitude || "0") - lng, 2)
         );
         const distB = Math.sqrt(
-          Math.pow(parseFloat(b.latitude || "0") - lat, 2) + 
+          Math.pow(parseFloat(b.latitude || "0") - lat, 2) +
           Math.pow(parseFloat(b.longitude || "0") - lng, 2)
         );
         return distA - distB;
@@ -473,7 +473,7 @@ export class MemStorage implements IStorage {
       if (radius) {
         pharmacies = pharmacies.filter(pharmacy => {
           const distance = Math.sqrt(
-            Math.pow(parseFloat(pharmacy.latitude || "0") - lat, 2) + 
+            Math.pow(parseFloat(pharmacy.latitude || "0") - lat, 2) +
             Math.pow(parseFloat(pharmacy.longitude || "0") - lng, 2)
           );
           return distance <= radius / 100; // Convert to degrees approximation
@@ -490,7 +490,7 @@ export class MemStorage implements IStorage {
 
   async createPharmacy(insertPharmacy: InsertPharmacy): Promise<Pharmacy> {
     const id = randomUUID();
-    const pharmacy: Pharmacy = { 
+    const pharmacy: Pharmacy = {
       id,
       name: insertPharmacy.name,
       address: insertPharmacy.address,
@@ -514,7 +514,7 @@ export class MemStorage implements IStorage {
 
   async createPrescription(insertPrescription: InsertPrescription): Promise<Prescription> {
     const id = randomUUID();
-    const prescription: Prescription = { 
+    const prescription: Prescription = {
       id,
       userId: insertPrescription.userId,
       imageUrl: insertPrescription.imageUrl,
@@ -549,7 +549,7 @@ export class MemStorage implements IStorage {
     const deliveryPersonId = Array.from(this.deliveryPersons.values())
       .find(dp => dp.isAvailable)?.id ?? null;
 
-    const order: Order = { 
+    const order: Order = {
       id,
       userId: insertOrder.userId,
       pharmacyId: insertOrder.pharmacyId,
@@ -718,7 +718,7 @@ export class MemStorage implements IStorage {
 
   async createNotification(insertNotification: InsertNotification): Promise<Notification> {
     const id = randomUUID();
-    const notification: Notification = { 
+    const notification: Notification = {
       id,
       userId: insertNotification.userId,
       title: insertNotification.title,
@@ -868,6 +868,7 @@ class PostgresStorage implements IStorage {
       status: orderData.status || "pending",
       medications: orderData.medications || null,
       bonDocuments: orderData.bonDocuments || null,
+      prescriptionId: orderData.prescriptionId || null, // Added prescriptionId
     };
 
     // Ajouter les coordonnées de géolocalisation si disponibles
@@ -1063,7 +1064,7 @@ class PostgresStorage implements IStorage {
   }
 
   async assignDeliveryPerson(orderId: string, deliveryPersonId: string): Promise<Order | undefined> {
-    const result = await db.update(orders).set({ 
+    const result = await db.update(orders).set({
       deliveryPersonId,
       status: 'in_delivery'
     }).where(eq(orders.id, orderId)).returning();
