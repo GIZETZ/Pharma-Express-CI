@@ -3,8 +3,9 @@ services:
     name: pharma-express-ci
     env: node
     plan: starter
-    buildCommand: ./build.sh
-    startCommand: ./start.sh
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    runtime: node
     envVars:
       - key: NODE_ENV
         value: production

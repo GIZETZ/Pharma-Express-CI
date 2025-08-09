@@ -1,5 +1,5 @@
 # Multi-stage build pour optimiser la taille de l'image
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Installer les dépendances système nécessaires
 RUN apk add --no-cache libc6-compat
@@ -16,7 +16,7 @@ COPY drizzle.config.ts ./
 
 # Stage pour les dépendances
 FROM base AS deps
-RUN npm ci --only=production && npm ci --only=development
+RUN npm ci --omit=dev && npm ci
 
 # Stage pour le build
 FROM base AS builder
@@ -27,7 +27,7 @@ COPY . .
 RUN npm run build
 
 # Stage final de production
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
