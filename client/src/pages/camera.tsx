@@ -87,7 +87,7 @@ export default function Camera() {
   };
 
   const goBack = () => {
-    setLocation("/home");
+    window.history.back();
   };
 
   return (
