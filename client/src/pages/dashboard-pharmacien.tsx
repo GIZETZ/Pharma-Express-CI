@@ -254,12 +254,24 @@ export default function DashboardPharmacien() {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-green-600 mb-2">
-            💊 Tableau de bord Pharmacien
-          </h1>
-          <p className="text-gray-600">
-            Bienvenue Dr. {user?.firstName} ! Gérez votre pharmacie et les commandes
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-green-600 mb-2">
+                💊 Tableau de bord Pharmacien
+              </h1>
+              <p className="text-gray-600">
+                Bienvenue Dr. {user?.firstName} ! Gérez votre pharmacie et les commandes
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.location.href = '/pharmacy-profile'}
+              className="bg-blue-50 hover:bg-blue-100 border-blue-200"
+            >
+              🏪 Gérer la pharmacie
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="orders" className="space-y-6">
