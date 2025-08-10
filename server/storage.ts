@@ -961,9 +961,23 @@ class PostgresStorage implements IStorage {
     return result[0];
   }
 
-  async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
-    const result = await db.update(orders).set({ status }).where(eq(orders.id, id)).returning();
-    return result[0];
+  async updateOrderStatus(orderId: string, status: string, totalAmount?: number): Promise<any> {
+    const updateData: any = {
+      status,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (totalAmount !== undefined) {
+      updateData.totalAmount = totalAmount.toString();
+    }
+
+    const [updatedOrder] = await db
+      .update(orders)
+      .set(updateData)
+      .where(eq(orders.id, orderId))
+      .returning();
+
+    return updatedOrder;
   }
 
   async updateOrderMedications(id: string, medications: any[]): Promise<Order | undefined> {

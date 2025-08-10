@@ -343,6 +343,36 @@ export default function DashboardPatient() {
                         {order.deliveryNotes && (
                           <p className="text-sm"><strong>Notes:</strong> {order.deliveryNotes}</p>
                         )}
+                        
+                        {/* Affichage des médicaments avec prix si confirmés par la pharmacie */}
+                        {order.status !== 'pending' && order.medications && (
+                          <div className="mt-3 bg-gray-50 rounded-lg p-3">
+                            <p className="text-sm font-medium mb-2">Détails des médicaments:</p>
+                            <div className="space-y-2">
+                              {(typeof order.medications === 'string' ? JSON.parse(order.medications) : order.medications).map((med: any, index: number) => (
+                                <div key={index} className="flex justify-between items-center text-sm py-1 border-b border-gray-200 last:border-b-0">
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{med.name}</span>
+                                    <div className="flex gap-2 mt-1">
+                                      {med.available !== undefined && (
+                                        <Badge variant={med.available ? "default" : "destructive"} className="text-xs">
+                                          {med.available ? "Disponible" : "Indisponible"}
+                                        </Badge>
+                                      )}
+                                      {med.surBon && (
+                                        <Badge variant="outline" className="text-xs">Sur BON</Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {med.price && (
+                                    <span className="text-green-600 font-semibold">{med.price} FCFA</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
                         {order.status === 'in_delivery' && (
                           <Button size="sm" className="w-full mt-2" onClick={() => setActiveTab("tracking")}>
                             Suivre la livraison

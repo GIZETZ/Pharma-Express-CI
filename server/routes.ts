@@ -745,6 +745,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Medications must be an array' });
       }
 
+      // Calculate total amount from medication prices
+      const totalAmount = medications.reduce((sum: number, med: any) => {
+        return sum + (med.price && med.available ? parseFloat(med.price) : 0);
+      }, 0);
+
+      // Update order with medication details and total amount
+      const updatedOrder = await storage.updateOrderMedications(orderId, medications);
+      if (updatedOrder) {
+        await storage.updateOrderStatus(orderId, 'confirmed', totalAmount);
+      }
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      res.json({ ...updatedOrder, totalAmount });
+    } catch (error) {
+      console.error('Error sending response:', error);
+      res.status(500).json({ message: 'Failed to send response' });
+    }
+  });e: 'Medications must be an array' });
+      }
+
       // Update medications with pharmacist response
       const updatedOrder = await storage.updateOrderMedications(orderId, medications);
       

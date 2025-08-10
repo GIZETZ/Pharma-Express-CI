@@ -60,13 +60,13 @@ const PrescriptionImage = ({ prescriptionId, className }: { prescriptionId: stri
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        
+
         // Ouvrir l'image en plein écran
         const modal = document.createElement('div');
         modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4';
         modal.style.zIndex = '9999';
         modal.style.cursor = 'pointer';
-        
+
         const modalContent = document.createElement('div');
         modalContent.className = 'relative max-w-full max-h-full';
         modalContent.innerHTML = `
@@ -75,30 +75,30 @@ const PrescriptionImage = ({ prescriptionId, className }: { prescriptionId: stri
                alt="Photo de l'ordonnance" />
           <button class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 text-2xl font-bold">&times;</button>
         `;
-        
+
         modal.appendChild(modalContent);
-        
+
         const closeModal = () => {
           if (document.body.contains(modal)) {
             document.body.removeChild(modal);
           }
         };
-        
+
         // Empêcher la propagation sur le contenu de l'image
         modalContent.addEventListener('click', (e) => {
           e.stopPropagation();
         });
-        
+
         // Fermer avec le bouton X
         const closeBtn = modalContent.querySelector('button');
         closeBtn?.addEventListener('click', (e) => {
           e.stopPropagation();
           closeModal();
         });
-        
+
         // Fermer en cliquant sur le fond
         modal.addEventListener('click', closeModal);
-        
+
         // Fermer avec Escape
         const handleEscape = (e: KeyboardEvent) => {
           if (e.key === 'Escape') {
@@ -107,7 +107,7 @@ const PrescriptionImage = ({ prescriptionId, className }: { prescriptionId: stri
           }
         };
         document.addEventListener('keydown', handleEscape);
-        
+
         document.body.appendChild(modal);
       }}
     />
@@ -239,14 +239,14 @@ export default function DashboardPharmacien() {
       const priceKey = `${orderId}-${index}`;
       const status = medicationStatuses[statusKey] || { available: true, surBon: med.surBon || false };
       const price = medicationPrices[priceKey] || '';
-      
+
       return { 
         ...med, 
         ...status, 
         price: price ? parseFloat(price) : undefined
       };
     });
-    
+
     sendResponseMutation.mutate({ orderId, medications });
   };
 
@@ -407,7 +407,7 @@ export default function DashboardPharmacien() {
                         </p>
                       </div>
                     </div>
-                    
+
                     {/* Médicaments demandés */}
                     <div className="mb-4">
                       <p className="text-sm font-medium text-gray-700 mb-2">Médicaments demandés</p>
@@ -507,7 +507,7 @@ export default function DashboardPharmacien() {
                                                 {visibleImages[`${order.id}-${index}`] ? '👁️ Cacher' : '👁️ Voir'}
                                               </Button>
                                             </div>
-                                            
+
                                             {/* Image affichée directement */}
                                             {visibleImages[`${order.id}-${index}`] && (
                                               <div className="border-t p-4 bg-gray-50">
@@ -518,13 +518,13 @@ export default function DashboardPharmacien() {
                                                   onClick={(e) => {
                                                     e.preventDefault();
                                                     e.stopPropagation();
-                                                    
+
                                                     // Ouvrir en plein écran pour agrandir
                                                     const modal = document.createElement('div');
                                                     modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4';
                                                     modal.style.zIndex = '9999';
                                                     modal.style.cursor = 'pointer';
-                                                    
+
                                                     const modalContent = document.createElement('div');
                                                     modalContent.className = 'relative max-w-full max-h-full';
                                                     modalContent.innerHTML = `
@@ -533,20 +533,20 @@ export default function DashboardPharmacien() {
                                                            alt="Document BON: ${doc.name}" />
                                                       <button class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 text-2xl font-bold">&times;</button>
                                                     `;
-                                                    
+
                                                     modal.appendChild(modalContent);
-                                                    
+
                                                     const closeModal = () => {
                                                       if (document.body.contains(modal)) {
                                                         document.body.removeChild(modal);
                                                       }
                                                     };
-                                                    
+
                                                     modalContent.addEventListener('click', (e) => e.stopPropagation());
                                                     const closeBtn = modalContent.querySelector('button');
                                                     closeBtn?.addEventListener('click', (e) => { e.stopPropagation(); closeModal(); });
                                                     modal.addEventListener('click', closeModal);
-                                                    
+
                                                     const handleEscape = (e: KeyboardEvent) => {
                                                       if (e.key === 'Escape') {
                                                         closeModal();
@@ -554,7 +554,7 @@ export default function DashboardPharmacien() {
                                                       }
                                                     };
                                                     document.addEventListener('keydown', handleEscape);
-                                                    
+
                                                     document.body.appendChild(modal);
                                                   }}
                                                 />
@@ -594,7 +594,7 @@ export default function DashboardPharmacien() {
                                 </div>
                               </div>
                             </div>
-                            
+
                             {/* Gestion des médicaments */}
                             <div>
                               <h4 className="font-medium mb-3">Gestion des médicaments</h4>
@@ -603,7 +603,7 @@ export default function DashboardPharmacien() {
                                   JSON.parse(order.medications).map((med: any, index: number) => {
                                     const statusKey = `${order.id}-${index}`;
                                     const currentStatus = medicationStatuses[statusKey] || { available: true, surBon: med.surBon || false };
-                                    
+
                                     return (
                                       <div key={index} className="border rounded-lg p-4 bg-white">
                                         <div className="flex items-center justify-between mb-3">
@@ -612,8 +612,8 @@ export default function DashboardPharmacien() {
                                             {currentStatus.available ? "Disponible" : "Indisponible"}
                                           </Badge>
                                         </div>
-                                        
-                                        <div className="grid grid-cols-2 gap-4">
+
+                                        <div className="grid grid-cols-2 gap-4 mb-3">
                                           <div className="flex items-center space-x-2">
                                             <Switch
                                               id={`available-${statusKey}`}
@@ -626,7 +626,7 @@ export default function DashboardPharmacien() {
                                               Disponible en stock
                                             </Label>
                                           </div>
-                                          
+
                                           <div className="flex items-center space-x-2">
                                             <Switch
                                               id={`surbon-${statusKey}`}
@@ -639,6 +639,23 @@ export default function DashboardPharmacien() {
                                               Sur BON (remboursable)
                                             </Label>
                                           </div>
+                                        </div>
+
+                                        {/* Prix du médicament */}
+                                        <div className="mt-3">
+                                          <Label htmlFor={`price-${statusKey}`} className="text-sm font-medium">
+                                            Prix (FCFA)
+                                          </Label>
+                                          <Input
+                                            id={`price-${statusKey}`}
+                                            type="number"
+                                            placeholder="Prix en FCFA"
+                                            value={medicationPrices[statusKey] || ''}
+                                            onChange={(e) => updateMedicationPrice(order.id, index, e.target.value)}
+                                            className="mt-1"
+                                            min="0"
+                                            step="1"
+                                          />
                                         </div>
                                       </div>
                                     );
@@ -647,7 +664,7 @@ export default function DashboardPharmacien() {
                                   order.medications.map((med: any, index: number) => {
                                     const statusKey = `${order.id}-${index}`;
                                     const currentStatus = medicationStatuses[statusKey] || { available: true, surBon: med.surBon || false };
-                                    
+
                                     return (
                                       <div key={index} className="border rounded-lg p-4 bg-white">
                                         <div className="flex items-center justify-between mb-3">
@@ -656,8 +673,8 @@ export default function DashboardPharmacien() {
                                             {currentStatus.available ? "Disponible" : "Indisponible"}
                                           </Badge>
                                         </div>
-                                        
-                                        <div className="grid grid-cols-2 gap-4">
+
+                                        <div className="grid grid-cols-2 gap-4 mb-3">
                                           <div className="flex items-center space-x-2">
                                             <Switch
                                               id={`available-${statusKey}`}
@@ -670,7 +687,7 @@ export default function DashboardPharmacien() {
                                               Disponible en stock
                                             </Label>
                                           </div>
-                                          
+
                                           <div className="flex items-center space-x-2">
                                             <Switch
                                               id={`surbon-${statusKey}`}
@@ -684,6 +701,23 @@ export default function DashboardPharmacien() {
                                             </Label>
                                           </div>
                                         </div>
+
+                                        {/* Prix du médicament */}
+                                        <div className="mt-3">
+                                          <Label htmlFor={`price-${statusKey}`} className="text-sm font-medium">
+                                            Prix (FCFA)
+                                          </Label>
+                                          <Input
+                                            id={`price-${statusKey}`}
+                                            type="number"
+                                            placeholder="Prix en FCFA"
+                                            value={medicationPrices[statusKey] || ''}
+                                            onChange={(e) => updateMedicationPrice(order.id, index, e.target.value)}
+                                            className="mt-1"
+                                            min="0"
+                                            step="1"
+                                          />
+                                        </div>
                                       </div>
                                     );
                                   })
@@ -691,14 +725,14 @@ export default function DashboardPharmacien() {
                                   <p className="text-sm text-gray-500">Aucun médicament spécifié</p>
                                 )}
                               </div>
-                              
+
                               <div className="flex space-x-2 mt-4 pt-4 border-t">
                                 <Button
                                   onClick={() => {
                                     const medications = order.medications && typeof order.medications === 'string' 
                                       ? JSON.parse(order.medications) 
                                       : order.medications || [];
-                                    
+
                                     handleSendResponse(order.id, medications);
                                   }}
                                   disabled={sendResponseMutation.isPending}
@@ -711,7 +745,7 @@ export default function DashboardPharmacien() {
                           </div>
                         </DialogContent>
                       </Dialog>
-                      
+
                       <Button
                         size="sm"
                         variant="outline"
