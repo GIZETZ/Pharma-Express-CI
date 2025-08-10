@@ -980,9 +980,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Accès refusé' });
       }
 
-      const pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
+      let pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
       if (!pharmacy) {
-        return res.status(404).json({ message: 'Aucune pharmacie associée à ce compte' });
+        // Auto-create pharmacy for pharmacist if none exists
+        const pharmacyName = `Pharmacie ${user.firstName} ${user.lastName}`;
+        pharmacy = await storage.createPharmacy({
+          name: pharmacyName,
+          address: user.address || 'Abidjan, Côte d\'Ivoire',
+          phone: user.phone,
+          latitude: 5.2893 + (Math.random() - 0.5) * 0.1,
+          longitude: -3.9882 + (Math.random() - 0.5) * 0.1,
+          rating: 4.5,
+          deliveryTime: '30',
+          isOpen: true,
+          deliveryRadius: 5,
+          minDeliveryFee: 1000,
+          openingHours: {
+            monday: { open: '08:00', close: '19:00' },
+            tuesday: { open: '08:00', close: '19:00' },
+            wednesday: { open: '08:00', close: '19:00' },
+            thursday: { open: '08:00', close: '19:00' },
+            friday: { open: '08:00', close: '19:00' },
+            saturday: { open: '08:00', close: '17:00' },
+            sunday: { open: '09:00', close: '15:00' }
+          }
+        });
+        
+        // Update user to associate with the pharmacy
+        await storage.updateUser(req.session.userId!, { pharmacyId: pharmacy.id });
       }
       res.json(pharmacy);
     } catch (error) {

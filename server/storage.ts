@@ -321,38 +321,14 @@ export class MemStorage implements IStorage {
     const user = this.users.get(userId);
     if (!user || user.role !== 'pharmacien') return undefined;
     
-    // Créer automatiquement une pharmacie pour tout pharmacien
-    let pharmacy = Array.from(this.pharmacies.values()).find(pharmacy => pharmacy.phone === user.phone);
-    
-    if (!pharmacy) {
-      // Créer une pharmacie automatiquement basée sur les informations de l'utilisateur
-      const pharmacyName = user.phone === '+225 05 44 33 22' ? 'Pharmacie Centrale Plus' : 
-                           user.phone === '+225 07 11 22 33' ? 'Pharmacie du Centre' :
-                           `Pharmacie ${user.firstName || 'Moderne'}`;
-      
-      pharmacy = await this.createPharmacy({
-        name: pharmacyName,
-        address: user.phone === '+225 05 44 33 22' ? 'Boulevard VGE, Marcory, Abidjan' : 'Centre-ville, Abidjan',
-        phone: user.phone,
-        latitude: 5.2893 + (Math.random() - 0.5) * 0.1,
-        longitude: -3.9882 + (Math.random() - 0.5) * 0.1,
-        rating: 4.2 + Math.random() * 0.8,
-        reviewCount: Math.floor(Math.random() * 200) + 50,
-        deliveryTime: 15 + Math.floor(Math.random() * 20),
-        isOpen: true,
-        deliveryRadius: 5 + Math.floor(Math.random() * 5),
-        minDeliveryFee: 1000,
-        openingHours: {
-          monday: { open: '08:00', close: '19:00' },
-          tuesday: { open: '08:00', close: '19:00' },
-          wednesday: { open: '08:00', close: '19:00' },
-          thursday: { open: '08:00', close: '19:00' },
-          friday: { open: '08:00', close: '19:00' },
-          saturday: { open: '08:00', close: '17:00' },
-          sunday: { open: '09:00', close: '15:00' }
-        }
-      });
+    // First check if user has a pharmacyId assigned
+    if (user.pharmacyId) {
+      const pharmacy = this.pharmacies.get(user.pharmacyId);
+      if (pharmacy) return pharmacy;
     }
+    
+    // Fallback: try to find pharmacy by phone number
+    const pharmacy = Array.from(this.pharmacies.values()).find(pharmacy => pharmacy.phone === user.phone);
     
     return pharmacy;
   }
