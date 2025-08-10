@@ -12,7 +12,10 @@ import Onboarding from "@/pages/onboarding";
 import Home from "@/pages/home";
 import Camera from "@/pages/camera";
 import Pharmacies from "@/pages/pharmacies";
-import Order from "@/pages/order";
+import OrderPage from "./pages/order";
+import OrderValidationPage from "./pages/order-validation";
+import PendingValidation from "./pages/pending-validation";
+import SupervisorLock from "./pages/supervisorlock";
 import DeliveryTracking from "@/pages/delivery-tracking";
 import Profile from "@/pages/profile";
 import EditProfile from "@/pages/edit-profile";
@@ -24,13 +27,11 @@ import DashboardPatient from "@/pages/dashboard-patient";
 import DashboardPharmacien from "@/pages/dashboard-pharmacien";
 import DashboardLivreur from "@/pages/dashboard-livreur";
 import DashboardAdmin from "@/pages/dashboard-admin";
-import SupervisorLock from "@/pages/supervisorlock";
-import PendingValidation from "@/pages/pending-validation";
-import PWAInstallPrompt from "@/components/pwa-install-prompt";
+
 
 function RoleDashboard() {
   const { user } = useAuth();
-  
+
   if (!user) return null;
 
   // Check if professional account is pending validation
@@ -42,7 +43,7 @@ function RoleDashboard() {
   if ((user.role === "pharmacien" || user.role === "livreur") && user.verificationStatus === "rejected") {
     return <PendingValidation />; // Could create a separate rejection page
   }
-  
+
   switch (user.role) {
     case "admin":
       return <DashboardAdmin />;
@@ -90,12 +91,14 @@ function Router() {
           <Route path="/pending-validation" component={PendingValidation} />
           <Route path="/camera" component={Camera} />
           <Route path="/pharmacies" component={Pharmacies} />
-          <Route path="/order" component={Order} />
+          <Route path="/order" component={OrderPage} />
+          <Route path="/order-validation" component={OrderValidationPage} />
+          <Route path="/pending-validation" component={PendingValidation} />
+          <Route path="/supervisorlock" component={SupervisorLock} />
           <Route path="/delivery" component={DeliveryTracking} />
           <Route path="/profile" component={Profile} />
           <Route path="/edit-profile" component={EditProfile} />
           <Route path="/delivery-address" component={DeliveryAddress} />
-          <Route path="/supervisorlock" component={SupervisorLock} />
           <Route component={NotFound} />
         </>
       ) : (

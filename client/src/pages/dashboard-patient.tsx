@@ -476,20 +476,13 @@ export default function DashboardPatient() {
                                   <span className="font-bold text-lg">{(parseFloat(order.totalAmount) + 1000).toFixed(0)} FCFA</span>
                                 </div>
                                 
-                                <div className="grid grid-cols-2 gap-2 mt-3">
+                                <div className="mt-3">
                                   <Button 
                                     size="sm" 
-                                    onClick={() => setSelectedOrderForPayment(order)}
-                                    className="bg-green-600 hover:bg-green-700"
+                                    onClick={() => navigate(`/order-validation?orderId=${order.id}`)}
+                                    className="w-full bg-blue-600 hover:bg-blue-700"
                                   >
-                                    💳 Procéder au paiement
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="destructive"
-                                    onClick={() => handleCancelOrder(order.id)}
-                                  >
-                                    ❌ Annuler la commande
+                                    📋 Valider la commande
                                   </Button>
                                 </div>
                               </div>
