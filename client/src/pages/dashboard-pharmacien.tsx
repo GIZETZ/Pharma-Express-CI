@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -121,14 +122,12 @@ export default function DashboardPharmacien() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [medicationStatuses, setMedicationStatuses] = useState<Record<string, {available: boolean, surBon: boolean}>>({});
   const [visibleImages, setVisibleImages] = useState<Record<string, boolean>>({});
+  const [medicationPrices, setMedicationPrices] = useState<Record<string, string>>({});
 
   // Mutation pour mettre à jour le statut des commandes
   const updateOrderMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: string; status: string }) =>
-      apiRequest(`/api/pharmacien/orders/${orderId}/status`, {
-        method: "POST",
-        body: JSON.stringify({ status }),
-      }),
+      apiRequest("POST", `/api/pharmacien/orders/${orderId}/status`, { status }),
     onSuccess: (data, variables) => {
       toast({
         title: "Commande mise à jour",
@@ -148,10 +147,7 @@ export default function DashboardPharmacien() {
   // Mutation pour mettre à jour les médicaments
   const updateMedicationsMutation = useMutation({
     mutationFn: ({ orderId, medications }: { orderId: string; medications: any[] }) =>
-      apiRequest(`/api/pharmacien/orders/${orderId}/medications`, {
-        method: "POST",
-        body: JSON.stringify({ medications }),
-      }),
+      apiRequest("POST", `/api/pharmacien/orders/${orderId}/medications`, { medications }),
     onSuccess: () => {
       toast({
         title: "Médicaments mis à jour",
@@ -167,6 +163,29 @@ export default function DashboardPharmacien() {
       });
     },
   });
+
+  // Mutation pour envoyer la réponse au patient
+  const sendResponseMutation = useMutation({
+    mutationFn: ({ orderId, medications }: { orderId: string; medications: any[] }) =>
+      apiRequest("POST", `/api/pharmacien/orders/${orderId}/send-response`, { medications }),
+    onSuccess: () => {
+      toast({
+        title: "Réponse envoyée",
+        description: "La réponse a été envoyée au patient avec succès",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/pharmacien/orders"] });
+      setMedicationPrices({});
+      setMedicationStatuses({});
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'envoyer la réponse",
+        variant: "destructive",
+      });
+    },
+  });
+
   const { data: orders, isLoading: ordersLoading } = useQuery({ 
     queryKey: ["/api/pharmacien/orders"],
     refetchInterval: 5000 // Refresh every 5 seconds
@@ -204,6 +223,31 @@ export default function DashboardPharmacien() {
         [field]: value
       }
     }));
+  };
+
+  const updateMedicationPrice = (orderId: string, medIndex: number, price: string) => {
+    const key = `${orderId}-${medIndex}`;
+    setMedicationPrices(prev => ({
+      ...prev,
+      [key]: price
+    }));
+  };
+
+  const handleSendResponse = (orderId: string, originalMedications: any[]) => {
+    const medications = originalMedications.map((med: any, index: number) => {
+      const statusKey = `${orderId}-${index}`;
+      const priceKey = `${orderId}-${index}`;
+      const status = medicationStatuses[statusKey] || { available: true, surBon: med.surBon || false };
+      const price = medicationPrices[priceKey] || '';
+      
+      return { 
+        ...med, 
+        ...status, 
+        price: price ? parseFloat(price) : undefined
+      };
+    });
+    
+    sendResponseMutation.mutate({ orderId, medications });
   };
 
   return (
@@ -655,17 +699,12 @@ export default function DashboardPharmacien() {
                                       ? JSON.parse(order.medications) 
                                       : order.medications || [];
                                     
-                                    const updatedMeds = medications.map((med: any, index: number) => {
-                                      const statusKey = `${order.id}-${index}`;
-                                      const status = medicationStatuses[statusKey] || { available: true, surBon: med.surBon || false };
-                                      return { ...med, ...status };
-                                    });
-                                    
-                                    handleMedicationUpdate(order.id, updatedMeds);
+                                    handleSendResponse(order.id, medications);
                                   }}
-                                  disabled={updateMedicationsMutation.isPending}
+                                  disabled={sendResponseMutation.isPending}
+                                  className="bg-blue-600 hover:bg-blue-700"
                                 >
-                                  💾 Sauvegarder les modifications
+                                  📤 Envoyer la réponse
                                 </Button>
                               </div>
                             </div>

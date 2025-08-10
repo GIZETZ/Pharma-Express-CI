@@ -730,6 +730,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send response to patient (pharmacist)
+  app.post('/api/pharmacien/orders/:orderId/send-response', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'pharmacien') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { orderId } = req.params;
+      const { medications } = req.body;
+
+      if (!Array.isArray(medications)) {
+        return res.status(400).json({ message: 'Medications must be an array' });
+      }
+
+      // Update medications with pharmacist response
+      const updatedOrder = await storage.updateOrderMedications(orderId, medications);
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      // Change order status to "awaiting_patient_response"
+      const finalOrder = await storage.updateOrderStatus(orderId, 'awaiting_patient_response');
+
+      res.json(finalOrder);
+    } catch (error) {
+      console.error('Error sending response:', error);
+      res.status(500).json({ message: 'Failed to send response' });
+    }
+  });
+
   // Get delivery orders (livreur)
   app.get('/api/livreur/deliveries', requireAuth, async (req: any, res) => {
     try {
