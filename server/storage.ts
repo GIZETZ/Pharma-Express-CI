@@ -322,7 +322,35 @@ export class MemStorage implements IStorage {
     if (!user || user.role !== 'pharmacien') return undefined;
     
     // Trouver la pharmacie par numéro de téléphone (liaison temporaire)
-    return Array.from(this.pharmacies.values()).find(pharmacy => pharmacy.phone === user.phone);
+    let pharmacy = Array.from(this.pharmacies.values()).find(pharmacy => pharmacy.phone === user.phone);
+    
+    // Si aucune pharmacie trouvée et que c'est le compte Pharmacie Centrale Plus, la créer
+    if (!pharmacy && user.phone === '+225 05 44 33 22') {
+      pharmacy = await this.createPharmacy({
+        name: 'Pharmacie Centrale Plus',
+        address: 'Boulevard VGE, Marcory, Abidjan',
+        phone: '+225 05 44 33 22',
+        latitude: 5.2893,
+        longitude: -3.9882,
+        rating: 4.7,
+        reviewCount: 156,
+        deliveryTime: 20,
+        isOpen: true,
+        deliveryRadius: 8,
+        minDeliveryFee: 1000,
+        openingHours: {
+          monday: { open: '08:00', close: '19:00' },
+          tuesday: { open: '08:00', close: '19:00' },
+          wednesday: { open: '08:00', close: '19:00' },
+          thursday: { open: '08:00', close: '19:00' },
+          friday: { open: '08:00', close: '19:00' },
+          saturday: { open: '08:00', close: '17:00' },
+          sunday: { open: '09:00', close: '15:00' }
+        }
+      });
+    }
+    
+    return pharmacy;
   }
 
   async updatePharmacy(id: string, updates: Partial<InsertPharmacy>): Promise<Pharmacy | undefined> {
