@@ -321,22 +321,26 @@ export class MemStorage implements IStorage {
     const user = this.users.get(userId);
     if (!user || user.role !== 'pharmacien') return undefined;
     
-    // Trouver la pharmacie par numéro de téléphone (liaison temporaire)
+    // Créer automatiquement une pharmacie pour tout pharmacien
     let pharmacy = Array.from(this.pharmacies.values()).find(pharmacy => pharmacy.phone === user.phone);
     
-    // Si aucune pharmacie trouvée et que c'est le compte Pharmacie Centrale Plus, la créer
-    if (!pharmacy && user.phone === '+225 05 44 33 22') {
+    if (!pharmacy) {
+      // Créer une pharmacie automatiquement basée sur les informations de l'utilisateur
+      const pharmacyName = user.phone === '+225 05 44 33 22' ? 'Pharmacie Centrale Plus' : 
+                           user.phone === '+225 07 11 22 33' ? 'Pharmacie du Centre' :
+                           `Pharmacie ${user.firstName || 'Moderne'}`;
+      
       pharmacy = await this.createPharmacy({
-        name: 'Pharmacie Centrale Plus',
-        address: 'Boulevard VGE, Marcory, Abidjan',
-        phone: '+225 05 44 33 22',
-        latitude: 5.2893,
-        longitude: -3.9882,
-        rating: 4.7,
-        reviewCount: 156,
-        deliveryTime: 20,
+        name: pharmacyName,
+        address: user.phone === '+225 05 44 33 22' ? 'Boulevard VGE, Marcory, Abidjan' : 'Centre-ville, Abidjan',
+        phone: user.phone,
+        latitude: 5.2893 + (Math.random() - 0.5) * 0.1,
+        longitude: -3.9882 + (Math.random() - 0.5) * 0.1,
+        rating: 4.2 + Math.random() * 0.8,
+        reviewCount: Math.floor(Math.random() * 200) + 50,
+        deliveryTime: 15 + Math.floor(Math.random() * 20),
         isOpen: true,
-        deliveryRadius: 8,
+        deliveryRadius: 5 + Math.floor(Math.random() * 5),
         minDeliveryFee: 1000,
         openingHours: {
           monday: { open: '08:00', close: '19:00' },
