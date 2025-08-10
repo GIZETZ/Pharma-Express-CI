@@ -28,6 +28,7 @@ import DashboardPatient from "@/pages/dashboard-patient";
 import DashboardPharmacien from "@/pages/dashboard-pharmacien";
 import DashboardLivreur from "@/pages/dashboard-livreur";
 import DashboardAdmin from "@/pages/dashboard-admin";
+import PharmacyProfile from "@/pages/pharmacy-profile";
 
 
 function RoleDashboard() {
@@ -99,6 +100,7 @@ function Router() {
           <Route path="/delivery" component={DeliveryTracking} />
           <Route path="/profile" component={Profile} />
           <Route path="/edit-profile" component={EditProfile} />
+          <Route path="/pharmacy-profile" component={PharmacyProfile} />
           <Route path="/delivery-address" component={DeliveryAddress} />
           <Route component={NotFound} />
         </>

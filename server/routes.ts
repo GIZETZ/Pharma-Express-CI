@@ -972,6 +972,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+// Pharmacy profile routes
+  app.get('/api/pharmacies/my-pharmacy', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'pharmacien') {
+        return res.status(403).json({ message: 'Accès refusé' });
+      }
+
+      const pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
+      if (!pharmacy) {
+        return res.status(404).json({ message: 'Aucune pharmacie associée à ce compte' });
+      }
+      res.json(pharmacy);
+    } catch (error) {
+      console.error('Error fetching pharmacy:', error);
+      res.status(500).json({ message: 'Erreur serveur' });
+    }
+  });
+
+  app.put('/api/pharmacies/my-pharmacy', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'pharmacien') {
+        return res.status(403).json({ message: 'Accès refusé' });
+      }
+
+      const pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
+      if (!pharmacy) {
+        return res.status(404).json({ message: 'Aucune pharmacie associée à ce compte' });
+      }
+
+      const updatedPharmacy = await storage.updatePharmacy(pharmacy.id, req.body);
+      if (!updatedPharmacy) {
+        return res.status(404).json({ message: 'Pharmacie non trouvée' });
+      }
+
+      res.json(updatedPharmacy);
+    } catch (error) {
+      console.error('Error updating pharmacy:', error);
+      res.status(500).json({ message: 'Erreur serveur' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

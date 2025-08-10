@@ -101,6 +101,17 @@ export class MemStorage implements IStorage {
         verificationStatus: "approved" as const
       },
       {
+        firstName: "Dr. Adjoua",
+        lastName: "Bamba",
+        phone: "+225 05 44 33 22",
+        address: "Pharmacie Centrale Plus, Marcory",
+        password: "pharma2024",
+        role: "pharmacien" as const,
+        language: "fr",
+        isActive: true,
+        verificationStatus: "approved" as const
+      },
+      {
         firstName: "Jean-Claude",
         lastName: "Koffi",
         phone: "+225 07 44 55 66",
@@ -149,6 +160,25 @@ export class MemStorage implements IStorage {
         rating: 4.2,
         deliveryTime: "25",
         isOpen: true
+      },
+      {
+        name: "Pharmacie Centrale Plus",
+        address: "Boulevard VGE, Marcory",
+        latitude: 5.2845,
+        longitude: -3.9731,
+        phone: "+225 05 44 33 22",
+        rating: 4.7,
+        deliveryTime: "20",
+        isOpen: true,
+        openingHours: {
+          monday: { open: "08:00", close: "20:00" },
+          tuesday: { open: "08:00", close: "20:00" },
+          wednesday: { open: "08:00", close: "20:00" },
+          thursday: { open: "08:00", close: "20:00" },
+          friday: { open: "08:00", close: "20:00" },
+          saturday: { open: "09:00", close: "18:00" },
+          sunday: { open: "10:00", close: "16:00" }
+        }
       }
     ];
 
@@ -285,6 +315,27 @@ export class MemStorage implements IStorage {
     
     this.pharmacies.set(id, newPharmacy);
     return newPharmacy;
+  }
+
+  async getPharmacyByUserId(userId: string): Promise<Pharmacy | undefined> {
+    const user = this.users.get(userId);
+    if (!user || user.role !== 'pharmacien') return undefined;
+    
+    // Trouver la pharmacie par numéro de téléphone (liaison temporaire)
+    return Array.from(this.pharmacies.values()).find(pharmacy => pharmacy.phone === user.phone);
+  }
+
+  async updatePharmacy(id: string, updates: Partial<InsertPharmacy>): Promise<Pharmacy | undefined> {
+    const pharmacy = this.pharmacies.get(id);
+    if (!pharmacy) return undefined;
+
+    const updatedPharmacy: Pharmacy = {
+      ...pharmacy,
+      ...updates,
+    };
+    
+    this.pharmacies.set(id, updatedPharmacy);
+    return updatedPharmacy;
   }
 
   // Prescription operations
