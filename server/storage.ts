@@ -85,7 +85,9 @@ export class MemStorage implements IStorage {
         address: "Siège YahoPharma, Abidjan",
         password: "admin123",
         role: "admin" as const,
-        language: "fr"
+        language: "fr",
+        isActive: true,
+        verificationStatus: "approved" as const
       },
       {
         firstName: "Dr. Marie",
@@ -94,7 +96,9 @@ export class MemStorage implements IStorage {
         address: "Pharmacie de la Paix, Abidjan",
         password: "pharma123",
         role: "pharmacien" as const,
-        language: "fr"
+        language: "fr",
+        isActive: true,
+        verificationStatus: "approved" as const
       },
       {
         firstName: "Jean-Claude",
@@ -103,7 +107,9 @@ export class MemStorage implements IStorage {
         address: "Zone livraison Abidjan",
         password: "livreur123",
         role: "livreur" as const,
-        language: "fr"
+        language: "fr",
+        isActive: true,
+        verificationStatus: "approved" as const
       },
       {
         firstName: "Aya",
@@ -112,7 +118,9 @@ export class MemStorage implements IStorage {
         address: "Cocody, Abidjan",
         password: "patient123",
         role: "patient" as const,
-        language: "fr"
+        language: "fr",
+        isActive: true,
+        verificationStatus: "approved" as const
       }
     ];
 
@@ -129,7 +137,8 @@ export class MemStorage implements IStorage {
         longitude: -4.0267,
         phone: "+225 27 22 44 55 66",
         rating: 4.5,
-        deliveryTime: "30"
+        deliveryTime: "30",
+        isOpen: true
       },
       {
         name: "Pharmacie du Plateau",
@@ -138,7 +147,8 @@ export class MemStorage implements IStorage {
         longitude: -4.0267,
         phone: "+225 27 20 21 22 23",
         rating: 4.2,
-        deliveryTime: "25"
+        deliveryTime: "25",
+        isOpen: true
       }
     ];
 

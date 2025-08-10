@@ -14,7 +14,7 @@ import {
 import { db } from "./firebase";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
-import { IStorage } from "./storage";
+import { type IStorage } from "./storage";
 
 export class FirebaseStorage implements IStorage {
   
@@ -134,7 +134,7 @@ export class FirebaseStorage implements IStorage {
         verificationStatus: status,
         updatedAt: new Date(),
       });
-      return this.getUser(userId);
+      return this.getUser(userId) ?? null;
     } catch (error) {
       console.error('Error updating verification status:', error);
       return null;

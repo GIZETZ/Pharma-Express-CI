@@ -1,4 +1,4 @@
-import { IStorage, MemStorage } from "./storage";
+import { type IStorage, MemStorage } from "./storage";
 import { FirebaseStorage } from "./firebase-storage";
 
 export function createStorage(): IStorage {
