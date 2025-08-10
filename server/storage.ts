@@ -630,6 +630,19 @@ export class MemStorage implements IStorage {
     }
   }
 
+  async getOrderById(orderId: string): Promise<any> {
+    try {
+      const [order] = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.id, orderId));
+      return order;
+    } catch (error) {
+      console.error('Error getting order by ID:', error);
+      return undefined;
+    }
+  }
+
   async getDeliveryOrders(deliveryPersonId?: string): Promise<any[]> {
     const ordersArray = Array.from(this.orders.values());
     const usersArray = Array.from(this.users.values());

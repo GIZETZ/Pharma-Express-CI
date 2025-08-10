@@ -767,6 +767,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Process payment for order
+  app.post('/api/orders/payment', requireAuth, async (req: any, res) => {
+    try {
+      const { orderId, paymentMethod, amount, deliveryFee, transactionId } = req.body;
+
+      if (!orderId || !paymentMethod || !amount) {
+        return res.status(400).json({ message: 'Missing required payment information' });
+      }
+
+      // Update order status to ready for delivery after payment
+      const updatedOrder = await storage.updateOrderStatus(orderId, 'ready_for_delivery');
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      // Log payment information
+      console.log('Payment processed:', {
+        orderId,
+        paymentMethod,
+        amount,
+        deliveryFee,
+        transactionId,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({ 
+        message: 'Payment processed successfully',
+        order: updatedOrder,
+        paymentDetails: {
+          method: paymentMethod,
+          amount,
+          deliveryFee,
+          transactionId
+        }
+      });
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      res.status(500).json({ message: 'Failed to process payment' });
+    }
+  });
+
+  // Cancel order
+  app.post('/api/orders/:orderId/cancel', requireAuth, async (req: any, res) => {
+    try {
+      const { orderId } = req.params;
+      const userId = req.session.userId;
+
+      // Check if user owns the order
+      const order = await storage.getOrderById(orderId);
+      if (!order || order.patientId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Only allow cancellation for certain statuses
+      if (!['pending', 'confirmed'].includes(order.status)) {
+        return res.status(400).json({ message: 'Cannot cancel order at this stage' });
+      }
+
+      const updatedOrder = await storage.updateOrderStatus(orderId, 'cancelled');
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      res.json({ message: 'Order cancelled successfully', order: updatedOrder });
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      res.status(500).json({ message: 'Failed to cancel order' });
+    }
+  });
+
   // Get delivery orders (livreur)
   app.get('/api/livreur/deliveries', requireAuth, async (req: any, res) => {
     try {

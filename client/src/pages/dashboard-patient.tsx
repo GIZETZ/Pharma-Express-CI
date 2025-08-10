@@ -33,6 +33,14 @@ export default function DashboardPatient() {
     prescriptionPhoto: null as File | null
   });
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
+  const [selectedOrderForPayment, setSelectedOrderForPayment] = useState<any>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [paymentDetails, setPaymentDetails] = useState({
+    waveNumber: '',
+    orangeNumber: '',
+    moovNumber: '',
+    momoNumber: ''
+  });
   
   // Helper functions for medication management
   const addMedication = () => {
@@ -138,6 +146,49 @@ export default function DashboardPatient() {
       toast({
         title: "Erreur",
         description: "Impossible de créer la commande",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation pour le paiement
+  const paymentMutation = useMutation({
+    mutationFn: (paymentData: any) =>
+      apiRequest("/api/orders/payment", "POST", paymentData),
+    onSuccess: () => {
+      toast({
+        title: "Paiement confirmé",
+        description: "Votre commande est maintenant en cours de livraison",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      setSelectedOrderForPayment(null);
+      setPaymentMethod('');
+      setPaymentDetails({ waveNumber: '', orangeNumber: '', moovNumber: '', momoNumber: '' });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur de paiement",
+        description: "Impossible de traiter le paiement. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation pour annuler une commande
+  const cancelOrderMutation = useMutation({
+    mutationFn: (orderId: string) =>
+      apiRequest(`/api/orders/${orderId}/cancel`, "POST"),
+    onSuccess: () => {
+      toast({
+        title: "Commande annulée",
+        description: "Votre commande a été annulée avec succès",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'annuler la commande",
         variant: "destructive",
       });
     },
@@ -268,6 +319,44 @@ export default function DashboardPatient() {
     }
   };
 
+  const handleCancelOrder = (orderId: string) => {
+    if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
+      cancelOrderMutation.mutate(orderId);
+    }
+  };
+
+  const handlePayment = () => {
+    if (!selectedOrderForPayment || !paymentMethod) {
+      toast({
+        title: "Informations manquantes",
+        description: "Veuillez sélectionner un moyen de paiement",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const totalAmount = parseFloat(selectedOrderForPayment.totalAmount) + 1000;
+    const paymentData = {
+      orderId: selectedOrderForPayment.id,
+      paymentMethod,
+      amount: totalAmount,
+      deliveryFee: 1000,
+      ...paymentDetails
+    };
+
+    paymentMutation.mutate(paymentData);
+  };
+
+  const getPaymentMethods = () => {
+    // Ces données devraient idéalement venir de l'API de la pharmacie
+    return [
+      { id: 'wave', name: 'WAVE CI', number: '+225 0701234567' },
+      { id: 'orange', name: 'Orange Money', number: '+225 0701234568' },
+      { id: 'moov', name: 'Moov Money', number: '+225 0501234567' },
+      { id: 'momo', name: 'MTN MoMo', number: '+225 0501234568' }
+    ];
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
@@ -370,6 +459,41 @@ export default function DashboardPatient() {
                                 </div>
                               ))}
                             </div>
+                            
+                            {/* Actions de validation et paiement pour les commandes confirmées */}
+                            {order.status === 'confirmed' && (
+                              <div className="mt-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium">Sous-total médicaments:</span>
+                                  <span className="font-semibold">{order.totalAmount} FCFA</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium">Frais de livraison:</span>
+                                  <span className="font-semibold">1,000 FCFA</span>
+                                </div>
+                                <div className="flex items-center justify-between border-t pt-2">
+                                  <span className="font-medium">Total à payer:</span>
+                                  <span className="font-bold text-lg">{(parseFloat(order.totalAmount) + 1000).toFixed(0)} FCFA</span>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-2 mt-3">
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => setSelectedOrderForPayment(order)}
+                                    className="bg-green-600 hover:bg-green-700"
+                                  >
+                                    💳 Procéder au paiement
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="destructive"
+                                    onClick={() => handleCancelOrder(order.id)}
+                                  >
+                                    ❌ Annuler la commande
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                         
@@ -542,6 +666,125 @@ export default function DashboardPatient() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal de paiement */}
+      {selectedOrderForPayment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">💳 Paiement de la commande</h3>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setSelectedOrderForPayment(null)}
+                >
+                  ✕
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Récapitulatif */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium mb-2">Récapitulatif</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Médicaments:</span>
+                      <span>{selectedOrderForPayment.totalAmount} FCFA</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Livraison:</span>
+                      <span>1,000 FCFA</span>
+                    </div>
+                    <div className="flex justify-between font-semibold border-t pt-1">
+                      <span>Total:</span>
+                      <span>{(parseFloat(selectedOrderForPayment.totalAmount) + 1000).toFixed(0)} FCFA</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Méthodes de paiement */}
+                <div>
+                  <h4 className="font-medium mb-3">Choisir le moyen de paiement</h4>
+                  <div className="space-y-2">
+                    {getPaymentMethods().map((method) => (
+                      <div 
+                        key={method.id}
+                        className={`border rounded-lg p-3 cursor-pointer ${
+                          paymentMethod === method.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                        }`}
+                        onClick={() => setPaymentMethod(method.id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-4 h-4 rounded-full border-2 ${
+                              paymentMethod === method.id ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                            }`}>
+                              {paymentMethod === method.id && (
+                                <div className="w-full h-full rounded-full bg-white scale-50"></div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium">{method.name}</p>
+                              <p className="text-sm text-gray-600">{method.number}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Instructions de paiement */}
+                {paymentMethod && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h4 className="font-medium mb-2">📋 Instructions de paiement</h4>
+                    <div className="text-sm text-yellow-800 space-y-1">
+                      <p>1. Ouvrez votre app {getPaymentMethods().find(m => m.id === paymentMethod)?.name}</p>
+                      <p>2. Envoyez <strong>{(parseFloat(selectedOrderForPayment.totalAmount) + 1000).toFixed(0)} FCFA</strong> au numéro:</p>
+                      <p className="font-bold">{getPaymentMethods().find(m => m.id === paymentMethod)?.number}</p>
+                      <p>3. Confirmez le paiement ci-dessous une fois effectué</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Numéro de transaction */}
+                {paymentMethod && (
+                  <div>
+                    <Label htmlFor="transaction-id" className="text-sm font-medium">
+                      Numéro de transaction (optionnel)
+                    </Label>
+                    <Input
+                      id="transaction-id"
+                      placeholder="Ex: TXN123456789"
+                      className="mt-1"
+                    />
+                  </div>
+                )}
+
+                {/* Boutons d'action */}
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setSelectedOrderForPayment(null)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    onClick={handlePayment}
+                    disabled={!paymentMethod || paymentMutation.isPending}
+                  >
+                    {paymentMutation.isPending ? 'Traitement...' : 'Confirmer le paiement'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <BottomNavigation currentPage="orders" />
     </div>
   );
