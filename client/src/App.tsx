@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import PWAInstallPrompt from "@/components/pwa-install-prompt";
 
 import LanguageSelection from "@/pages/language-selection";
 import Onboarding from "@/pages/onboarding";
