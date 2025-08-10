@@ -120,6 +120,7 @@ export default function DashboardPharmacien() {
   const [activeTab, setActiveTab] = useState("new-orders");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [medicationStatuses, setMedicationStatuses] = useState<Record<string, {available: boolean, surBon: boolean}>>({});
+  const [visibleImages, setVisibleImages] = useState<Record<string, boolean>>({});
 
   // Mutation pour mettre à jour le statut des commandes
   const updateOrderMutation = useMutation({
@@ -440,84 +441,84 @@ export default function DashboardPharmacien() {
                                       <h5 className="font-medium text-blue-900 mb-2">Documents BON uploadés</h5>
                                       <div className="space-y-2">
                                         {JSON.parse(order.bonDocuments).map((doc: any, index: number) => (
-                                          <div key={index} className="flex items-center justify-between bg-white rounded p-2 border">
-                                            <div className="flex items-center space-x-2">
-                                              <span className="text-blue-600">📄</span>
-                                              <span className="text-sm font-medium">{doc.name}</span>
+                                          <div key={index} className="bg-white rounded border">
+                                            <div className="flex items-center justify-between p-2">
+                                              <div className="flex items-center space-x-2">
+                                                <span className="text-blue-600">📄</span>
+                                                <span className="text-sm font-medium">{doc.name}</span>
+                                              </div>
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={(e) => {
+                                                  e.preventDefault();
+                                                  e.stopPropagation();
+                                                  const imageKey = `${order.id}-${index}`;
+                                                  setVisibleImages(prev => ({
+                                                    ...prev,
+                                                    [imageKey]: !prev[imageKey]
+                                                  }));
+                                                }}
+                                              >
+                                                {visibleImages[`${order.id}-${index}`] ? '👁️ Cacher' : '👁️ Voir'}
+                                              </Button>
                                             </div>
-                                            <Button
-                                              size="sm"
-                                              variant="outline"
-                                              onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                
-                                                const modal = document.createElement('div');
-                                                modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4';
-                                                modal.style.zIndex = '9999';
-                                                
-                                                const modalContent = document.createElement('div');
-                                                modalContent.className = 'bg-white rounded-lg max-w-4xl max-h-full overflow-auto relative';
-                                                
-                                                modalContent.innerHTML = `
-                                                  <div class="p-4 border-b flex justify-between items-center">
-                                                    <h3 class="font-semibold">Document BON: ${doc.name}</h3>
-                                                    <button class="close-btn text-gray-500 hover:text-gray-700 text-2xl font-bold">&times;</button>
-                                                  </div>
-                                                  <div class="p-4">
-                                                    <img src="${doc.data}" 
-                                                         class="w-full max-h-96 object-contain" 
-                                                         alt="Document BON" />
-                                                  </div>
-                                                  <div class="p-4 border-t text-center">
-                                                    <button class="close-footer-btn px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Fermer</button>
-                                                  </div>
-                                                `;
-                                                
-                                                modal.appendChild(modalContent);
-                                                
-                                                const closeModal = () => {
-                                                  if (document.body.contains(modal)) {
-                                                    document.body.removeChild(modal);
-                                                  }
-                                                };
-                                                
-                                                // Empêcher la propagation sur le contenu
-                                                modalContent.addEventListener('click', (e) => {
-                                                  e.stopPropagation();
-                                                });
-                                                
-                                                // Ajouter les événements de fermeture
-                                                const closeBtnHeader = modalContent.querySelector('.close-btn');
-                                                const closeBtnFooter = modalContent.querySelector('.close-footer-btn');
-                                                
-                                                closeBtnHeader?.addEventListener('click', (e) => {
-                                                  e.stopPropagation();
-                                                  closeModal();
-                                                });
-                                                
-                                                closeBtnFooter?.addEventListener('click', (e) => {
-                                                  e.stopPropagation();
-                                                  closeModal();
-                                                });
-                                                
-                                                // Fermer en cliquant sur le fond
-                                                modal.addEventListener('click', closeModal);
-                                                
-                                                // Fermer avec Escape
-                                                const handleEscape = (e: KeyboardEvent) => {
-                                                  if (e.key === 'Escape') {
-                                                    closeModal();
-                                                    document.removeEventListener('keydown', handleEscape);
-                                                  }
-                                                };
-                                                document.addEventListener('keydown', handleEscape);
-                                                
-                                                document.body.appendChild(modal);
-                                              }}
-                                            >
-                                              👁️ Voir
-                                            </Button>
+                                            
+                                            {/* Image affichée directement */}
+                                            {visibleImages[`${order.id}-${index}`] && (
+                                              <div className="border-t p-4 bg-gray-50">
+                                                <img 
+                                                  src={doc.data} 
+                                                  alt={`Document BON: ${doc.name}`}
+                                                  className="w-full max-h-80 object-contain rounded cursor-pointer hover:shadow-lg transition-shadow"
+                                                  onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    
+                                                    // Ouvrir en plein écran pour agrandir
+                                                    const modal = document.createElement('div');
+                                                    modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4';
+                                                    modal.style.zIndex = '9999';
+                                                    modal.style.cursor = 'pointer';
+                                                    
+                                                    const modalContent = document.createElement('div');
+                                                    modalContent.className = 'relative max-w-full max-h-full';
+                                                    modalContent.innerHTML = `
+                                                      <img src="${doc.data}" 
+                                                           class="max-w-full max-h-full object-contain" 
+                                                           alt="Document BON: ${doc.name}" />
+                                                      <button class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 text-2xl font-bold">&times;</button>
+                                                    `;
+                                                    
+                                                    modal.appendChild(modalContent);
+                                                    
+                                                    const closeModal = () => {
+                                                      if (document.body.contains(modal)) {
+                                                        document.body.removeChild(modal);
+                                                      }
+                                                    };
+                                                    
+                                                    modalContent.addEventListener('click', (e) => e.stopPropagation());
+                                                    const closeBtn = modalContent.querySelector('button');
+                                                    closeBtn?.addEventListener('click', (e) => { e.stopPropagation(); closeModal(); });
+                                                    modal.addEventListener('click', closeModal);
+                                                    
+                                                    const handleEscape = (e: KeyboardEvent) => {
+                                                      if (e.key === 'Escape') {
+                                                        closeModal();
+                                                        document.removeEventListener('keydown', handleEscape);
+                                                      }
+                                                    };
+                                                    document.addEventListener('keydown', handleEscape);
+                                                    
+                                                    document.body.appendChild(modal);
+                                                  }}
+                                                />
+                                                <p className="text-xs text-gray-500 mt-2 text-center">
+                                                  Cliquez sur l'image pour l'agrandir
+                                                </p>
+                                              </div>
+                                            )}
                                           </div>
                                         ))}
                                       </div>
