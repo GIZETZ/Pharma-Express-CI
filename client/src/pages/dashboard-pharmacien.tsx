@@ -263,14 +263,24 @@ export default function DashboardPharmacien() {
                 Bienvenue Dr. {user?.firstName} ! Gérez votre pharmacie et les commandes
               </p>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => window.location.href = '/pharmacy-profile'}
-              className="bg-blue-50 hover:bg-blue-100 border-blue-200"
-            >
-              🏪 Gérer la pharmacie
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => window.location.href = '/pharmacy-profile'}
+                className="bg-blue-50 hover:bg-blue-100 border-blue-200"
+              >
+                🏪 Gérer la pharmacie
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => window.location.href = '/create-pharmacy'}
+                className="bg-green-50 hover:bg-green-100 border-green-200"
+              >
+                ➕ Créer pharmacie
+              </Button>
+            </div>
           </div>
         </div>
 

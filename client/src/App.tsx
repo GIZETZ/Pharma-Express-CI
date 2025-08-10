@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import PWAInstallPrompt from "@/components/pwa-install-prompt";
+import { lazy } from "react";
 
 import LanguageSelection from "@/pages/language-selection";
 import Onboarding from "@/pages/onboarding";
@@ -101,6 +102,8 @@ function Router() {
           <Route path="/profile" component={Profile} />
           <Route path="/edit-profile" component={EditProfile} />
           <Route path="/pharmacy-profile" component={PharmacyProfile} />
+          <Route path="/create-pharmacy" component={lazy(() => import("./pages/create-pharmacy"))} />
+          <Route path="/dashboard-livreur" component={lazy(() => import("./pages/dashboard-livreur"))} />
           <Route path="/delivery-address" component={DeliveryAddress} />
           <Route component={NotFound} />
         </>

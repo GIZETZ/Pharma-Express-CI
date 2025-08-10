@@ -87,10 +87,18 @@ export default function PharmacyProfile() {
           <Card>
             <CardContent className="p-6 text-center">
               <h3 className="text-lg font-semibold mb-2">Aucune pharmacie associée</h3>
-              <p className="text-gray-600 mb-4">Votre compte n'est associé à aucune pharmacie.</p>
-              <Button onClick={() => navigate('/dashboard-pharmacien')}>
-                Retour au tableau de bord
-              </Button>
+              <p className="text-gray-600 mb-4">Votre compte n'est associé à aucune pharmacie. Créez votre pharmacie pour commencer à recevoir des commandes.</p>
+              <div className="flex gap-3 justify-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/dashboard-pharmacien')}
+                >
+                  Retour au tableau de bord
+                </Button>
+                <Button onClick={() => navigate('/create-pharmacy')}>
+                  Créer ma pharmacie
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
