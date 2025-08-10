@@ -26,7 +26,10 @@ export default function OrderValidationPage() {
   const [location, navigate] = useLocation();
   
   // Get order ID from URL
-  const orderId = new URLSearchParams(location.split('?')[1] || '').get('orderId');
+  const urlParams = location.includes('?') ? location.split('?')[1] : '';
+  const orderId = new URLSearchParams(urlParams).get('orderId');
+  
+  console.log('Order validation - URL:', location, 'orderId:', orderId);
   
   const [selectedMedications, setSelectedMedications] = useState<Record<string, boolean>>({});
   const [paymentMethod, setPaymentMethod] = useState<string>('');
