@@ -765,25 +765,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error sending response:', error);
       res.status(500).json({ message: 'Failed to send response' });
     }
-  });e: 'Medications must be an array' });
-      }
-
-      // Update medications with pharmacist response
-      const updatedOrder = await storage.updateOrderMedications(orderId, medications);
-      
-      if (!updatedOrder) {
-        return res.status(404).json({ message: 'Order not found' });
-      }
-
-      // Change order status to "awaiting_patient_response"
-      const finalOrder = await storage.updateOrderStatus(orderId, 'awaiting_patient_response');
-
-      res.json(finalOrder);
-    } catch (error) {
-      console.error('Error sending response:', error);
-      res.status(500).json({ message: 'Failed to send response' });
-    }
-  });
+  
 
   // Get delivery orders (livreur)
   app.get('/api/livreur/deliveries', requireAuth, async (req: any, res) => {
