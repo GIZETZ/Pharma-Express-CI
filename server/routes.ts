@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
 import session from "express-session";
-import { storage } from "./storage";
+import { createStorage } from "./storage-factory";
 import { 
   insertPharmacySchema, 
   insertPrescriptionSchema, 
@@ -11,7 +11,10 @@ import {
   insertNotificationSchema,
   registerSchema,
   loginSchema
-} from "@shared/schema";
+} from "@shared/firebase-schema";
+
+// Create storage instance
+const storage = createStorage();
 import { z } from "zod";
 
 // Multer configuration for file uploads
