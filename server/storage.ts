@@ -606,15 +606,28 @@ export class MemStorage implements IStorage {
     return ordersWithUserDetails.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
   }
 
-  async updateOrderStatus(orderId: string, status: string): Promise<any> {
-    const order = this.orders.get(orderId);
-    if (order) {
-      order.status = status;
-      order.updatedAt = new Date();
-      this.orders.set(orderId, order);
-      return order;
+  async updateOrderStatus(orderId: string, status: string, totalAmount?: number): Promise<Order | undefined> {
+    try {
+      const updateData: any = {
+        status,
+        updatedAt: new Date()
+      };
+
+      // Add totalAmount if provided
+      if (totalAmount !== undefined) {
+        updateData.totalAmount = totalAmount.toString();
+      }
+
+      const [updatedOrder] = await db
+        .update(orders)
+        .set(updateData)
+        .where(eq(orders.id, orderId))
+        .returning();
+      return updatedOrder;
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      return undefined;
     }
-    return undefined;
   }
 
   async getDeliveryOrders(deliveryPersonId?: string): Promise<any[]> {
