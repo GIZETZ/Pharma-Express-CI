@@ -765,7 +765,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error sending response:', error);
       res.status(500).json({ message: 'Failed to send response' });
     }
-  
+  });
 
   // Get delivery orders (livreur)
   app.get('/api/livreur/deliveries', requireAuth, async (req: any, res) => {
