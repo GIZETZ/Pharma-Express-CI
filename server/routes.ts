@@ -95,6 +95,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  // Test route to verify code changes are applied
+  app.get('/api/test-debug', (req, res) => {
+    console.log('🚀 TEST ROUTE ACCESSED - CHANGES ARE APPLIED!');
+    res.json({ message: 'Debug test route working', timestamp: new Date().toISOString() });
+  });
+
+  // Simple test route for pharmacy GET debugging
+  app.get('/api/test-pharmacy-get', requireAuth, (req, res) => {
+    console.log('🎯 PHARMACY GET TEST - User:', req.session.userId);
+    res.json({ success: true, userId: req.session.userId });
+  });
+
+  // Test POST route to compare with GET
+  app.post('/api/test-pharmacy-post', requireAuth, (req, res) => {
+    console.log('🎯 PHARMACY POST TEST - User:', req.session.userId);
+    res.json({ success: true, userId: req.session.userId, method: 'POST' });
+  });
+
   // Routes d'authentification
   app.post('/api/auth/register', async (req, res) => {
     try {
@@ -974,55 +992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Pharmacy profile routes
-  app.get('/api/pharmacies/my-pharmacy', requireAuth, async (req, res) => {
-    const user = await storage.getUser(req.session.userId!);
-    console.log('Getting pharmacy for user:', { userId: req.session.userId, role: user?.role, pharmacyId: user?.pharmacyId, phone: user?.phone });
-    
-    if (!user || user.role !== 'pharmacien') {
-      return res.status(403).json({ message: 'Accès refusé' });
-    }
-
-    let pharmacy = null;
-
-    // Try to get pharmacy by pharmacyId from user
-    if (user.pharmacyId) {
-      pharmacy = await storage.getPharmacy(user.pharmacyId);
-      console.log('Pharmacy found by pharmacyId:', pharmacy ? pharmacy.id : 'not found');
-    }
-
-    // If not found, try the old method (fallback)
-    if (!pharmacy) {
-      pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
-      console.log('Pharmacy found by userId method:', pharmacy ? pharmacy.id : 'not found');
-
-      // If found by old method, update user with pharmacyId
-      if (pharmacy) {
-        await storage.updateUser(req.session.userId!, { pharmacyId: pharmacy.id });
-        console.log('Updated user with pharmacyId:', pharmacy.id);
-      }
-    }
-
-    // Last resort: search by phone number directly
-    if (!pharmacy) {
-      const allPharmacies = await storage.getPharmacies();
-      pharmacy = allPharmacies.find(p => p.phone === user.phone);
-      console.log('Pharmacy found by phone search:', pharmacy ? pharmacy.id : 'not found');
-      
-      // If found, update user with pharmacyId
-      if (pharmacy) {
-        await storage.updateUser(req.session.userId!, { pharmacyId: pharmacy.id });
-        console.log('Updated user with pharmacyId from phone search:', pharmacy.id);
-      }
-    }
-
-    if (!pharmacy) {
-      console.log('No pharmacy found for user. All pharmacies:', await storage.getPharmacies());
-      return res.status(404).json({ message: 'Pharmacy not found' });
-    }
-
-    console.log('Returning pharmacy:', pharmacy.id);
-    res.json(pharmacy);
-  });
+  // Note: GET route is intercepted by Vite middleware in development, using PUT with empty body as workaround
 
   app.put('/api/pharmacies/my-pharmacy', requireAuth, async (req, res) => {
     try {
@@ -1031,7 +1001,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Accès refusé' });
       }
 
+      // If no body data, act as a GET request (workaround for Vite middleware issue)
       const pharmacyData = req.body;
+      if (!pharmacyData || Object.keys(pharmacyData).length === 0) {
+        console.log('PUT request with no data - acting as GET request');
+        
+        // Same logic as GET route
+        let pharmacy = null;
+
+        // Try to get pharmacy by pharmacyId from user
+        if (user.pharmacyId) {
+          pharmacy = await storage.getPharmacy(user.pharmacyId);
+          console.log('Pharmacy found by pharmacyId:', pharmacy ? pharmacy.id : 'not found');
+        }
+
+        // If not found, try the old method (fallback)
+        if (!pharmacy) {
+          pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
+          console.log('Pharmacy found by userId method:', pharmacy ? pharmacy.id : 'not found');
+
+          // If found by old method, update user with pharmacyId
+          if (pharmacy) {
+            await storage.updateUser(req.session.userId!, { pharmacyId: pharmacy.id });
+            console.log('Updated user with pharmacyId:', pharmacy.id);
+          }
+        }
+
+        // Last resort: search by phone number directly
+        if (!pharmacy) {
+          const allPharmacies = await storage.getPharmacies();
+          pharmacy = allPharmacies.find(p => p.phone === user.phone);
+          console.log('Pharmacy found by phone search:', pharmacy ? pharmacy.id : 'not found');
+          
+          // If found, update user with pharmacyId
+          if (pharmacy) {
+            await storage.updateUser(req.session.userId!, { pharmacyId: pharmacy.id });
+            console.log('Updated user with pharmacyId from phone search:', pharmacy.id);
+          }
+        }
+
+        if (!pharmacy) {
+          console.log('No pharmacy found for user. All pharmacies:', await storage.getPharmacies());
+          return res.status(404).json({ message: 'Pharmacy not found' });
+        }
+
+        console.log('Returning pharmacy via PUT-as-GET:', pharmacy.id);
+        return res.json(pharmacy);
+      }
+
       console.log('Updating pharmacy with data:', pharmacyData);
 
       // Try to find existing pharmacy by pharmacyId first, then fallback to ownerId

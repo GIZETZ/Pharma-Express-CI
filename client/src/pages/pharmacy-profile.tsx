@@ -32,8 +32,19 @@ export default function PharmacyProfile() {
   const { latitude, longitude, error: geoError, loading: geoLoading, refetch: refetchLocation } = useGeolocation();
 
   // Récupérer les informations de la pharmacie associée au pharmacien
+  // Note: Using PUT with empty body as workaround for Vite middleware intercepting GET requests
   const { data: pharmacyData, isLoading } = useQuery({
     queryKey: ['/api/pharmacies/my-pharmacy'],
+    queryFn: async () => {
+      const response = await apiRequest('PUT', '/api/pharmacies/my-pharmacy', {});
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null; // No pharmacy found yet
+        }
+        throw new Error(`Failed to fetch pharmacy: ${response.status}`);
+      }
+      return response.json();
+    },
     enabled: !!user && user.role === 'pharmacien'
   });
 
