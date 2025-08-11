@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,8 +14,9 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import BottomNavigation from "@/components/bottom-navigation";
-import { ArrowLeft, MapPin, Phone, Clock, Star, Edit3, Save, X } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Clock, Star, Edit3, Save, X, Navigation } from "lucide-react";
 import { useLocation } from "wouter";
+import { useGeolocation } from "@/hooks/use-geolocation";
 
 export default function PharmacyProfile() {
   const [location, navigate] = useLocation();
@@ -23,6 +25,11 @@ export default function PharmacyProfile() {
   const queryClient = useQueryClient();
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState<any>({});
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [currentAddress, setCurrentAddress] = useState<string>("");
+  
+  // Géolocalisation pour auto-localiser la pharmacie
+  const { latitude, longitude, error: geoError, loading: geoLoading, refetch: refetchLocation } = useGeolocation();
 
   // Récupérer les informations de la pharmacie associée au pharmacien
   const { data: pharmacyData, isLoading } = useQuery({
@@ -45,6 +52,31 @@ export default function PharmacyProfile() {
     }
   });
 
+  // Reverse geocoding pour obtenir l'adresse à partir des coordonnées
+  useEffect(() => {
+    if (latitude && longitude && editMode) {
+      const getAddressFromCoords = async () => {
+        try {
+          const response = await fetch(`/api/location/reverse?lat=${latitude}&lng=${longitude}`);
+          const addressData = await response.json();
+          setCurrentAddress(addressData.formatted_address);
+          
+          // Mettre à jour automatiquement l'adresse dans le formulaire d'édition
+          setEditData(prev => ({
+            ...prev,
+            address: addressData.formatted_address,
+            latitude: latitude,
+            longitude: longitude
+          }));
+        } catch (error) {
+          console.error("Erreur géolocalisation:", error);
+        }
+      };
+      
+      getAddressFromCoords();
+    }
+  }, [latitude, longitude, editMode]);
+
   const handleEdit = () => {
     setEditData(pharmacyData || {});
     setEditMode(true);
@@ -57,6 +89,13 @@ export default function PharmacyProfile() {
   const handleCancel = () => {
     setEditMode(false);
     setEditData({});
+    setCurrentAddress("");
+  };
+
+  const handleDetectLocation = () => {
+    setIsDetectingLocation(true);
+    refetchLocation();
+    setTimeout(() => setIsDetectingLocation(false), 3000);
   };
 
   const updateOpeningHours = (day: string, field: 'open' | 'close', value: string) => {
@@ -80,31 +119,29 @@ export default function PharmacyProfile() {
     );
   }
 
-  if (!pharmacyData) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <CardContent className="p-6 text-center">
-              <h3 className="text-lg font-semibold mb-2">Aucune pharmacie associée</h3>
-              <p className="text-gray-600 mb-4">Votre compte n'est associé à aucune pharmacie. Créez votre pharmacie pour commencer à recevoir des commandes.</p>
-              <div className="flex gap-3 justify-center">
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate('/dashboard-pharmacien')}
-                >
-                  Retour au tableau de bord
-                </Button>
-                <Button onClick={() => navigate('/create-pharmacy')}>
-                  Créer ma pharmacie
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  // Afficher les informations de la pharmacie ou créer une pharmacie par défaut
+  const displayPharmacy = pharmacyData || {
+    name: `Pharmacie ${user?.firstName} ${user?.lastName}`,
+    address: user?.address || 'Abidjan, Côte d\'Ivoire',
+    phone: user?.phone || '',
+    rating: 4.5,
+    reviewCount: 0,
+    deliveryTime: '30',
+    isOpen: true,
+    latitude: 5.2893,
+    longitude: -3.9882,
+    deliveryRadius: 5,
+    minDeliveryFee: 1000,
+    openingHours: {
+      monday: { open: '08:00', close: '19:00' },
+      tuesday: { open: '08:00', close: '19:00' },
+      wednesday: { open: '08:00', close: '19:00' },
+      thursday: { open: '08:00', close: '19:00' },
+      friday: { open: '08:00', close: '19:00' },
+      saturday: { open: '08:00', close: '17:00' },
+      sunday: { open: '09:00', close: '15:00' }
+    }
+  };
 
   const days = [
     { key: 'monday', label: 'Lundi' },
@@ -151,23 +188,46 @@ export default function PharmacyProfile() {
                       placeholder="Nom de la pharmacie"
                     />
                   ) : (
-                    pharmacyData.name
+                    displayPharmacy.name
                   )}
-                  <Badge variant={pharmacyData.isOpen ? 'default' : 'secondary'}>
-                    {pharmacyData.isOpen ? 'Ouvert' : 'Fermé'}
+                  <Badge variant={displayPharmacy.isOpen ? 'default' : 'secondary'}>
+                    {displayPharmacy.isOpen ? 'Ouvert' : 'Fermé'}
                   </Badge>
                 </CardTitle>
-                <CardDescription className="flex items-center gap-2 mt-2">
-                  <MapPin className="h-4 w-4" />
+                <CardDescription className="flex items-start gap-2 mt-2">
+                  <MapPin className="h-4 w-4 mt-1 flex-shrink-0" />
                   {editMode ? (
-                    <Textarea
-                      value={editData.address || ''}
-                      onChange={(e) => setEditData({ ...editData, address: e.target.value })}
-                      placeholder="Adresse complète"
-                      rows={2}
-                    />
+                    <div className="flex-1 space-y-2">
+                      <Textarea
+                        value={editData.address || ''}
+                        onChange={(e) => setEditData({ ...editData, address: e.target.value })}
+                        placeholder="Adresse complète"
+                        rows={2}
+                        className="w-full"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleDetectLocation}
+                          disabled={isDetectingLocation || geoLoading}
+                        >
+                          <Navigation className="h-4 w-4 mr-2" />
+                          {isDetectingLocation || geoLoading ? 'Localisation...' : 'Ma position actuelle'}
+                        </Button>
+                        {currentAddress && (
+                          <Badge variant="outline" className="text-xs">
+                            Position détectée
+                          </Badge>
+                        )}
+                      </div>
+                      {geoError && (
+                        <p className="text-sm text-red-600">Erreur de géolocalisation: {geoError}</p>
+                      )}
+                    </div>
                   ) : (
-                    pharmacyData.address
+                    <span className="flex-1">{displayPharmacy.address}</span>
                   )}
                 </CardDescription>
               </div>
@@ -203,12 +263,12 @@ export default function PharmacyProfile() {
                     placeholder="Numéro de téléphone"
                   />
                 ) : (
-                  <span>{pharmacyData.phone}</span>
+                  <span>{displayPharmacy.phone}</span>
                 )}
               </div>
               <div className="flex items-center gap-2">
                 <Star className="h-4 w-4 text-yellow-500" />
-                <span>{pharmacyData.rating}/5 ({pharmacyData.reviewCount || 0} avis)</span>
+                <span>{displayPharmacy.rating}/5 ({displayPharmacy.reviewCount || 0} avis)</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-gray-500" />
@@ -220,10 +280,21 @@ export default function PharmacyProfile() {
                     type="number"
                   />
                 ) : (
-                  <span>Livraison en {pharmacyData.deliveryTime} min</span>
+                  <span>Livraison en {displayPharmacy.deliveryTime} min</span>
                 )}
               </div>
             </div>
+            
+            {editMode && (latitude && longitude) && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-800">
+                  📍 Position GPS détectée: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                </p>
+                <p className="text-xs text-green-700 mt-1">
+                  Cette position aidera les patients à mieux localiser votre pharmacie
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -265,7 +336,7 @@ export default function PharmacyProfile() {
                         </>
                       ) : (
                         <span className="text-sm">
-                          {pharmacyData.openingHours?.[day.key]?.open || '08:00'} - {pharmacyData.openingHours?.[day.key]?.close || '18:00'}
+                          {displayPharmacy.openingHours?.[day.key]?.open || '08:00'} - {displayPharmacy.openingHours?.[day.key]?.close || '18:00'}
                         </span>
                       )}
                     </div>
@@ -327,12 +398,12 @@ export default function PharmacyProfile() {
                     <Label>Statut de la pharmacie</Label>
                     <div className="flex items-center gap-2 mt-2">
                       <Switch 
-                        checked={editMode ? editData.isOpen : pharmacyData.isOpen}
+                        checked={editMode ? editData.isOpen : displayPharmacy.isOpen}
                         onCheckedChange={(checked) => editMode && setEditData({ ...editData, isOpen: checked })}
                         disabled={!editMode}
                       />
                       <span className="text-sm">
-                        {(editMode ? editData.isOpen : pharmacyData.isOpen) ? 'Pharmacie ouverte' : 'Pharmacie fermée'}
+                        {(editMode ? editData.isOpen : displayPharmacy.isOpen) ? 'Pharmacie ouverte' : 'Pharmacie fermée'}
                       </span>
                     </div>
                   </div>
@@ -349,7 +420,7 @@ export default function PharmacyProfile() {
                         max="50"
                       />
                     ) : (
-                      <p className="text-sm text-gray-600 mt-2">{pharmacyData.deliveryRadius || 5} km</p>
+                      <p className="text-sm text-gray-600 mt-2">{displayPharmacy.deliveryRadius || 5} km</p>
                     )}
                   </div>
                   <Separator />
@@ -364,7 +435,7 @@ export default function PharmacyProfile() {
                         min="0"
                       />
                     ) : (
-                      <p className="text-sm text-gray-600 mt-2">{pharmacyData.minDeliveryFee || 1000} FCFA</p>
+                      <p className="text-sm text-gray-600 mt-2">{displayPharmacy.minDeliveryFee || 1000} FCFA</p>
                     )}
                   </div>
                 </div>
