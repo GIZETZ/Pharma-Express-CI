@@ -274,12 +274,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Pharmacies endpoints
   app.get('/api/pharmacies', async (req, res) => {
     try {
-      const { lat, lng, radius = 10 } = req.query;
+      const { lat, lng, radius = 50 } = req.query;
+      console.log('Fetching pharmacies with params:', { lat, lng, radius });
+      
       const pharmacies = await storage.getPharmacies(
         lat ? parseFloat(lat as string) : undefined,
         lng ? parseFloat(lng as string) : undefined,
         radius ? parseInt(radius as string) : undefined
       );
+      
+      console.log(`Found ${pharmacies.length} pharmacies`);
       res.json(pharmacies);
     } catch (error) {
       console.error('Error fetching pharmacies:', error);
