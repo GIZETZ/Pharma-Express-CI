@@ -1057,9 +1057,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pharmacy = await storage.getPharmacy(user.pharmacyId);
         console.log('Found pharmacy by pharmacyId:', pharmacy?.id);
       }
-      if (!pharmacy) {
-        pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
-        console.log('Found pharmacy by userId:', pharmacy?.id);
+      
+      // Skip the phone matching search - always create new pharmacy if pharmacyId not set
+      if (!pharmacy && !user.pharmacyId) {
+        console.log('No pharmacyId set for user - will create new pharmacy');
       }
 
       if (pharmacy) {
