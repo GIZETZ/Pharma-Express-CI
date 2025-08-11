@@ -39,16 +39,33 @@ export default function PharmacyProfile() {
 
   const updatePharmacyMutation = useMutation({
     mutationFn: async (data: any) => {
+      console.log('Sending pharmacy update data:', data);
       const response = await apiRequest('PUT', '/api/pharmacies/my-pharmacy', data);
-      return response.json();
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Pharmacy update failed:', response.status, errorData);
+        throw new Error(`Failed to update pharmacy: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('Pharmacy update successful:', result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Pharmacy update mutation success:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/pharmacies/my-pharmacy'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       toast({ title: "Profil mis à jour", description: "Les informations de votre pharmacie ont été sauvegardées." });
       setEditMode(false);
     },
-    onError: () => {
-      toast({ title: "Erreur", description: "Impossible de mettre à jour le profil.", variant: "destructive" });
+    onError: (error) => {
+      console.error('Pharmacy update mutation error:', error);
+      toast({ 
+        title: "Erreur", 
+        description: "Impossible de mettre à jour le profil. Vérifiez la console pour plus de détails.", 
+        variant: "destructive" 
+      });
     }
   });
 

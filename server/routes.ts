@@ -1005,54 +1005,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.put('/api/pharmacies/my-pharmacy', requireAuth, async (req, res) => {
-    const user = await storage.getUser(req.session.userId!);
-    if (!user || user.role !== 'pharmacien') {
-      return res.status(403).json({ message: 'Accès refusé' });
-    }
-
-    const pharmacyData = req.body;
-
-    // Try to find existing pharmacy by pharmacyId first, then fallback to ownerId
-    let pharmacy = null;
-    if (user.pharmacyId) {
-      pharmacy = await storage.getPharmacy(user.pharmacyId);
-    }
-    if (!pharmacy) {
-      pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
-    }
-
-    if (pharmacy) {
-      // Update existing pharmacy
-      const updatedPharmacy = await storage.updatePharmacy(pharmacy.id, pharmacyData);
-
-      // Ensure user has the pharmacyId
-      if (!user.pharmacyId) {
-        await storage.updateUser(req.session.userId!, { pharmacyId: pharmacy.id });
+    try {
+      const user = await storage.getUser(req.session.userId!);
+      if (!user || user.role !== 'pharmacien') {
+        return res.status(403).json({ message: 'Accès refusé' });
       }
 
-      res.json(updatedPharmacy);
-    } else {
-      // Create new pharmacy
-      const newPharmacy = await storage.createPharmacy({
-        ...pharmacyData,
-        ownerId: req.session.userId!,
-        rating: pharmacyData.rating || 4.5,
-        reviewCount: pharmacyData.reviewCount || 0,
-        isOpen: pharmacyData.isOpen !== undefined ? pharmacyData.isOpen : true,
-        openingHours: pharmacyData.openingHours || {
-          monday: { open: '08:00', close: '19:00' },
-          tuesday: { open: '08:00', close: '19:00' },
-          wednesday: { open: '08:00', close: '19:00' },
-          thursday: { open: '08:00', close: '19:00' },
-          friday: { open: '08:00', close: '19:00' },
-          saturday: { open: '08:00', close: '17:00' },
-          sunday: { open: '09:00', close: '15:00' }
-        }
-      });
+      const pharmacyData = req.body;
+      console.log('Updating pharmacy with data:', pharmacyData);
 
-      // Update user with the new pharmacy ID
-      await storage.updateUser(req.session.userId!, { pharmacyId: newPharmacy.id });
-      res.json(newPharmacy);
+      // Try to find existing pharmacy by pharmacyId first, then fallback to ownerId
+      let pharmacy = null;
+      if (user.pharmacyId) {
+        pharmacy = await storage.getPharmacy(user.pharmacyId);
+        console.log('Found pharmacy by pharmacyId:', pharmacy?.id);
+      }
+      if (!pharmacy) {
+        pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
+        console.log('Found pharmacy by userId:', pharmacy?.id);
+      }
+
+      if (pharmacy) {
+        // Update existing pharmacy
+        console.log('Updating existing pharmacy:', pharmacy.id);
+        const updatedPharmacy = await storage.updatePharmacy(pharmacy.id, pharmacyData);
+
+        // Ensure user has the pharmacyId
+        if (!user.pharmacyId) {
+          console.log('Updating user with pharmacyId:', pharmacy.id);
+          await storage.updateUser(req.session.userId!, { pharmacyId: pharmacy.id });
+        }
+
+        console.log('Pharmacy updated successfully:', updatedPharmacy);
+        res.json(updatedPharmacy);
+      } else {
+        // Create new pharmacy
+        console.log('Creating new pharmacy for user:', req.session.userId);
+        const newPharmacy = await storage.createPharmacy({
+          ...pharmacyData,
+          ownerId: req.session.userId!,
+          rating: pharmacyData.rating || 4.5,
+          reviewCount: pharmacyData.reviewCount || 0,
+          isOpen: pharmacyData.isOpen !== undefined ? pharmacyData.isOpen : true,
+          openingHours: pharmacyData.openingHours || {
+            monday: { open: '08:00', close: '19:00' },
+            tuesday: { open: '08:00', close: '19:00' },
+            wednesday: { open: '08:00', close: '19:00' },
+            thursday: { open: '08:00', close: '19:00' },
+            friday: { open: '08:00', close: '19:00' },
+            saturday: { open: '08:00', close: '17:00' },
+            sunday: { open: '09:00', close: '15:00' }
+          }
+        });
+
+        // Update user with the new pharmacy ID
+        console.log('Updating user with new pharmacyId:', newPharmacy.id);
+        await storage.updateUser(req.session.userId!, { pharmacyId: newPharmacy.id });
+        
+        console.log('New pharmacy created successfully:', newPharmacy);
+        res.json(newPharmacy);
+      }
+    } catch (error) {
+      console.error('Error updating pharmacy:', error);
+      res.status(500).json({ message: 'Erreur lors de la mise à jour de la pharmacie' });
     }
   });
 

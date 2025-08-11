@@ -39,6 +39,8 @@ export interface IStorage {
   getPharmacies(lat?: number, lng?: number, radius?: number): Promise<Pharmacy[]>;
   getPharmacy(id: string): Promise<Pharmacy | undefined>;
   createPharmacy(pharmacy: InsertPharmacy): Promise<Pharmacy>;
+  updatePharmacy(id: string, updates: Partial<InsertPharmacy>): Promise<Pharmacy | undefined>;
+  getPharmacyByUserId(userId: string): Promise<Pharmacy | undefined>;
 
   // Prescription operations
   getPrescription(id: string): Promise<Prescription | undefined>;
