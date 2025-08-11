@@ -6,7 +6,7 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_REMOVE_DELAY = 5000
 
 type ToasterToast = ToastProps & {
   id: string
@@ -62,9 +62,12 @@ const addToRemoveQueue = (toastId: string) => {
 
   const timeout = setTimeout(() => {
     toastTimeouts.delete(toastId)
-    dispatch({
-      type: "REMOVE_TOAST",
-      toastId: toastId,
+    // Utiliser requestAnimationFrame pour éviter les conflits DOM
+    requestAnimationFrame(() => {
+      dispatch({
+        type: "REMOVE_TOAST",
+        toastId: toastId,
+      })
     })
   }, TOAST_REMOVE_DELAY)
 
@@ -142,23 +145,34 @@ type Toast = Omit<ToasterToast, "id">
 function toast({ ...props }: Toast) {
   const id = genId()
 
-  const update = (props: ToasterToast) =>
-    dispatch({
-      type: "UPDATE_TOAST",
-      toast: { ...props, id },
+  const update = (props: ToasterToast) => {
+    requestAnimationFrame(() => {
+      dispatch({
+        type: "UPDATE_TOAST",
+        toast: { ...props, id },
+      })
     })
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+  }
+  
+  const dismiss = () => {
+    requestAnimationFrame(() => {
+      dispatch({ type: "DISMISS_TOAST", toastId: id })
+    })
+  }
 
-  dispatch({
-    type: "ADD_TOAST",
-    toast: {
-      ...props,
-      id,
-      open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss()
+  // Utiliser requestAnimationFrame pour éviter les conflits DOM
+  requestAnimationFrame(() => {
+    dispatch({
+      type: "ADD_TOAST",
+      toast: {
+        ...props,
+        id,
+        open: true,
+        onOpenChange: (open) => {
+          if (!open) dismiss()
+        },
       },
-    },
+    })
   })
 
   return {

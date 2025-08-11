@@ -65,28 +65,29 @@ export default function PharmacyProfile() {
     },
     onSuccess: (data) => {
       console.log('Pharmacy update mutation success:', data);
-      // Utiliser setTimeout pour éviter les conflits DOM
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['/api/pharmacies/my-pharmacy'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-        toast({ 
-          title: "Profil mis à jour", 
-          description: "Les informations de votre pharmacie ont été sauvegardées." 
-        });
-        setEditMode(false);
-        setEditData({});
-        setCurrentAddress("");
-      }, 100);
+      
+      // Invalider les queries
+      queryClient.invalidateQueries({ queryKey: ['/api/pharmacies/my-pharmacy'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      
+      // Afficher le toast de succès
+      toast({ 
+        title: "Profil mis à jour", 
+        description: "Les informations de votre pharmacie ont été sauvegardées." 
+      });
+      
+      // Réinitialiser l'état d'édition
+      setEditMode(false);
+      setEditData({});
+      setCurrentAddress("");
     },
     onError: (error) => {
       console.error('Pharmacy update mutation error:', error);
-      setTimeout(() => {
-        toast({ 
-          title: "Erreur", 
-          description: "Impossible de mettre à jour le profil. Veuillez réessayer.", 
-          variant: "destructive" 
-        });
-      }, 100);
+      toast({ 
+        title: "Erreur", 
+        description: "Impossible de mettre à jour le profil. Veuillez réessayer.", 
+        variant: "destructive" 
+      });
     }
   });
 
