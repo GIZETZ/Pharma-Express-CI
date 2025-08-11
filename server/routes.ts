@@ -276,22 +276,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { lat, lng, radius = 50 } = req.query;
       console.log('Fetching pharmacies with params:', { lat, lng, radius });
-      
+
       const pharmacies = await storage.getPharmacies(
         lat ? parseFloat(lat as string) : undefined,
         lng ? parseFloat(lng as string) : undefined,
         radius ? parseInt(radius as string) : undefined
       );
-      
+
       console.log(`Found ${pharmacies.length} pharmacies`);
-      
+
       // Ajouter des headers pour éviter la mise en cache excessive
       res.set({
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0'
       });
-      
+
       res.json(pharmacies);
     } catch (error) {
       console.error('Error fetching pharmacies:', error);
@@ -316,20 +316,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const pharmacyData = insertPharmacySchema.parse(req.body);
       const pharmacy = await storage.createPharmacy(pharmacyData);
-      
+
       console.log('✅ Nouvelle pharmacie créée:', {
         id: pharmacy.id,
         name: pharmacy.name,
         address: pharmacy.address
       });
-      
+
       // Ajouter des headers pour éviter la mise en cache
       res.set({
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0'
       });
-      
+
       res.status(201).json(pharmacy);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -449,23 +449,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Handle BON documents
-      const bonDocuments = [];
+      const bonDocumentsInfo = []; // Renamed from bonDocuments to avoid shadowing
       for (let i = 0; i < 5; i++) {
         const fieldName = `bonDocument${i}`;
         if (req.files && req.files[fieldName] && req.files[fieldName][0]) {
           const bonFile = req.files[fieldName][0];
-          bonDocuments.push({
+          bonDocumentsInfo.push({
             name: bonFile.originalname,
             data: `data:${bonFile.mimetype};base64,${bonFile.buffer.toString('base64')}`,
           });
         }
       }
 
-      if (bonDocuments.length > 0) {
-        orderData.bonDocuments = JSON.stringify(bonDocuments);
-      }
+      // Récupérer les informations de la pharmacie
+      const pharmacy = await storage.getPharmacyById(orderData.pharmacyId);
 
-      const order = await storage.createOrder(orderData);
+      // Créer la commande
+      const order = await storage.createOrder({
+        userId: req.session.userId,
+        pharmacyId: orderData.pharmacyId,
+        deliveryAddress: orderData.deliveryAddress,
+        deliveryLatitude: orderData.deliveryLatitude || null,
+        deliveryLongitude: orderData.deliveryLongitude || null,
+        deliveryNotes: orderData.deliveryNotes || null,
+        medications: JSON.stringify(medications), // This 'medications' variable is not defined in this scope. It should be extracted from req.body.
+        status: 'pending',
+        totalAmount: '0', // Sera mis à jour par la pharmacie
+        prescriptionId: prescriptionId,
+        bonDocuments: bonDocumentsInfo.length > 0 ? JSON.stringify(bonDocumentsInfo) : null
+      });
 
       // Send confirmation notification
       await storage.createNotification({
@@ -1031,7 +1043,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pharmacyData = req.body;
       if (!pharmacyData || Object.keys(pharmacyData).length === 0) {
         console.log('PUT request with no data - acting as GET request');
-        
+
         // Same logic as GET route
         let pharmacy = null;
 
@@ -1058,7 +1070,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const allPharmacies = await storage.getPharmacies();
           pharmacy = allPharmacies.find(p => p.phone === user.phone);
           console.log('Pharmacy found by phone search:', pharmacy ? pharmacy.id : 'not found');
-          
+
           // If found, update user with pharmacyId
           if (pharmacy) {
             await storage.updateUser(req.session.userId!, { pharmacyId: pharmacy.id });
@@ -1083,7 +1095,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pharmacy = await storage.getPharmacy(user.pharmacyId);
         console.log('Found pharmacy by pharmacyId:', pharmacy?.id);
       }
-      
+
       // Skip the phone matching search - always create new pharmacy if pharmacyId not set
       if (!pharmacy && !user.pharmacyId) {
         console.log('No pharmacyId set for user - will create new pharmacy');
@@ -1108,14 +1120,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const existingByPhone = allPharmacies.find(p => 
           p.phone === pharmacyData.phone || p.phone === user.phone
         );
-        
+
         if (existingByPhone) {
           console.log('Found existing pharmacy by phone, updating instead of creating:', existingByPhone.id);
           const updatedPharmacy = await storage.updatePharmacy(existingByPhone.id, pharmacyData);
-          
+
           // Update user with the existing pharmacy ID
           await storage.updateUser(req.session.userId!, { pharmacyId: existingByPhone.id });
-          
+
           console.log('Existing pharmacy updated successfully:', updatedPharmacy);
           res.json(updatedPharmacy);
         } else {

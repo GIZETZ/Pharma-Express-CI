@@ -41,6 +41,7 @@ export interface IStorage {
   createPharmacy(pharmacy: InsertPharmacy): Promise<Pharmacy>;
   updatePharmacy(id: string, updates: Partial<InsertPharmacy>): Promise<Pharmacy | undefined>;
   getPharmacyByUserId(userId: string): Promise<Pharmacy | undefined>;
+  getPharmacyById(pharmacyId: string): Promise<Pharmacy | undefined>;
 
   // Prescription operations
   getPrescription(id: string): Promise<Prescription | undefined>;
@@ -220,7 +221,7 @@ export class MemStorage implements IStorage {
   async createUser(user: InsertUser): Promise<User> {
     const id = randomUUID();
     const hashedPassword = await bcrypt.hash(user.password, 10);
-    
+
     const newUser: User = {
       id,
       ...user,
@@ -228,7 +229,7 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    
+
     this.users.set(id, newUser);
     return newUser;
   }
@@ -242,7 +243,7 @@ export class MemStorage implements IStorage {
       ...updates,
       updatedAt: new Date(),
     };
-    
+
     this.users.set(id, updatedUser);
     return updatedUser;
   }
@@ -300,7 +301,7 @@ export class MemStorage implements IStorage {
   async getPharmacies(lat?: number, lng?: number, radius?: number): Promise<Pharmacy[]> {
     // Nettoyer les doublons à chaque récupération
     await this.cleanupDuplicatePharmacies();
-    
+
     const pharmacies = Array.from(this.pharmacies.values());
 
     if (lat !== undefined && lng !== undefined) {
@@ -329,6 +330,10 @@ export class MemStorage implements IStorage {
     return this.pharmacies.get(id);
   }
 
+  async getPharmacyById(pharmacyId: string): Promise<Pharmacy | undefined> {
+    return this.pharmacies.get(pharmacyId);
+  }
+
   async createPharmacy(pharmacy: InsertPharmacy): Promise<Pharmacy> {
     const id = randomUUID();
     const newPharmacy: Pharmacy = {
@@ -336,7 +341,7 @@ export class MemStorage implements IStorage {
       ...pharmacy,
       createdAt: new Date(),
     };
-    
+
     this.pharmacies.set(id, newPharmacy);
     console.log('✅ Pharmacie créée:', { id, name: newPharmacy.name, phone: newPharmacy.phone });
     return newPharmacy;
@@ -363,7 +368,7 @@ export class MemStorage implements IStorage {
   // Nettoyer les doublons de pharmacies basées sur le téléphone
   async cleanupDuplicatePharmacies(): Promise<void> {
     const pharmaciesByPhone = new Map<string, Pharmacy[]>();
-    
+
     // Grouper par numéro de téléphone
     for (const pharmacy of this.pharmacies.values()) {
       if (pharmacy.phone) {
@@ -398,23 +403,23 @@ export class MemStorage implements IStorage {
   async getPharmacyByUserId(userId: string): Promise<Pharmacy | undefined> {
     const user = this.users.get(userId);
     console.log('getPharmacyByUserId - User details:', { userId, role: user?.role, pharmacyId: user?.pharmacyId, phone: user?.phone });
-    
+
     if (!user || user.role !== 'pharmacien') return undefined;
-    
+
     // First check if user has a pharmacyId assigned
     if (user.pharmacyId) {
       const pharmacy = this.pharmacies.get(user.pharmacyId);
       console.log('getPharmacyByUserId - Pharmacy by pharmacyId:', pharmacy ? pharmacy.id : 'not found');
       if (pharmacy) return pharmacy;
     }
-    
+
     // Fallback: try to find pharmacy by phone number
     const allPharmacies = Array.from(this.pharmacies.values());
     console.log('getPharmacyByUserId - All pharmacies:', allPharmacies.map(p => ({ id: p.id, phone: p.phone, name: p.name })));
-    
+
     let pharmacy = allPharmacies.find(p => p.phone === user.phone);
     console.log('getPharmacyByUserId - Pharmacy by phone match:', pharmacy ? pharmacy.id : 'not found');
-    
+
     // If still not found, try to find by name pattern
     if (!pharmacy) {
       const expectedName = `Pharmacie ${user.firstName} ${user.lastName}`;
@@ -422,7 +427,7 @@ export class MemStorage implements IStorage {
       pharmacy = allPharmacies.find(p => p.name === expectedName);
       console.log('getPharmacyByUserId - Pharmacy by name match:', pharmacy ? pharmacy.id : 'not found');
     }
-    
+
     // Additional fallback: try partial name matches
     if (!pharmacy) {
       const userFullName = `${user.firstName} ${user.lastName}`.toLowerCase();
@@ -433,13 +438,13 @@ export class MemStorage implements IStorage {
       );
       console.log('getPharmacyByUserId - Pharmacy by partial name match:', pharmacy ? pharmacy.id : 'not found');
     }
-    
+
     // If found but user doesn't have pharmacyId set, update it
     if (pharmacy && !user.pharmacyId) {
       await this.updateUser(userId, { pharmacyId: pharmacy.id });
       console.log('getPharmacyByUserId - Updated user with pharmacyId:', pharmacy.id);
     }
-    
+
     return pharmacy;
   }
 
@@ -451,7 +456,7 @@ export class MemStorage implements IStorage {
       ...pharmacy,
       ...updates,
     };
-    
+
     this.pharmacies.set(id, updatedPharmacy);
     return updatedPharmacy;
   }
@@ -468,7 +473,7 @@ export class MemStorage implements IStorage {
       ...prescription,
       createdAt: new Date(),
     };
-    
+
     this.prescriptions.set(id, newPrescription);
     return newPrescription;
   }
@@ -501,15 +506,50 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    
+
     this.orders.set(id, newOrder);
     return newOrder;
   }
 
   async getUserOrders(userId: string): Promise<Order[]> {
-    return Array.from(this.orders.values())
-      .filter(o => o.userId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const ordersResult = await this.db
+      .select({
+        id: orders.id,
+        pharmacyId: orders.pharmacyId,
+        deliveryAddress: orders.deliveryAddress,
+        deliveryLatitude: orders.deliveryLatitude,
+        deliveryLongitude: orders.deliveryLongitude,
+        deliveryNotes: orders.deliveryNotes,
+        medications: orders.medications,
+        status: orders.status,
+        totalAmount: orders.totalAmount,
+        prescriptionId: orders.prescriptionId,
+        bonDocuments: orders.bonDocuments,
+        createdAt: orders.createdAt,
+        updatedAt: orders.updatedAt,
+        // Informations de la pharmacie
+        pharmacyName: pharmacies.name,
+        pharmacyAddress: pharmacies.address,
+        pharmacyPhone: pharmacies.phone,
+        pharmacyRating: pharmacies.rating
+      })
+      .from(orders)
+      .leftJoin(pharmacies, eq(orders.pharmacyId, pharmacies.id))
+      .where(eq(orders.userId, userId))
+      .orderBy(desc(orders.createdAt));
+
+    return ordersResult.map(order => ({
+      ...order,
+      pharmacy: order.pharmacyName ? {
+        id: order.pharmacyId,
+        name: order.pharmacyName,
+        address: order.pharmacyAddress,
+        phone: order.pharmacyPhone,
+        rating: order.pharmacyRating
+      } : null,
+      // S'assurer que le montant est affiché même si c'est 0
+      totalAmount: order.totalAmount || '0'
+    }));
   }
 
   async getCurrentOrder(userId: string): Promise<Order | undefined> {
@@ -524,11 +564,11 @@ export class MemStorage implements IStorage {
 
     order.status = status as any;
     order.updatedAt = new Date();
-    
+
     if (status === 'delivered') {
       order.deliveredAt = new Date();
     }
-    
+
     this.orders.set(id, order);
     return order;
   }
@@ -562,7 +602,7 @@ export class MemStorage implements IStorage {
       ...notification,
       createdAt: new Date(),
     };
-    
+
     this.notifications.set(id, newNotification);
     return newNotification;
   }

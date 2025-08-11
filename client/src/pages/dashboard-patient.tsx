@@ -426,8 +426,8 @@ export default function DashboardPatient() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        <p className="text-sm"><strong>Pharmacie:</strong> {order.pharmacy?.name || 'Non spécifiée'}</p>
-                        <p className="text-sm"><strong>Montant:</strong> {order.totalAmount} FCFA</p>
+                        <p className="text-sm"><strong>Pharmacie:</strong> {order.pharmacy?.name || 'En cours d\'attribution'}</p>
+                        <p className="text-sm"><strong>Montant:</strong> {order.totalAmount && order.totalAmount !== '0' ? `${order.totalAmount} FCFA` : 'En cours d\'évaluation'}</p>
                         <p className="text-sm"><strong>Adresse:</strong> {order.deliveryAddress}</p>
                         {order.deliveryNotes && (
                           <p className="text-sm"><strong>Notes:</strong> {order.deliveryNotes}</p>
