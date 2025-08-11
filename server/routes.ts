@@ -464,6 +464,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Récupérer les informations de la pharmacie
       const pharmacy = await storage.getPharmacyById(orderData.pharmacyId);
 
+      // Extraire les médicaments du body
+      const medications = orderData.medications ? 
+        (typeof orderData.medications === 'string' ? JSON.parse(orderData.medications) : orderData.medications) 
+        : [];
+
       // Créer la commande
       const order = await storage.createOrder({
         userId: req.session.userId,
@@ -472,7 +477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deliveryLatitude: orderData.deliveryLatitude || null,
         deliveryLongitude: orderData.deliveryLongitude || null,
         deliveryNotes: orderData.deliveryNotes || null,
-        medications: JSON.stringify(medications), // This 'medications' variable is not defined in this scope. It should be extracted from req.body.
+        medications: JSON.stringify(medications),
         status: 'pending',
         totalAmount: '0', // Sera mis à jour par la pharmacie
         prescriptionId: prescriptionId,

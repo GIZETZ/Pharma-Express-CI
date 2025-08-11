@@ -512,44 +512,28 @@ export class MemStorage implements IStorage {
   }
 
   async getUserOrders(userId: string): Promise<Order[]> {
-    const ordersResult = await this.db
-      .select({
-        id: orders.id,
-        pharmacyId: orders.pharmacyId,
-        deliveryAddress: orders.deliveryAddress,
-        deliveryLatitude: orders.deliveryLatitude,
-        deliveryLongitude: orders.deliveryLongitude,
-        deliveryNotes: orders.deliveryNotes,
-        medications: orders.medications,
-        status: orders.status,
-        totalAmount: orders.totalAmount,
-        prescriptionId: orders.prescriptionId,
-        bonDocuments: orders.bonDocuments,
-        createdAt: orders.createdAt,
-        updatedAt: orders.updatedAt,
-        // Informations de la pharmacie
-        pharmacyName: pharmacies.name,
-        pharmacyAddress: pharmacies.address,
-        pharmacyPhone: pharmacies.phone,
-        pharmacyRating: pharmacies.rating
-      })
-      .from(orders)
-      .leftJoin(pharmacies, eq(orders.pharmacyId, pharmacies.id))
-      .where(eq(orders.userId, userId))
-      .orderBy(desc(orders.createdAt));
+    const userOrders = Array.from(this.orders.values())
+      .filter(order => order.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-    return ordersResult.map(order => ({
-      ...order,
-      pharmacy: order.pharmacyName ? {
-        id: order.pharmacyId,
-        name: order.pharmacyName,
-        address: order.pharmacyAddress,
-        phone: order.pharmacyPhone,
-        rating: order.pharmacyRating
-      } : null,
-      // S'assurer que le montant est affiché même si c'est 0
-      totalAmount: order.totalAmount || '0'
-    }));
+    // Enrichir avec les informations de la pharmacie
+    const enrichedOrders = userOrders.map(order => {
+      const pharmacy = this.pharmacies.get(order.pharmacyId);
+      return {
+        ...order,
+        pharmacy: pharmacy ? {
+          id: pharmacy.id,
+          name: pharmacy.name,
+          address: pharmacy.address,
+          phone: pharmacy.phone,
+          rating: pharmacy.rating
+        } : null,
+        // S'assurer que le montant est affiché même si c'est 0
+        totalAmount: order.totalAmount || '0'
+      };
+    });
+
+    return enrichedOrders;
   }
 
   async getCurrentOrder(userId: string): Promise<Order | undefined> {
@@ -614,5 +598,177 @@ export class MemStorage implements IStorage {
     notification.isRead = true;
     this.notifications.set(id, notification);
     return notification;
+  }
+
+  // Méthodes supplémentaires pour les pharmaciens
+  async getAllPharmacistOrders(): Promise<Order[]> {
+    const allOrders = Array.from(this.orders.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    // Enrichir avec les informations de la pharmacie et de l'utilisateur
+    const enrichedOrders = allOrders.map(order => {
+      const pharmacy = this.pharmacies.get(order.pharmacyId);
+      const user = this.users.get(order.userId);
+      return {
+        ...order,
+        pharmacy: pharmacy ? {
+          id: pharmacy.id,
+          name: pharmacy.name,
+          address: pharmacy.address,
+          phone: pharmacy.phone,
+          rating: pharmacy.rating
+        } : null,
+        patient: user ? {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.phone
+        } : null,
+        totalAmount: order.totalAmount || '0'
+      };
+    });
+
+    return enrichedOrders;
+  }
+
+  async getPharmacistOrders(pharmacyId: string): Promise<Order[]> {
+    const pharmacyOrders = Array.from(this.orders.values())
+      .filter(order => order.pharmacyId === pharmacyId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    // Enrichir avec les informations de l'utilisateur
+    const enrichedOrders = pharmacyOrders.map(order => {
+      const user = this.users.get(order.userId);
+      const pharmacy = this.pharmacies.get(order.pharmacyId);
+      return {
+        ...order,
+        pharmacy: pharmacy ? {
+          id: pharmacy.id,
+          name: pharmacy.name,
+          address: pharmacy.address,
+          phone: pharmacy.phone,
+          rating: pharmacy.rating
+        } : null,
+        patient: user ? {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.phone
+        } : null,
+        totalAmount: order.totalAmount || '0'
+      };
+    });
+
+    return enrichedOrders;
+  }
+
+  async getAllPrescriptions(): Promise<Prescription[]> {
+    return Array.from(this.prescriptions.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getOrderById(orderId: string): Promise<Order | undefined> {
+    const order = this.orders.get(orderId);
+    if (!order) return undefined;
+
+    // Enrichir avec les informations de la pharmacie
+    const pharmacy = this.pharmacies.get(order.pharmacyId);
+    return {
+      ...order,
+      pharmacy: pharmacy ? {
+        id: pharmacy.id,
+        name: pharmacy.name,
+        address: pharmacy.address,
+        phone: pharmacy.phone,
+        rating: pharmacy.rating
+      } : null,
+      totalAmount: order.totalAmount || '0',
+      patientId: order.userId // Ajouter un alias pour la compatibilité
+    };
+  }
+
+  async updateOrderStatus(id: string, status: string, totalAmount?: number): Promise<Order | undefined> {
+    const order = this.orders.get(id);
+    if (!order) return undefined;
+
+    order.status = status as any;
+    order.updatedAt = new Date();
+
+    if (totalAmount !== undefined) {
+      order.totalAmount = totalAmount.toString();
+    }
+
+    if (status === 'delivered') {
+      order.deliveredAt = new Date();
+    }
+
+    this.orders.set(id, order);
+    
+    // Retourner l'ordre enrichi
+    const pharmacy = this.pharmacies.get(order.pharmacyId);
+    return {
+      ...order,
+      pharmacy: pharmacy ? {
+        id: pharmacy.id,
+        name: pharmacy.name,
+        address: pharmacy.address,
+        phone: pharmacy.phone,
+        rating: pharmacy.rating
+      } : null,
+      totalAmount: order.totalAmount || '0'
+    };
+  }
+
+  async getDeliveryOrders(): Promise<Order[]> {
+    const deliveryOrders = Array.from(this.orders.values())
+      .filter(order => ['ready_for_delivery', 'in_delivery'].includes(order.status))
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    // Enrichir avec les informations de la pharmacie et de l'utilisateur
+    const enrichedOrders = deliveryOrders.map(order => {
+      const pharmacy = this.pharmacies.get(order.pharmacyId);
+      const user = this.users.get(order.userId);
+      return {
+        ...order,
+        pharmacy: pharmacy ? {
+          id: pharmacy.id,
+          name: pharmacy.name,
+          address: pharmacy.address,
+          phone: pharmacy.phone,
+          rating: pharmacy.rating
+        } : null,
+        patient: user ? {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.phone
+        } : null,
+        totalAmount: order.totalAmount || '0'
+      };
+    });
+
+    return enrichedOrders;
+  }
+
+  async assignDeliveryPerson(orderId: string, deliveryPersonId: string): Promise<Order | undefined> {
+    const order = this.orders.get(orderId);
+    if (!order) return undefined;
+
+    order.deliveryPersonId = deliveryPersonId;
+    order.status = 'in_delivery';
+    order.updatedAt = new Date();
+
+    this.orders.set(orderId, order);
+    
+    // Retourner l'ordre enrichi
+    const pharmacy = this.pharmacies.get(order.pharmacyId);
+    return {
+      ...order,
+      pharmacy: pharmacy ? {
+        id: pharmacy.id,
+        name: pharmacy.name,
+        address: pharmacy.address,
+        phone: pharmacy.phone,
+        rating: pharmacy.rating
+      } : null,
+      totalAmount: order.totalAmount || '0'
+    };
   }
 }
