@@ -65,37 +65,49 @@ export default function PharmacyProfile() {
     },
     onSuccess: (data) => {
       console.log('Pharmacy update mutation success:', data);
-      queryClient.invalidateQueries({ queryKey: ['/api/pharmacies/my-pharmacy'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      toast({ title: "Profil mis à jour", description: "Les informations de votre pharmacie ont été sauvegardées." });
-      setEditMode(false);
+      // Utiliser setTimeout pour éviter les conflits DOM
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/pharmacies/my-pharmacy'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+        toast({ 
+          title: "Profil mis à jour", 
+          description: "Les informations de votre pharmacie ont été sauvegardées." 
+        });
+        setEditMode(false);
+        setEditData({});
+        setCurrentAddress("");
+      }, 100);
     },
     onError: (error) => {
       console.error('Pharmacy update mutation error:', error);
-      toast({ 
-        title: "Erreur", 
-        description: "Impossible de mettre à jour le profil. Vérifiez la console pour plus de détails.", 
-        variant: "destructive" 
-      });
+      setTimeout(() => {
+        toast({ 
+          title: "Erreur", 
+          description: "Impossible de mettre à jour le profil. Veuillez réessayer.", 
+          variant: "destructive" 
+        });
+      }, 100);
     }
   });
 
   // Reverse geocoding pour obtenir l'adresse à partir des coordonnées
   useEffect(() => {
-    if (latitude && longitude && editMode) {
+    if (latitude && longitude && editMode && !updatePharmacyMutation.isPending) {
       const getAddressFromCoords = async () => {
         try {
           const response = await fetch(`/api/location/reverse?lat=${latitude}&lng=${longitude}`);
-          const addressData = await response.json();
-          setCurrentAddress(addressData.formatted_address);
-          
-          // Mettre à jour automatiquement l'adresse dans le formulaire d'édition
-          setEditData(prev => ({
-            ...prev,
-            address: addressData.formatted_address,
-            latitude: latitude,
-            longitude: longitude
-          }));
+          if (response.ok) {
+            const addressData = await response.json();
+            setCurrentAddress(addressData.formatted_address || '');
+            
+            // Mettre à jour automatiquement l'adresse dans le formulaire d'édition
+            setEditData(prev => ({
+              ...prev,
+              address: addressData.formatted_address || prev.address,
+              latitude: latitude,
+              longitude: longitude
+            }));
+          }
         } catch (error) {
           console.error("Erreur géolocalisation:", error);
         }
@@ -103,7 +115,7 @@ export default function PharmacyProfile() {
       
       getAddressFromCoords();
     }
-  }, [latitude, longitude, editMode]);
+  }, [latitude, longitude, editMode, updatePharmacyMutation.isPending]);
 
   const handleEdit = () => {
     setEditData(pharmacyData || {});
@@ -111,13 +123,17 @@ export default function PharmacyProfile() {
   };
 
   const handleSave = () => {
-    updatePharmacyMutation.mutate(editData);
+    if (!updatePharmacyMutation.isPending) {
+      updatePharmacyMutation.mutate(editData);
+    }
   };
 
   const handleCancel = () => {
-    setEditMode(false);
-    setEditData({});
-    setCurrentAddress("");
+    if (!updatePharmacyMutation.isPending) {
+      setEditMode(false);
+      setEditData({});
+      setCurrentAddress("");
+    }
   };
 
   const handleDetectLocation = () => {
