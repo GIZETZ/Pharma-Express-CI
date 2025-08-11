@@ -298,6 +298,9 @@ export class MemStorage implements IStorage {
 
   // Pharmacy operations
   async getPharmacies(lat?: number, lng?: number, radius?: number): Promise<Pharmacy[]> {
+    // Nettoyer les doublons à chaque récupération
+    await this.cleanupDuplicatePharmacies();
+    
     const pharmacies = Array.from(this.pharmacies.values());
 
     if (lat !== undefined && lng !== undefined) {
@@ -335,7 +338,61 @@ export class MemStorage implements IStorage {
     };
     
     this.pharmacies.set(id, newPharmacy);
+    console.log('✅ Pharmacie créée:', { id, name: newPharmacy.name, phone: newPharmacy.phone });
     return newPharmacy;
+  }
+
+  async updatePharmacy(id: string, updates: Partial<InsertPharmacy>): Promise<Pharmacy | undefined> {
+    const existing = this.pharmacies.get(id);
+    if (!existing) {
+      return undefined;
+    }
+
+    const updated: Pharmacy = {
+      ...existing,
+      ...updates,
+      id, // Preserve the original ID
+      createdAt: existing.createdAt, // Preserve creation date
+    };
+
+    this.pharmacies.set(id, updated);
+    console.log('🔄 Pharmacie mise à jour:', { id, name: updated.name, phone: updated.phone });
+    return updated;
+  }
+
+  // Nettoyer les doublons de pharmacies basées sur le téléphone
+  async cleanupDuplicatePharmacies(): Promise<void> {
+    const pharmaciesByPhone = new Map<string, Pharmacy[]>();
+    
+    // Grouper par numéro de téléphone
+    for (const pharmacy of this.pharmacies.values()) {
+      if (pharmacy.phone) {
+        if (!pharmaciesByPhone.has(pharmacy.phone)) {
+          pharmaciesByPhone.set(pharmacy.phone, []);
+        }
+        pharmaciesByPhone.get(pharmacy.phone)!.push(pharmacy);
+      }
+    }
+
+    // Supprimer les doublons
+    for (const [phone, duplicates] of pharmaciesByPhone.entries()) {
+      if (duplicates.length > 1) {
+        // Garder la plus récente (dernière créée)
+        const sorted = duplicates.sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        const keepPharmacy = sorted[0];
+        const toDelete = sorted.slice(1);
+
+        console.log(`🧹 Nettoyage doublons pour ${phone}: garder ${keepPharmacy.id}, supprimer`, 
+          toDelete.map(p => p.id));
+
+        // Supprimer les doublons
+        for (const pharmacy of toDelete) {
+          this.pharmacies.delete(pharmacy.id);
+        }
+      }
+    }
   }
 
   async getPharmacyByUserId(userId: string): Promise<Pharmacy | undefined> {

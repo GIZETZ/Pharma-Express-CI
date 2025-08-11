@@ -1103,31 +1103,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Pharmacy updated successfully:', updatedPharmacy);
         res.json(updatedPharmacy);
       } else {
-        // Create new pharmacy
-        console.log('Creating new pharmacy for user:', req.session.userId);
-        const newPharmacy = await storage.createPharmacy({
-          ...pharmacyData,
-          ownerId: req.session.userId!,
-          rating: pharmacyData.rating || 4.5,
-          reviewCount: pharmacyData.reviewCount || 0,
-          isOpen: pharmacyData.isOpen !== undefined ? pharmacyData.isOpen : true,
-          openingHours: pharmacyData.openingHours || {
-            monday: { open: '08:00', close: '19:00' },
-            tuesday: { open: '08:00', close: '19:00' },
-            wednesday: { open: '08:00', close: '19:00' },
-            thursday: { open: '08:00', close: '19:00' },
-            friday: { open: '08:00', close: '19:00' },
-            saturday: { open: '08:00', close: '17:00' },
-            sunday: { open: '09:00', close: '15:00' }
-          }
-        });
+        // Before creating new pharmacy, check if there's already one with same phone
+        const allPharmacies = await storage.getPharmacies();
+        const existingByPhone = allPharmacies.find(p => 
+          p.phone === pharmacyData.phone || p.phone === user.phone
+        );
+        
+        if (existingByPhone) {
+          console.log('Found existing pharmacy by phone, updating instead of creating:', existingByPhone.id);
+          const updatedPharmacy = await storage.updatePharmacy(existingByPhone.id, pharmacyData);
+          
+          // Update user with the existing pharmacy ID
+          await storage.updateUser(req.session.userId!, { pharmacyId: existingByPhone.id });
+          
+          console.log('Existing pharmacy updated successfully:', updatedPharmacy);
+          res.json(updatedPharmacy);
+        } else {
+          // Create new pharmacy only if no existing one found
+          console.log('Creating new pharmacy for user:', req.session.userId);
+          const newPharmacy = await storage.createPharmacy({
+            ...pharmacyData,
+            ownerId: req.session.userId!,
+            rating: pharmacyData.rating || 4.5,
+            reviewCount: pharmacyData.reviewCount || 0,
+            isOpen: pharmacyData.isOpen !== undefined ? pharmacyData.isOpen : true,
+            openingHours: pharmacyData.openingHours || {
+              monday: { open: '08:00', close: '19:00' },
+              tuesday: { open: '08:00', close: '19:00' },
+              wednesday: { open: '08:00', close: '19:00' },
+              thursday: { open: '08:00', close: '19:00' },
+              friday: { open: '08:00', close: '19:00' },
+              saturday: { open: '08:00', close: '17:00' },
+              sunday: { open: '09:00', close: '15:00' }
+            }
+          });
 
-        // Update user with the new pharmacy ID
-        console.log('Updating user with new pharmacyId:', newPharmacy.id);
-        await storage.updateUser(req.session.userId!, { pharmacyId: newPharmacy.id });
+          // Update user with the new pharmacy ID
+          console.log('Updating user with new pharmacyId:', newPharmacy.id);
+          await storage.updateUser(req.session.userId!, { pharmacyId: newPharmacy.id });
 
-        console.log('New pharmacy created successfully:', newPharmacy);
-        res.json(newPharmacy);
+          console.log('New pharmacy created successfully:', newPharmacy);
+          res.json(newPharmacy);
+        }
       }
     } catch (error) {
       console.error('Error updating pharmacy:', error);
