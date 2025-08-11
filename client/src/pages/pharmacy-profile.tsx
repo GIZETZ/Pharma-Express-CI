@@ -102,7 +102,7 @@ export default function PharmacyProfile() {
             setCurrentAddress(addressData.formatted_address || '');
             
             // Mettre à jour automatiquement l'adresse dans le formulaire d'édition
-            setEditData(prev => ({
+            setEditData((prev: any) => ({
               ...prev,
               address: addressData.formatted_address || prev.address,
               latitude: latitude,
@@ -118,22 +118,36 @@ export default function PharmacyProfile() {
     }
   }, [latitude, longitude, editMode, updatePharmacyMutation.isPending]);
 
-  const handleEdit = () => {
-    setEditData(pharmacyData || {});
-    setEditMode(true);
+  const handleEdit = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    
+    // Use setTimeout to prevent race conditions with DOM updates
+    setTimeout(() => {
+      setEditData(pharmacyData || {});
+      setEditMode(true);
+    }, 0);
   };
 
-  const handleSave = () => {
+  const handleSave = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    
     if (!updatePharmacyMutation.isPending) {
       updatePharmacyMutation.mutate(editData);
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    
     if (!updatePharmacyMutation.isPending) {
-      setEditMode(false);
-      setEditData({});
-      setCurrentAddress("");
+      setTimeout(() => {
+        setEditMode(false);
+        setEditData({});
+        setCurrentAddress("");
+      }, 0);
     }
   };
 
