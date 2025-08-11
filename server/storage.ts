@@ -181,6 +181,25 @@ export class MemStorage implements IStorage {
           saturday: { open: "09:00", close: "18:00" },
           sunday: { open: "10:00", close: "16:00" }
         }
+      },
+      {
+        name: "Ithiel Pharma",
+        address: "Avenue des Martyrs, Yopougon",
+        latitude: 5.3456,
+        longitude: -4.0892,
+        phone: "+225 27 23 45 67 89",
+        rating: 4.6,
+        deliveryTime: "25",
+        isOpen: true,
+        openingHours: {
+          monday: { open: "07:30", close: "19:30" },
+          tuesday: { open: "07:30", close: "19:30" },
+          wednesday: { open: "07:30", close: "19:30" },
+          thursday: { open: "07:30", close: "19:30" },
+          friday: { open: "07:30", close: "19:30" },
+          saturday: { open: "08:00", close: "18:00" },
+          sunday: { open: "09:00", close: "17:00" }
+        }
       }
     ];
 
