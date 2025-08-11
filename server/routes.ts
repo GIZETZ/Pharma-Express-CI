@@ -284,6 +284,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       console.log(`Found ${pharmacies.length} pharmacies`);
+      
+      // Ajouter des headers pour éviter la mise en cache excessive
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
       res.json(pharmacies);
     } catch (error) {
       console.error('Error fetching pharmacies:', error);
@@ -308,6 +316,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const pharmacyData = insertPharmacySchema.parse(req.body);
       const pharmacy = await storage.createPharmacy(pharmacyData);
+      
+      console.log('✅ Nouvelle pharmacie créée:', {
+        id: pharmacy.id,
+        name: pharmacy.name,
+        address: pharmacy.address
+      });
+      
+      // Ajouter des headers pour éviter la mise en cache
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
       res.status(201).json(pharmacy);
     } catch (error) {
       if (error instanceof z.ZodError) {

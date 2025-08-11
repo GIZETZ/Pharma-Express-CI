@@ -37,6 +37,17 @@ export default function Pharmacies() {
     }
   }, []);
 
+  // Actualisation automatique périodique des pharmacies
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      console.log('Actualisation automatique des pharmacies...');
+      refetchPharmacies();
+    }, 120000); // Toutes les 2 minutes
+
+    // Nettoyer l'intervalle au démontage du composant
+    return () => clearInterval(intervalId);
+  }, [refetchPharmacies]);
+
   // Pharmacies triées par distance si géolocalisation disponible
   const { data: pharmacies, isLoading: pharmaciesLoading, refetch: refetchPharmacies } = useQuery({ 
     queryKey: ["/api/pharmacies", userLocation],
@@ -77,10 +88,11 @@ export default function Pharmacies() {
       return data || [];
     },
     enabled: true,
-    staleTime: 0, // Force fresh data every time
-    cacheTime: 0,  // Don't cache the results
+    staleTime: 30000, // 30 secondes avant de considérer les données comme périmées
+    refetchInterval: 60000, // Actualisation automatique toutes les minutes
     refetchOnWindowFocus: true,
-    refetchOnMount: true
+    refetchOnMount: true,
+    refetchIntervalInBackground: false // Pas d'actualisation en arrière-plan
   });
 
   // Function to calculate distance between two points
