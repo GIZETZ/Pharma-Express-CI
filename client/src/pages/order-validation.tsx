@@ -38,7 +38,10 @@ export default function OrderValidationPage() {
   // Fetch order details
   const { data: order, isLoading } = useQuery({
     queryKey: [`/api/orders/${orderId}`],
-    queryFn: () => apiRequest(`/api/orders/${orderId}`, "GET"),
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/orders/${orderId}`);
+      return response.json();
+    },
     enabled: !!orderId
   });
 
@@ -91,7 +94,7 @@ export default function OrderValidationPage() {
   // Payment mutation
   const paymentMutation = useMutation({
     mutationFn: (paymentData: any) =>
-      apiRequest("/api/orders/payment", "POST", paymentData),
+      apiRequest("POST", "/api/orders/payment", paymentData),
     onSuccess: () => {
       toast({
         title: "Paiement confirmé",
@@ -111,7 +114,7 @@ export default function OrderValidationPage() {
 
   // Cancel order mutation
   const cancelOrderMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/orders/${orderId}/cancel`, "POST"),
+    mutationFn: () => apiRequest("POST", `/api/orders/${orderId}/cancel`),
     onSuccess: () => {
       toast({
         title: "Commande annulée",
