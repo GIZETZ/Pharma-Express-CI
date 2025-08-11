@@ -329,8 +329,19 @@ export class MemStorage implements IStorage {
       if (pharmacy) return pharmacy;
     }
     
-    // Fallback: try to find pharmacy by phone number
-    const pharmacy = Array.from(this.pharmacies.values()).find(pharmacy => pharmacy.phone === user.phone);
+    // Fallback: try to find pharmacy by phone number or by matching user details
+    let pharmacy = Array.from(this.pharmacies.values()).find(p => p.phone === user.phone);
+    
+    // If still not found, try to find by name pattern
+    if (!pharmacy) {
+      const expectedName = `Pharmacie ${user.firstName} ${user.lastName}`;
+      pharmacy = Array.from(this.pharmacies.values()).find(p => p.name === expectedName);
+    }
+    
+    // If found but user doesn't have pharmacyId set, update it
+    if (pharmacy && !user.pharmacyId) {
+      await this.updateUser(userId, { pharmacyId: pharmacy.id });
+    }
     
     return pharmacy;
   }

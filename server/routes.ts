@@ -1061,7 +1061,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Update user with the new pharmacy ID
         console.log('Updating user with new pharmacyId:', newPharmacy.id);
         await storage.updateUser(req.session.userId!, { pharmacyId: newPharmacy.id });
-        
+
         console.log('New pharmacy created successfully:', newPharmacy);
         res.json(newPharmacy);
       }
