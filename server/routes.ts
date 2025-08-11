@@ -976,6 +976,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Pharmacy profile routes
   app.get('/api/pharmacies/my-pharmacy', requireAuth, async (req, res) => {
     const user = await storage.getUser(req.session.userId!);
+    console.log('Getting pharmacy for user:', { userId: req.session.userId, role: user?.role, pharmacyId: user?.pharmacyId, phone: user?.phone });
+    
     if (!user || user.role !== 'pharmacien') {
       return res.status(403).json({ message: 'Accès refusé' });
     }
@@ -985,22 +987,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Try to get pharmacy by pharmacyId from user
     if (user.pharmacyId) {
       pharmacy = await storage.getPharmacy(user.pharmacyId);
+      console.log('Pharmacy found by pharmacyId:', pharmacy ? pharmacy.id : 'not found');
     }
 
     // If not found, try the old method (fallback)
     if (!pharmacy) {
       pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
+      console.log('Pharmacy found by userId method:', pharmacy ? pharmacy.id : 'not found');
 
       // If found by old method, update user with pharmacyId
       if (pharmacy) {
         await storage.updateUser(req.session.userId!, { pharmacyId: pharmacy.id });
+        console.log('Updated user with pharmacyId:', pharmacy.id);
+      }
+    }
+
+    // Last resort: search by phone number directly
+    if (!pharmacy) {
+      const allPharmacies = await storage.getPharmacies();
+      pharmacy = allPharmacies.find(p => p.phone === user.phone);
+      console.log('Pharmacy found by phone search:', pharmacy ? pharmacy.id : 'not found');
+      
+      // If found, update user with pharmacyId
+      if (pharmacy) {
+        await storage.updateUser(req.session.userId!, { pharmacyId: pharmacy.id });
+        console.log('Updated user with pharmacyId from phone search:', pharmacy.id);
       }
     }
 
     if (!pharmacy) {
+      console.log('No pharmacy found for user. All pharmacies:', await storage.getPharmacies());
       return res.status(404).json({ message: 'Pharmacy not found' });
     }
 
+    console.log('Returning pharmacy:', pharmacy.id);
     res.json(pharmacy);
   });
 

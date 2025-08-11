@@ -321,26 +321,47 @@ export class MemStorage implements IStorage {
 
   async getPharmacyByUserId(userId: string): Promise<Pharmacy | undefined> {
     const user = this.users.get(userId);
+    console.log('getPharmacyByUserId - User details:', { userId, role: user?.role, pharmacyId: user?.pharmacyId, phone: user?.phone });
+    
     if (!user || user.role !== 'pharmacien') return undefined;
     
     // First check if user has a pharmacyId assigned
     if (user.pharmacyId) {
       const pharmacy = this.pharmacies.get(user.pharmacyId);
+      console.log('getPharmacyByUserId - Pharmacy by pharmacyId:', pharmacy ? pharmacy.id : 'not found');
       if (pharmacy) return pharmacy;
     }
     
-    // Fallback: try to find pharmacy by phone number or by matching user details
-    let pharmacy = Array.from(this.pharmacies.values()).find(p => p.phone === user.phone);
+    // Fallback: try to find pharmacy by phone number
+    const allPharmacies = Array.from(this.pharmacies.values());
+    console.log('getPharmacyByUserId - All pharmacies:', allPharmacies.map(p => ({ id: p.id, phone: p.phone, name: p.name })));
+    
+    let pharmacy = allPharmacies.find(p => p.phone === user.phone);
+    console.log('getPharmacyByUserId - Pharmacy by phone match:', pharmacy ? pharmacy.id : 'not found');
     
     // If still not found, try to find by name pattern
     if (!pharmacy) {
       const expectedName = `Pharmacie ${user.firstName} ${user.lastName}`;
-      pharmacy = Array.from(this.pharmacies.values()).find(p => p.name === expectedName);
+      console.log('getPharmacyByUserId - Searching for pharmacy with name:', expectedName);
+      pharmacy = allPharmacies.find(p => p.name === expectedName);
+      console.log('getPharmacyByUserId - Pharmacy by name match:', pharmacy ? pharmacy.id : 'not found');
+    }
+    
+    // Additional fallback: try partial name matches
+    if (!pharmacy) {
+      const userFullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+      pharmacy = allPharmacies.find(p => 
+        p.name.toLowerCase().includes(user.firstName.toLowerCase()) || 
+        p.name.toLowerCase().includes(user.lastName.toLowerCase()) ||
+        userFullName.includes(p.name.toLowerCase())
+      );
+      console.log('getPharmacyByUserId - Pharmacy by partial name match:', pharmacy ? pharmacy.id : 'not found');
     }
     
     // If found but user doesn't have pharmacyId set, update it
     if (pharmacy && !user.pharmacyId) {
       await this.updateUser(userId, { pharmacyId: pharmacy.id });
+      console.log('getPharmacyByUserId - Updated user with pharmacyId:', pharmacy.id);
     }
     
     return pharmacy;
