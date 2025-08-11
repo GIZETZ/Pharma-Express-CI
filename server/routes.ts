@@ -4,10 +4,10 @@ import multer from "multer";
 import path from "path";
 import session from "express-session";
 import { createStorage } from "./storage-factory";
-import { 
-  insertPharmacySchema, 
-  insertPrescriptionSchema, 
-  insertOrderSchema, 
+import {
+  insertPharmacySchema,
+  insertPrescriptionSchema,
+  insertOrderSchema,
   insertNotificationSchema,
   registerSchema,
   loginSchema
@@ -48,7 +48,7 @@ const requireAuth = (req: any, res: any, next: any) => {
     userId: req.session?.userId,
     hasSession: !!req.session
   });
-  
+
   if (!req.session.userId) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
@@ -147,16 +147,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Démarrer la session avec callback pour assurer la sauvegarde
       req.session.userId = user.id;
       req.session.language = user.language || "fr";
-      
+
       // Sauvegarder explicitement la session
       req.session.save((err) => {
         if (err) {
           console.error('Erreur sauvegarde session:', err);
           return res.status(500).json({ message: 'Erreur de session' });
         }
-        
+
         console.log('Session sauvegardée pour utilisateur:', user.id);
-        
+
         // Retourner les infos utilisateur (sans le mot de passe)
         const { password, ...userInfo } = user;
         res.json(userInfo);
@@ -238,8 +238,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Simuler la sauvegarde de l'image (en production, vous sauvegarderez sur un service cloud)
       const imageUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
 
-      const updatedUser = await storage.updateUser(req.session.userId, { 
-        profileImageUrl: imageUrl 
+      const updatedUser = await storage.updateUser(req.session.userId, {
+        profileImageUrl: imageUrl
       });
 
       if (!updatedUser) {
@@ -372,9 +372,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Order request body:', req.body);
       console.log('Order files:', req.files);
-      
+
       const orderData = { ...req.body, userId: req.session.userId };
-      
+
       // Ensure pharmacyId is present
       if (!orderData.pharmacyId) {
         return res.status(400).json({ message: 'Pharmacy ID is required' });
@@ -385,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.files && req.files['prescriptionPhoto'] && req.files['prescriptionPhoto'][0]) {
         const prescriptionFile = req.files['prescriptionPhoto'][0];
         console.log('Prescription photo found:', prescriptionFile.originalname);
-        
+
         // Create a prescription record
         const prescriptionData = {
           userId: req.session.userId,
@@ -393,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: 'processed' as const,
           medications: null,
         };
-        
+
         const prescription = await storage.createPrescription(prescriptionData);
         prescriptionId = prescription.id;
         console.log('Created prescription with ID:', prescriptionId);
@@ -420,7 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (bonDocuments.length > 0) {
         orderData.bonDocuments = JSON.stringify(bonDocuments);
       }
-      
+
       const order = await storage.createOrder(orderData);
 
       // Send confirmation notification
@@ -560,7 +560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const data = await response.json();
-      
+
       if (!data || !data.display_name) {
         throw new Error('No address found for these coordinates');
       }
@@ -577,7 +577,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(address);
     } catch (error) {
       console.error('Error with reverse geocoding:', error);
-      
+
       // Fallback to a generic response
       const fallbackAddress = {
         formatted_address: `Position GPS: ${req.query.lat}, ${req.query.lng}`,
@@ -585,7 +585,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         country: 'Côte d\'Ivoire',
         postal_code: '',
       };
-      
+
       res.json(fallbackAddress);
     }
   });
@@ -659,10 +659,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // If user has a pharmacyId, get orders for that pharmacy
       // Otherwise get all orders (for now, until we properly associate pharmacists with pharmacies)
-      const orders = user.pharmacyId 
+      const orders = user.pharmacyId
         ? await storage.getPharmacistOrders(user.pharmacyId)
         : await storage.getAllPharmacistOrders();
-        
+
       res.json(orders);
     } catch (error) {
       console.error('Error fetching pharmacist orders:', error);
@@ -721,7 +721,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedOrder = await storage.updateOrderMedications(orderId, medications);
-      
+
       if (!updatedOrder) {
         return res.status(404).json({ message: 'Order not found' });
       }
@@ -758,7 +758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (updatedOrder) {
         await storage.updateOrderStatus(orderId, 'confirmed', totalAmount);
       }
-      
+
       if (!updatedOrder) {
         return res.status(404).json({ message: 'Order not found' });
       }
@@ -781,7 +781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update order status to ready for delivery after payment
       const updatedOrder = await storage.updateOrderStatus(orderId, 'ready_for_delivery');
-      
+
       if (!updatedOrder) {
         return res.status(404).json({ message: 'Order not found' });
       }
@@ -796,7 +796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timestamp: new Date().toISOString()
       });
 
-      res.json({ 
+      res.json({
         message: 'Payment processed successfully',
         order: updatedOrder,
         paymentDetails: {
@@ -830,7 +830,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedOrder = await storage.updateOrderStatus(orderId, 'cancelled');
-      
+
       if (!updatedOrder) {
         return res.status(404).json({ message: 'Order not found' });
       }
@@ -909,6 +909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to update delivery status' });
     }
   });
+
   // Get all orders
   app.get('/api/orders', requireAuth, async (req: any, res) => {
     try {
@@ -923,16 +924,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new order
   app.post('/api/orders', requireAuth, async (req: any, res) => {
     try {
-      const { 
-        pharmacyId, 
-        deliveryAddress, 
-        deliveryLatitude, 
-        deliveryLongitude, 
-        medications, 
-        pharmacyMessage, 
-        notes, 
-        totalAmount, 
-        status 
+      const {
+        pharmacyId,
+        deliveryAddress,
+        deliveryLatitude,
+        deliveryLongitude,
+        medications,
+        pharmacyMessage,
+        notes,
+        totalAmount,
+        status
       } = req.body;
 
       if (!pharmacyId || !deliveryAddress) {
@@ -958,8 +959,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Ajouter les médicaments si disponibles
       if (medications) {
-        orderData.medications = typeof medications === 'string' 
-          ? JSON.parse(medications) 
+        orderData.medications = typeof medications === 'string'
+          ? JSON.parse(medications)
           : medications;
       }
 
@@ -972,82 +973,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-// Pharmacy profile routes
-  app.get('/api/pharmacies/my-pharmacy', requireAuth, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.session.userId);
-      if (!user || user.role !== 'pharmacien') {
-        return res.status(403).json({ message: 'Accès refusé' });
-      }
+  // Pharmacy profile routes
+  app.get('/api/pharmacies/my-pharmacy', requireAuth, async (req, res) => {
+    const user = await storage.getUser(req.session.userId!);
+    if (!user || user.role !== 'pharmacien') {
+      return res.status(403).json({ message: 'Accès refusé' });
+    }
 
-      let pharmacy = null;
-      
-      // Try to get pharmacy by pharmacyId from user
-      if (user.pharmacyId) {
-        pharmacy = await storage.getPharmacy(user.pharmacyId);
-      }
-      
-      // If not found, try the old method
-      if (!pharmacy) {
-        pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
-      }
-      
-      if (!pharmacy) {
-        // Auto-create pharmacy for pharmacist if none exists
-        const pharmacyName = `Pharmacie ${user.firstName} ${user.lastName}`;
-        pharmacy = await storage.createPharmacy({
-          name: pharmacyName,
-          address: user.address || 'Abidjan, Côte d\'Ivoire',
-          phone: user.phone,
-          latitude: 5.2893 + (Math.random() - 0.5) * 0.1,
-          longitude: -3.9882 + (Math.random() - 0.5) * 0.1,
-          rating: 4.5,
-          deliveryTime: '30',
-          isOpen: true,
-          deliveryRadius: 5,
-          minDeliveryFee: 1000,
-          openingHours: {
-            monday: { open: '08:00', close: '19:00' },
-            tuesday: { open: '08:00', close: '19:00' },
-            wednesday: { open: '08:00', close: '19:00' },
-            thursday: { open: '08:00', close: '19:00' },
-            friday: { open: '08:00', close: '19:00' },
-            saturday: { open: '08:00', close: '17:00' },
-            sunday: { open: '09:00', close: '15:00' }
-          }
-        });
-        
-        // Update user to associate with the pharmacy
+    let pharmacy = null;
+
+    // Try to get pharmacy by pharmacyId from user
+    if (user.pharmacyId) {
+      pharmacy = await storage.getPharmacy(user.pharmacyId);
+    }
+
+    // If not found, try the old method (fallback)
+    if (!pharmacy) {
+      pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
+
+      // If found by old method, update user with pharmacyId
+      if (pharmacy) {
         await storage.updateUser(req.session.userId!, { pharmacyId: pharmacy.id });
       }
-      res.json(pharmacy);
-    } catch (error) {
-      console.error('Error fetching pharmacy:', error);
-      res.status(500).json({ message: 'Erreur serveur' });
     }
+
+    if (!pharmacy) {
+      return res.status(404).json({ message: 'Pharmacy not found' });
+    }
+
+    res.json(pharmacy);
   });
 
-  app.put('/api/pharmacies/my-pharmacy', requireAuth, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.session.userId);
-      if (!user || user.role !== 'pharmacien') {
-        return res.status(403).json({ message: 'Accès refusé' });
-      }
+  app.put('/api/pharmacies/my-pharmacy', requireAuth, async (req, res) => {
+    const user = await storage.getUser(req.session.userId!);
+    if (!user || user.role !== 'pharmacien') {
+      return res.status(403).json({ message: 'Accès refusé' });
+    }
 
-      const pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
-      if (!pharmacy) {
-        return res.status(404).json({ message: 'Aucune pharmacie associée à ce compte' });
-      }
+    const pharmacyData = req.body;
 
-      const updatedPharmacy = await storage.updatePharmacy(pharmacy.id, req.body);
-      if (!updatedPharmacy) {
-        return res.status(404).json({ message: 'Pharmacie non trouvée' });
+    // Try to find existing pharmacy by pharmacyId first, then fallback to ownerId
+    let pharmacy = null;
+    if (user.pharmacyId) {
+      pharmacy = await storage.getPharmacy(user.pharmacyId);
+    }
+    if (!pharmacy) {
+      pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
+    }
+
+    if (pharmacy) {
+      // Update existing pharmacy
+      const updatedPharmacy = await storage.updatePharmacy(pharmacy.id, pharmacyData);
+
+      // Ensure user has the pharmacyId
+      if (!user.pharmacyId) {
+        await storage.updateUser(req.session.userId!, { pharmacyId: pharmacy.id });
       }
 
       res.json(updatedPharmacy);
-    } catch (error) {
-      console.error('Error updating pharmacy:', error);
-      res.status(500).json({ message: 'Erreur serveur' });
+    } else {
+      // Create new pharmacy
+      const newPharmacy = await storage.createPharmacy({
+        ...pharmacyData,
+        ownerId: req.session.userId!,
+        rating: pharmacyData.rating || 4.5,
+        reviewCount: pharmacyData.reviewCount || 0,
+        isOpen: pharmacyData.isOpen !== undefined ? pharmacyData.isOpen : true,
+        openingHours: pharmacyData.openingHours || {
+          monday: { open: '08:00', close: '19:00' },
+          tuesday: { open: '08:00', close: '19:00' },
+          wednesday: { open: '08:00', close: '19:00' },
+          thursday: { open: '08:00', close: '19:00' },
+          friday: { open: '08:00', close: '19:00' },
+          saturday: { open: '08:00', close: '17:00' },
+          sunday: { open: '09:00', close: '15:00' }
+        }
+      });
+
+      // Update user with the new pharmacy ID
+      await storage.updateUser(req.session.userId!, { pharmacyId: newPharmacy.id });
+      res.json(newPharmacy);
     }
   });
 
