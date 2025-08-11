@@ -44,13 +44,18 @@ export default function Pharmacies() {
       const url = userLocation 
         ? `/api/pharmacies?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=10`
         : `/api/pharmacies`;
+      console.log('Fetching pharmacies from:', url);
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Erreur lors du chargement des pharmacies');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('Pharmacies received:', data);
+      return data;
     },
-    enabled: true
+    enabled: true,
+    staleTime: 0, // Force fresh data every time
+    cacheTime: 0  // Don't cache the results
   });
 
   return (
