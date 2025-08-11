@@ -980,7 +980,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Accès refusé' });
       }
 
-      let pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
+      let pharmacy = null;
+      
+      // Try to get pharmacy by pharmacyId from user
+      if (user.pharmacyId) {
+        pharmacy = await storage.getPharmacy(user.pharmacyId);
+      }
+      
+      // If not found, try the old method
+      if (!pharmacy) {
+        pharmacy = await storage.getPharmacyByUserId(req.session.userId!);
+      }
+      
       if (!pharmacy) {
         // Auto-create pharmacy for pharmacist if none exists
         const pharmacyName = `Pharmacie ${user.firstName} ${user.lastName}`;
