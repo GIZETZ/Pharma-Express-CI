@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { ArrowLeft, Trash2, ShoppingCart, CreditCard, X } from "lucide-react";
 
@@ -24,10 +24,10 @@ export default function OrderValidationPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location, navigate] = useLocation();
+  const searchParams = useSearch();
   
   // Get order ID from URL
-  const urlParams = location.includes('?') ? location.split('?')[1] : '';
-  const orderId = new URLSearchParams(urlParams).get('orderId');
+  const orderId = new URLSearchParams(searchParams).get('orderId');
   
   console.log('Order validation - URL:', location, 'orderId:', orderId);
   
