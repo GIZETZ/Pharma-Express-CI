@@ -658,7 +658,11 @@ export default function DashboardPatient() {
                         <Phone className="h-4 w-4" />
                         Contacter le livreur
                       </Button>
-                      <Button variant="outline" className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        className="flex items-center gap-2"
+                        onClick={() => navigate("/delivery-tracking")}
+                      >
                         <MapPin className="h-4 w-4" />
                         Voir sur la carte
                       </Button>

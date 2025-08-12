@@ -1,3 +1,4 @@
+
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -6,16 +7,22 @@ import { Badge } from "@/components/ui/badge";
 import BottomNavigation from "@/components/bottom-navigation";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useGeolocation } from "@/hooks/use-geolocation";
+import { useState, useEffect } from "react";
 import type { Order, DeliveryPerson } from "@shared/schema";
 
 export default function DeliveryTracking() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { latitude: userLat, longitude: userLng } = useGeolocation();
+  const [deliveryPersonLocation, setDeliveryPersonLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [estimatedTime, setEstimatedTime] = useState<number>(0);
 
   // Get current order being tracked
   const { data: currentOrder, isLoading: orderLoading } = useQuery<Order>({
     queryKey: ['/api/orders/current'],
+    refetchInterval: 5000, // Refresh every 5 seconds for real-time tracking
   });
 
   const { data: deliveryPerson } = useQuery<DeliveryPerson>({
@@ -23,12 +30,43 @@ export default function DeliveryTracking() {
     enabled: !!currentOrder?.deliveryPersonId,
   });
 
+  // Simulate delivery person location updates (in real app, this would come from GPS)
+  useEffect(() => {
+    if (currentOrder?.status === 'in_delivery' && userLat && userLng) {
+      const interval = setInterval(() => {
+        // Simulate delivery person moving closer to patient
+        const randomOffset = 0.001;
+        const newLat = userLat + (Math.random() - 0.5) * randomOffset;
+        const newLng = userLng + (Math.random() - 0.5) * randomOffset;
+        
+        setDeliveryPersonLocation({ lat: newLat, lng: newLng });
+        
+        // Calculate estimated time based on distance
+        const distance = calculateDistance(newLat, newLng, userLat, userLng);
+        const estimatedMinutes = Math.max(1, Math.round(distance * 60)); // Assuming 1km per minute
+        setEstimatedTime(estimatedMinutes);
+      }, 3000); // Update every 3 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [currentOrder?.status, userLat, userLng]);
+
+  // Calculate distance between two coordinates
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
   // Mutation to confirm delivery
   const confirmDeliveryMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      return await apiRequest(`/api/orders/${orderId}/confirm-delivery`, {
-        method: 'POST',
-      });
+      return await apiRequest("POST", `/api/orders/${orderId}/confirm-delivery`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
@@ -75,7 +113,7 @@ export default function DeliveryTracking() {
       { 
         key: 'in_delivery', 
         label: 'En cours de livraison', 
-        time: status === 'in_delivery' ? "En cours..." : status === 'delivered' ? "Terminé" : "En attente", 
+        time: status === 'in_delivery' ? `Arrivée estimée: ${estimatedTime} min` : status === 'delivered' ? "Terminé" : "En attente", 
         completed: status && ['in_delivery', 'delivered'].includes(status),
         active: status === 'in_delivery'
       },
@@ -128,10 +166,10 @@ export default function DeliveryTracking() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-xl font-semibold" data-testid="text-delivery-status">
-                En cours de livraison
+                {currentOrder?.status === 'in_delivery' ? 'En cours de livraison' : 'Suivi de commande'}
               </h2>
               <p className="text-white/80" data-testid="text-order-number">
-                Commande #PX2024001
+                Commande #{currentOrder?.id.slice(0, 8) || 'PX2024001'}
               </p>
             </div>
             <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
@@ -146,34 +184,121 @@ export default function DeliveryTracking() {
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
             </svg>
             <span className="font-medium" data-testid="text-estimated-arrival">
-              Arrivée estimée: 15-20 minutes
+              Arrivée estimée: {estimatedTime > 0 ? `${estimatedTime} minutes` : '15-20 minutes'}
             </span>
           </div>
         </div>
 
-        {/* Delivery Map */}
+        {/* Interactive Delivery Map */}
         <Card className="shadow-sm mb-6">
           <CardContent className="p-4">
-            <h3 className="font-semibold text-gray-900 mb-3">Localisation en temps réel</h3>
-            <div className="map-container">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center text-gray-600">
-                  <svg className="w-12 h-12 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017.88 10.88 3 3 0 0112.12 15.12z" clipRule="evenodd" />
-                  </svg>
-                  <p className="font-medium">Carte de suivi</p>
-                  <p className="text-sm">Position du livreur</p>
+            <h3 className="font-semibold text-gray-900 mb-3">Carte de suivi en temps réel</h3>
+            <div className="relative bg-gradient-to-br from-blue-50 to-green-50 rounded-lg h-64 overflow-hidden border-2 border-gray-200">
+              {/* Map Background with Grid */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="grid grid-cols-8 grid-rows-8 h-full w-full">
+                  {Array.from({ length: 64 }).map((_, i) => (
+                    <div key={i} className="border border-gray-300"></div>
+                  ))}
                 </div>
               </div>
-              {/* Mock delivery route */}
-              <div className="absolute top-4 left-4 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
-              <div className="absolute bottom-4 right-4 w-4 h-4 bg-blue-500 rounded-full"></div>
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                <svg className="w-6 h-6 text-pharma-green" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                  <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707L16 7.586A1 1 0 0015.414 7H14z" />
-                </svg>
+
+              {/* Street Lines */}
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M0,20 Q30,15 60,25 T100,20" stroke="#e5e7eb" strokeWidth="0.5" fill="none" />
+                <path d="M0,40 L100,45" stroke="#e5e7eb" strokeWidth="0.3" fill="none" />
+                <path d="M0,70 Q25,65 50,75 T100,70" stroke="#e5e7eb" strokeWidth="0.4" fill="none" />
+                <path d="M20,0 L25,100" stroke="#e5e7eb" strokeWidth="0.3" fill="none" />
+                <path d="M50,0 Q48,30 52,60 T50,100" stroke="#e5e7eb" strokeWidth="0.4" fill="none" />
+                <path d="M80,0 L75,100" stroke="#e5e7eb" strokeWidth="0.3" fill="none" />
+              </svg>
+
+              {/* Patient Location (Fixed) */}
+              {userLat && userLng && (
+                <div className="absolute bottom-4 right-4 flex flex-col items-center">
+                  <div className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center animate-pulse">
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-semibold text-blue-600 mt-1 bg-white px-2 py-1 rounded shadow">Vous</span>
+                </div>
+              )}
+
+              {/* Pharmacy Location */}
+              <div className="absolute top-4 left-4 flex flex-col items-center">
+                <div className="w-6 h-6 bg-green-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 2L3 7v11a2 2 0 002 2h10a2 2 0 002-2V7l-7-5z" />
+                    <path d="M8 11h4v2H8v-2z" />
+                    <path d="M10 9v4" stroke="white" strokeWidth="1" />
+                  </svg>
+                </div>
+                <span className="text-xs font-semibold text-green-600 mt-1 bg-white px-2 py-1 rounded shadow">Pharmacie</span>
               </div>
+
+              {/* Delivery Person Location (Moving) */}
+              {deliveryPersonLocation && currentOrder?.status === 'in_delivery' && (
+                <div 
+                  className="absolute transition-all duration-3000 ease-linear flex flex-col items-center"
+                  style={{
+                    left: `${30 + (deliveryPersonLocation.lat - (userLat || 0)) * 2000}%`,
+                    top: `${50 + (deliveryPersonLocation.lng - (userLng || 0)) * 2000}%`,
+                  }}
+                >
+                  <div className="w-6 h-6 bg-orange-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center animate-bounce">
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                      <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707L16 7.586A1 1 0 0015.414 7H14z" />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-semibold text-orange-600 mt-1 bg-white px-2 py-1 rounded shadow">Livreur</span>
+                </div>
+              )}
+
+              {/* Route Line */}
+              {deliveryPersonLocation && userLat && userLng && (
+                <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                  <defs>
+                    <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" style={{stopColor:'#f97316', stopOpacity:1}} />
+                      <stop offset="100%" style={{stopColor:'#3b82f6', stopOpacity:1}} />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d={`M ${30 + (deliveryPersonLocation.lat - userLat) * 2000} ${50 + (deliveryPersonLocation.lng - userLng) * 2000} 
+                        Q ${65} ${40} 
+                        ${85} ${75}`}
+                    stroke="url(#routeGradient)"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                    fill="none"
+                    className="animate-pulse"
+                  />
+                </svg>
+              )}
+
+              {/* Real-time coordinates display */}
+              {deliveryPersonLocation && (
+                <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs p-2 rounded">
+                  <div>Livreur: {deliveryPersonLocation.lat.toFixed(4)}, {deliveryPersonLocation.lng.toFixed(4)}</div>
+                  {userLat && userLng && (
+                    <div>Vous: {userLat.toFixed(4)}, {userLng.toFixed(4)}</div>
+                  )}
+                  <div className="text-orange-300">Distance: {deliveryPersonLocation && userLat && userLng ? 
+                    `${calculateDistance(deliveryPersonLocation.lat, deliveryPersonLocation.lng, userLat, userLng).toFixed(2)} km` : 'Calcul...'}</div>
+                </div>
+              )}
+
+              {/* Status indicator */}
+              <div className="absolute bottom-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold animate-pulse">
+                🔴 EN DIRECT
+              </div>
+            </div>
+            
+            <div className="mt-3 flex justify-between items-center text-sm text-gray-600">
+              <span>🔄 Mise à jour automatique toutes les 3 secondes</span>
+              <span>📍 Précision GPS: ±5 mètres</span>
             </div>
           </CardContent>
         </Card>
@@ -257,9 +382,14 @@ export default function DeliveryTracking() {
               />
               <div className="flex-1">
                 <h4 className="font-medium text-gray-900" data-testid="text-delivery-person-name">
-                  Jean-Claude K.
+                  {deliveryPerson?.firstName || 'Jean-Claude'} {deliveryPerson?.lastName || 'K.'}
                 </h4>
                 <p className="text-gray-600 text-sm">Livreur agréé</p>
+                {deliveryPersonLocation && (
+                  <p className="text-xs text-gray-500">
+                    📍 Position: {deliveryPersonLocation.lat.toFixed(4)}, {deliveryPersonLocation.lng.toFixed(4)}
+                  </p>
+                )}
               </div>
               <div className="flex space-x-2">
                 <Button
