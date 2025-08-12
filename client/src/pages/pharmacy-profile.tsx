@@ -27,7 +27,7 @@ export default function PharmacyProfile() {
   const [editData, setEditData] = useState<any>({});
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [currentAddress, setCurrentAddress] = useState<string>("");
-  
+
   // Géolocalisation pour auto-localiser la pharmacie
   const { latitude, longitude, error: geoError, loading: geoLoading, refetch: refetchLocation } = useGeolocation();
 
@@ -52,30 +52,30 @@ export default function PharmacyProfile() {
     mutationFn: async (data: any) => {
       console.log('Sending pharmacy update data:', data);
       const response = await apiRequest('PUT', '/api/pharmacies/my-pharmacy', data);
-      
+
       if (!response.ok) {
         const errorData = await response.text();
         console.error('Pharmacy update failed:', response.status, errorData);
         throw new Error(`Failed to update pharmacy: ${response.status}`);
       }
-      
+
       const result = await response.json();
       console.log('Pharmacy update successful:', result);
       return result;
     },
     onSuccess: (data) => {
       console.log('Pharmacy update mutation success:', data);
-      
+
       // Invalider les queries
       queryClient.invalidateQueries({ queryKey: ['/api/pharmacies/my-pharmacy'] });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      
+
       // Afficher le toast de succès
       toast({ 
         title: "Profil mis à jour", 
         description: "Les informations de votre pharmacie ont été sauvegardées." 
       });
-      
+
       // Réinitialiser l'état d'édition
       setEditMode(false);
       setEditData({});
@@ -100,7 +100,7 @@ export default function PharmacyProfile() {
           if (response.ok) {
             const addressData = await response.json();
             setCurrentAddress(addressData.formatted_address || '');
-            
+
             // Mettre à jour automatiquement l'adresse dans le formulaire d'édition
             setEditData((prev: any) => ({
               ...prev,
@@ -113,7 +113,7 @@ export default function PharmacyProfile() {
           console.error("Erreur géolocalisation:", error);
         }
       };
-      
+
       getAddressFromCoords();
     }
   }, [latitude, longitude, editMode, updatePharmacyMutation.isPending]);
@@ -121,10 +121,22 @@ export default function PharmacyProfile() {
   const handleEdit = (e?: React.MouseEvent) => {
     e?.preventDefault();
     e?.stopPropagation();
-    
+
     // Use setTimeout to prevent race conditions with DOM updates
     setTimeout(() => {
-      setEditData(pharmacyData || {});
+      const dataToEdit = pharmacyData || displayPharmacy;
+      setEditData({
+        ...dataToEdit,
+        openingHours: dataToEdit.openingHours || {
+          monday: { open: '08:00', close: '19:00' },
+          tuesday: { open: '08:00', close: '19:00' },
+          wednesday: { open: '08:00', close: '19:00' },
+          thursday: { open: '08:00', close: '19:00' },
+          friday: { open: '08:00', close: '19:00' },
+          saturday: { open: '08:00', close: '17:00' },
+          sunday: { open: '09:00', close: '15:00' }
+        }
+      });
       setEditMode(true);
     }, 0);
   };
@@ -132,7 +144,7 @@ export default function PharmacyProfile() {
   const handleSave = (e?: React.MouseEvent) => {
     e?.preventDefault();
     e?.stopPropagation();
-    
+
     if (!updatePharmacyMutation.isPending) {
       updatePharmacyMutation.mutate(editData);
     }
@@ -141,7 +153,7 @@ export default function PharmacyProfile() {
   const handleCancel = (e?: React.MouseEvent) => {
     e?.preventDefault();
     e?.stopPropagation();
-    
+
     if (!updatePharmacyMutation.isPending) {
       setTimeout(() => {
         setEditMode(false);
@@ -343,7 +355,7 @@ export default function PharmacyProfile() {
                 )}
               </div>
             </div>
-            
+
             {editMode && (latitude && longitude) && (
               <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-800">
@@ -374,27 +386,27 @@ export default function PharmacyProfile() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {days.map((day) => (
-                  <div key={day.key} className="flex items-center justify-between py-2">
-                    <Label className="w-24">{day.label}</Label>
+                  <div key={day.key} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                    <Label className="w-24 font-medium">{day.label}</Label>
                     <div className="flex items-center gap-4">
                       {editMode ? (
                         <>
                           <Input
                             type="time"
-                            value={editData.openingHours?.[day.key]?.open || '08:00'}
+                            value={editData.openingHours?.[day.key]?.open || displayPharmacy.openingHours?.[day.key]?.open || '08:00'}
                             onChange={(e) => updateOpeningHours(day.key, 'open', e.target.value)}
                             className="w-32"
                           />
-                          <span>à</span>
+                          <span className="text-gray-500">à</span>
                           <Input
                             type="time"
-                            value={editData.openingHours?.[day.key]?.close || '18:00'}
+                            value={editData.openingHours?.[day.key]?.close || displayPharmacy.openingHours?.[day.key]?.close || '18:00'}
                             onChange={(e) => updateOpeningHours(day.key, 'close', e.target.value)}
                             className="w-32"
                           />
                         </>
                       ) : (
-                        <span className="text-sm">
+                        <span className="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-lg">
                           {displayPharmacy.openingHours?.[day.key]?.open || '08:00'} - {displayPharmacy.openingHours?.[day.key]?.close || '18:00'}
                         </span>
                       )}
