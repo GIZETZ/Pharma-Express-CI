@@ -903,7 +903,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get delivery orders (livreur)
+  // Get delivery orders assigned to this livreur
   app.get('/api/livreur/deliveries', requireAuth, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.session.userId);
@@ -911,15 +911,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      const deliveries = await storage.getDeliveryOrders();
-      res.json(deliveries);
+      // Get only orders assigned to this delivery person
+      const allDeliveries = await storage.getDeliveryOrders();
+      const myDeliveries = allDeliveries.filter(delivery => delivery.deliveryPersonId === user.id);
+      
+      res.json(myDeliveries);
     } catch (error) {
       console.error('Error fetching deliveries:', error);
       res.status(500).json({ message: 'Failed to fetch deliveries' });
     }
   });
 
-  // Get available deliveries (livreur)
+  // Get available deliveries (not assigned to anyone yet)
   app.get('/api/livreur/available-deliveries', requireAuth, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.session.userId);
@@ -927,7 +930,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      const availableDeliveries = await storage.getDeliveryOrders();
+      // Get only orders that are ready for delivery but not assigned to anyone
+      const allDeliveries = await storage.getDeliveryOrders();
+      const availableDeliveries = allDeliveries.filter(delivery => 
+        delivery.status === 'ready_for_delivery' && !delivery.deliveryPersonId
+      );
+      
       res.json(availableDeliveries);
     } catch (error) {
       console.error('Error fetching available deliveries:', error);

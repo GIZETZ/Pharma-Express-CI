@@ -814,8 +814,34 @@ export class MemStorage implements IStorage {
 
     this.orders.set(orderId, order);
     
-    // Retourner l'ordre enrichi
+    // Créer des notifications pour le livreur et le patient
+    const deliveryPerson = this.users.get(deliveryPersonId);
+    const patient = this.users.get(order.userId);
     const pharmacy = this.pharmacies.get(order.pharmacyId);
+
+    if (deliveryPerson) {
+      // Notification pour le livreur
+      await this.createNotification({
+        userId: deliveryPersonId,
+        title: 'Nouvelle livraison assignée',
+        message: `Commande #${order.id.slice(0, 8)} - ${order.deliveryAddress}`,
+        type: 'delivery_assigned',
+        isRead: false
+      });
+    }
+
+    if (patient) {
+      // Notification pour le patient
+      await this.createNotification({
+        userId: order.userId,
+        title: 'Livreur assigné à votre commande',
+        message: `${deliveryPerson?.firstName} ${deliveryPerson?.lastName} va livrer votre commande. Contact: ${deliveryPerson?.phone}`,
+        type: 'delivery_assigned',
+        isRead: false
+      });
+    }
+    
+    // Retourner l'ordre enrichi
     return {
       ...order,
       pharmacy: pharmacy ? {
@@ -824,6 +850,16 @@ export class MemStorage implements IStorage {
         address: pharmacy.address,
         phone: pharmacy.phone,
         rating: pharmacy.rating
+      } : null,
+      patient: patient ? {
+        firstName: patient.firstName,
+        lastName: patient.lastName,
+        phone: patient.phone
+      } : null,
+      deliveryPerson: deliveryPerson ? {
+        firstName: deliveryPerson.firstName,
+        lastName: deliveryPerson.lastName,
+        phone: deliveryPerson.phone
       } : null,
       totalAmount: order.totalAmount || '0'
     };

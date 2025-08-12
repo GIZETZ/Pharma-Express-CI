@@ -4,6 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -13,14 +17,32 @@ export default function DashboardLivreur() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("available");
+  const [activeTab, setActiveTab] = useState("my-deliveries");
+  const [isAvailable, setIsAvailable] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+
+  // Récupérer les commandes assignées à ce livreur
+  const { data: myDeliveries, isLoading: loadingMyDeliveries } = useQuery({
+    queryKey: ["/api/livreur/deliveries"],
+    enabled: true
+  });
+
+  // Récupérer les livraisons disponibles
+  const { data: availableDeliveries, isLoading: loadingAvailable } = useQuery({
+    queryKey: ["/api/livreur/available-deliveries"],
+    enabled: isAvailable
+  });
+
+  // Récupérer les notifications
+  const { data: notifications } = useQuery({
+    queryKey: ["/api/notifications"],
+    enabled: true
+  });
 
   // Mutation pour accepter une livraison
   const acceptDeliveryMutation = useMutation({
     mutationFn: (orderId: string) =>
-      apiRequest(`/api/livreur/deliveries/${orderId}/accept`, {
-        method: "POST",
-      }),
+      apiRequest("POST", `/api/livreur/deliveries/${orderId}/accept`),
     onSuccess: () => {
       toast({
         title: "Livraison acceptée",
@@ -41,14 +63,11 @@ export default function DashboardLivreur() {
   // Mutation pour mettre à jour le statut d'une livraison
   const updateDeliveryMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: string; status: string }) =>
-      apiRequest(`/api/livreur/deliveries/${orderId}/status`, {
-        method: "POST",
-        body: JSON.stringify({ status }),
-      }),
-    onSuccess: () => {
+      apiRequest("POST", `/api/livreur/deliveries/${orderId}/status`, { status }),
+    onSuccess: (data, variables) => {
       toast({
         title: "Statut mis à jour",
-        description: "Le statut de la livraison a été mis à jour",
+        description: variables.status === 'delivered' ? "Livraison terminée avec succès !" : "Le statut de la livraison a été mis à jour",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/livreur/deliveries"] });
     },
@@ -61,16 +80,6 @@ export default function DashboardLivreur() {
     },
   });
 
-  // Récupérer les commandes de livraison assignées
-  const { data: deliveries, isLoading: loadingDeliveries } = useQuery({
-    queryKey: ["/api/livreur/deliveries"],
-  });
-
-  // Récupérer les livraisons disponibles
-  const { data: availableDeliveries, isLoading: loadingAvailable } = useQuery({
-    queryKey: ["/api/livreur/available-deliveries"],
-  });
-
   const handleAcceptDelivery = (orderId: string) => {
     acceptDeliveryMutation.mutate(orderId);
   };
@@ -79,12 +88,16 @@ export default function DashboardLivreur() {
     updateDeliveryMutation.mutate({ orderId, status });
   };
 
-  if (loadingDeliveries || loadingAvailable) {
-    return <div>Chargement...</div>;
+  if (loadingMyDeliveries && loadingAvailable) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-6 pb-24">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-purple-600 mb-2">
@@ -95,8 +108,27 @@ export default function DashboardLivreur() {
           </p>
         </div>
 
+        {/* Résumé des notifications */}
+        {notifications && notifications.length > 0 && (
+          <Card className="mb-6 bg-purple-50 border-purple-200">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  🔔
+                </div>
+                <div>
+                  <h3 className="font-semibold text-purple-800">Nouvelles notifications</h3>
+                  <p className="text-sm text-purple-600">
+                    {notifications.filter((n: any) => !n.isRead).length} nouvelles notifications
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Statut de Disponibilité */}
-        {/* <Card className="mb-6">
+        <Card className="mb-6">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -120,369 +152,266 @@ export default function DashboardLivreur() {
               <Switch
                 checked={isAvailable}
                 onCheckedChange={setIsAvailable}
-                data-testid="switch-availability"
               />
             </div>
           </CardContent>
-        </Card> */}
+        </Card>
 
-        <Tabs defaultValue="missions" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="missions">
-              Nouvelles Missions
-              {deliveries?.filter((d: any) => d.status === 'available')?.length > 0 && (
-                <Badge variant="destructive" className="ml-2">
-                  {deliveries.filter((d: any) => d.status === 'available').length}
+            <TabsTrigger value="my-deliveries">
+              Mes Livraisons
+              {myDeliveries && myDeliveries.length > 0 && (
+                <Badge variant="default" className="ml-2 bg-purple-600">
+                  {myDeliveries.length}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="active">Livraisons Actives</TabsTrigger>
+            <TabsTrigger value="available">
+              Missions Disponibles
+              {availableDeliveries && availableDeliveries.length > 0 && (
+                <Badge variant="destructive" className="ml-2">
+                  {availableDeliveries.length}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="earnings">Mes Gains</TabsTrigger>
           </TabsList>
 
-          {/* Nouvelles Missions */}
-          <TabsContent value="missions">
-            <div className="space-y-4">
-              {/* Statistiques du jour */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Missions Disponibles</p>
-                        <p className="text-2xl font-bold text-orange-600">
-                          {deliveries?.filter((d: any) => d.status === 'available')?.length || 0}
-                        </p>
-                      </div>
-                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                        📦
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">En Cours</p>
-                        <p className="text-2xl font-bold text-blue-600">
-                          {deliveries?.filter((d: any) => d.status === 'in_transit')?.length || 0}
-                        </p>
-                      </div>
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        🚴
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Livrées Aujourd'hui</p>
-                        <p className="text-2xl font-bold text-green-600">
-                          {deliveries?.filter((d: any) => 
-                            d.status === 'delivered' && 
-                            new Date(d.deliveredAt).toDateString() === new Date().toDateString()
-                          )?.length || 0}
-                        </p>
-                      </div>
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                        ✅
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Gains du Jour</p>
-                        <p className="text-2xl font-bold text-purple-600">
-                          {(deliveries?.filter((d: any) => 
-                            d.status === 'delivered' && 
-                            new Date(d.deliveredAt).toDateString() === new Date().toDateString()
-                          )?.length || 0) * 500} FCFA
-                        </p>
-                      </div>
-                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                        💰
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Missions disponibles */}
-              {/* {isAvailable ? ( */}
-                <div className="space-y-4">
-                  {deliveries?.filter((delivery: any) => delivery.status === 'available').map((delivery: any) => (
-                    <Card key={delivery.id} className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg">
-                            Mission #{delivery.id.slice(0, 8)}
-                          </CardTitle>
-                          <div className="flex items-center space-x-2">
-                            <Badge variant="secondary">500 FCFA</Badge>
-                            <Badge>Disponible</Badge>
-                          </div>
-                        </div>
-                        <CardDescription>
-                          Distance estimée: {delivery.distance || '2.5'} km • Temps: {delivery.estimatedTime || '15'} min
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <p className="text-sm font-medium text-gray-700 mb-1">📍 Récupération</p>
-                            <p className="text-sm text-gray-600">{delivery.pharmacy?.name}</p>
-                            <p className="text-xs text-gray-500">{delivery.pharmacy?.address}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-700 mb-1">🏠 Livraison</p>
-                            <p className="text-sm text-gray-600">{delivery.customer?.name}</p>
-                            <p className="text-xs text-gray-500">{delivery.deliveryAddress}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm text-gray-600">
-                            <span className="font-medium">Contact client:</span> {delivery.customer?.phone}
-                          </div>
-                          <div className="flex space-x-2">
-                            <Button 
-                              size="sm" 
-                              className="bg-green-600 hover:bg-green-700"
-                              data-testid={`button-accept-delivery-${delivery.id}`}
-                              onClick={() => handleAcceptDelivery(delivery.id)}
-                              disabled={acceptDeliveryMutation.isPending}
-                            >
-                              ✅ Accepter Mission
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              data-testid={`button-view-route-${delivery.id}`}
-                            >
-                              🗺️ Voir Itinéraire
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-
-                  {(!deliveries || deliveries.filter((d: any) => d.status === 'available').length === 0) && (
-                    <Card>
-                      <CardContent className="text-center py-8">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                          📦
-                        </div>
-                        <h3 className="font-semibold mb-2">Aucune mission disponible</h3>
-                        <p className="text-sm text-gray-600">
-                          Restez connecté, de nouvelles missions apparaîtront bientôt
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              {/* ) : (
-                <Card>
-                  <CardContent className="text-center py-8">
-                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      🔴
-                    </div>
-                    <h3 className="font-semibold mb-2">Statut: Indisponible</h3>
-                    <p className="text-sm text-gray-600">
-                      Activez votre disponibilité pour recevoir des missions de livraison
-                    </p>
-                  </CardContent>
-                </Card>
-              )} */}
-            </div>
-          </TabsContent>
-
-          {/* Livraisons Actives */}
-          <TabsContent value="active">
-            <div className="space-y-4">
-              {deliveries?.filter((delivery: any) => delivery.status === 'in_transit').map((delivery: any) => (
-                <Card key={delivery.id} className="border-l-4 border-l-blue-500">
+          {/* Mes Livraisons Assignées */}
+          <TabsContent value="my-deliveries" className="space-y-4">
+            {!myDeliveries || myDeliveries.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    📦
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                    Aucune livraison assignée
+                  </h3>
+                  <p className="text-gray-500">
+                    Vos commandes assignées apparaîtront ici
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              myDeliveries.map((delivery: any) => (
+                <Card key={delivery.id} className="border-l-4 border-l-purple-500">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">
-                        Livraison en Cours #{delivery.id.slice(0, 8)}
+                        Commande #{delivery.id.slice(0, 8)}
                       </CardTitle>
-                      <Badge className="bg-blue-600">En Transit</Badge>
+                      <Badge variant={
+                        delivery.status === 'in_delivery' ? 'default' : 
+                        delivery.status === 'delivered' ? 'secondary' : 'destructive'
+                      }>
+                        {delivery.status === 'in_delivery' ? 'En livraison' : 
+                         delivery.status === 'delivered' ? 'Livrée' : 'En attente'}
+                      </Badge>
                     </div>
+                    <CardDescription>
+                      {delivery.pharmacy?.name || 'Pharmacie inconnue'}
+                    </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">Progression</span>
-                        <span className="text-sm text-gray-600">75%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-blue-600 h-2 rounded-full" style={{ width: '75%' }}></div>
-                      </div>
+                  <CardContent className="space-y-4">
+                    {/* Informations Patient */}
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-blue-800 mb-2 flex items-center">
+                        👤 Information Patient
+                      </h4>
+                      <p className="text-sm text-blue-700">
+                        <strong>Nom:</strong> {delivery.patient?.firstName} {delivery.patient?.lastName}
+                      </p>
+                      <p className="text-sm text-blue-700">
+                        <strong>Téléphone:</strong> {delivery.patient?.phone}
+                      </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Client</p>
-                        <p className="text-sm text-gray-600">{delivery.customer?.name}</p>
-                        <p className="text-xs text-gray-500">{delivery.customer?.phone}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Adresse</p>
-                        <p className="text-sm text-gray-600">{delivery.deliveryAddress}</p>
-                      </div>
+                    {/* Adresse de Livraison */}
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-green-800 mb-2 flex items-center">
+                        📍 Adresse de Livraison
+                      </h4>
+                      <p className="text-sm text-green-700">{delivery.deliveryAddress}</p>
                     </div>
 
-                    <div className="flex space-x-2">
-                          <Button 
-                            size="sm" 
-                            className="bg-blue-600 hover:bg-blue-700"
-                            onClick={() => handleUpdateDeliveryStatus(delivery.id, 'delivered')}
-                            disabled={updateDeliveryMutation.isPending}
-                          >
-                            ✅ Livré
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => window.open(`tel:${delivery.user?.phone}`, '_self')}
-                          >
-                            📞 Contacter
-                          </Button>
+                    {/* Médicaments */}
+                    {delivery.medications && delivery.medications.length > 0 && (
+                      <div className="bg-yellow-50 p-4 rounded-lg">
+                        <h4 className="font-semibold text-yellow-800 mb-2 flex items-center">
+                          💊 Médicaments à Livrer
+                        </h4>
+                        <ul className="text-sm text-yellow-700 space-y-1">
+                          {delivery.medications.map((med: any, index: number) => (
+                            <li key={index} className="flex justify-between">
+                              <span>{med.name} (Qté: {med.quantity})</span>
+                              <span className="font-semibold">{med.price} FCFA</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <Separator className="my-2" />
+                        <div className="flex justify-between font-bold">
+                          <span>Total:</span>
+                          <span>{delivery.totalAmount || 0} FCFA</span>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      {delivery.status === 'in_delivery' && (
+                        <Button
+                          onClick={() => handleUpdateDeliveryStatus(delivery.id, 'delivered')}
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                          disabled={updateDeliveryMutation.isPending}
+                        >
+                          Marquer comme Livrée ✅
+                        </Button>
+                      )}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setSelectedOrder(delivery)}
+                            className="flex-1"
+                          >
+                            Voir Détails
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>Détails de la Commande #{delivery.id.slice(0, 8)}</DialogTitle>
+                            <DialogDescription>
+                              Informations complètes de la livraison
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <Label>Statut</Label>
+                              <Badge className="ml-2">
+                                {delivery.status === 'in_delivery' ? 'En livraison' : 
+                                 delivery.status === 'delivered' ? 'Livrée' : 'En attente'}
+                              </Badge>
+                            </div>
+                            <div>
+                              <Label>Patient</Label>
+                              <p>{delivery.patient?.firstName} {delivery.patient?.lastName}</p>
+                              <p className="text-sm text-gray-600">{delivery.patient?.phone}</p>
+                            </div>
+                            <div>
+                              <Label>Adresse</Label>
+                              <p>{delivery.deliveryAddress}</p>
+                            </div>
+                            <div>
+                              <Label>Pharmacie</Label>
+                              <p>{delivery.pharmacy?.name}</p>
+                              <p className="text-sm text-gray-600">{delivery.pharmacy?.phone}</p>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
+              ))
+            )}
           </TabsContent>
 
-          {/* Mes Gains */}
+          {/* Missions Disponibles */}
+          <TabsContent value="available" className="space-y-4">
+            {!availableDeliveries || availableDeliveries.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    🚴
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                    Aucune mission disponible
+                  </h3>
+                  <p className="text-gray-500">
+                    Les nouvelles missions apparaîtront ici
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              availableDeliveries.map((delivery: any) => (
+                <Card key={delivery.id} className="border-l-4 border-l-orange-500">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">
+                        Mission #{delivery.id.slice(0, 8)}
+                      </CardTitle>
+                      <Badge variant="destructive">
+                        Disponible
+                      </Badge>
+                    </div>
+                    <CardDescription>
+                      {delivery.pharmacy?.name} • +500 FCFA
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Distance</Label>
+                        <p className="text-sm">≈ 2-5 km</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Montant</Label>
+                        <p className="text-sm font-semibold">{delivery.totalAmount || 0} FCFA</p>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Adresse de livraison</Label>
+                      <p className="text-sm">{delivery.deliveryAddress}</p>
+                    </div>
+                    <Button
+                      onClick={() => handleAcceptDelivery(delivery.id)}
+                      className="w-full bg-orange-600 hover:bg-orange-700"
+                      disabled={acceptDeliveryMutation.isPending}
+                    >
+                      Accepter cette Mission 🚴
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </TabsContent>
+
+          {/* Gains */}
           <TabsContent value="earnings">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>💰 Tarification Fixe</CardTitle>
-                  <CardDescription>500 FCFA pour chaque livraison</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                      <span className="font-medium">Tarif par livraison</span>
-                      <span className="text-xl font-bold text-purple-600">500 FCFA</span>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <p>• Tarif fixe garanti par livraison</p>
-                      <p>• Pas de frais cachés</p>
-                      <p>• Paiement sécurisé</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>📊 Historique des Gains</CardTitle>
-                  <CardDescription>Vos performances cette semaine</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Aujourd'hui</span>
-                      <span className="font-semibold">
-                        {(deliveries?.filter((d: any) => 
-                          d.status === 'delivered' && 
-                          new Date(d.deliveredAt).toDateString() === new Date().toDateString()
-                        )?.length || 0) * 500} FCFA
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Cette semaine</span>
-                      <span className="font-semibold">
-                        {(deliveries?.filter((d: any) => d.status === 'delivered')?.length || 0) * 500} FCFA
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Ce mois</span>
-                      <span className="font-semibold">
-                        {(deliveries?.filter((d: any) => d.status === 'delivered')?.length || 0) * 500} FCFA
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-                    {/* Livraisons disponibles */}
-          <TabsContent value="available">
             <Card>
               <CardHeader>
-                <CardTitle>🚚 Livraisons Disponibles</CardTitle>
+                <CardTitle>💰 Mes Gains</CardTitle>
                 <CardDescription>
-                  Choisissez une livraison à effectuer
+                  Historique de vos revenus de livraison
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {!availableDeliveries || availableDeliveries.length === 0 ? (
-                    <div className="text-center py-8">
-                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        🚚
-                      </div>
-                      <p className="text-gray-500">Aucune livraison disponible pour le moment</p>
-                    </div>
-                  ) : (
-                    availableDeliveries.map((delivery: any) => (
-                      <div key={delivery.id} className="border rounded-lg p-4 bg-green-50">
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <h4 className="font-semibold">Livraison #{delivery.id.slice(0, 8)}</h4>
-                            <p className="text-sm text-gray-600">
-                              De: {delivery.pharmacy?.name}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              Pour: {delivery.user?.firstName} {delivery.user?.lastName}
-                            </p>
-                          </div>
-                          <Badge className="bg-green-100 text-green-800">Disponible</Badge>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4 mb-3">
-                          <div>
-                            <p className="text-sm font-medium text-gray-700">Adresse de livraison</p>
-                            <p className="text-sm text-gray-600">{delivery.deliveryAddress}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-700">Montant</p>
-                            <p className="text-sm text-gray-600">{delivery.totalAmount} FCFA</p>
-                          </div>
-                        </div>
-
-                        <Button
-                          className="w-full bg-green-600 hover:bg-green-700"
-                          onClick={() => handleAcceptDelivery(delivery.id)}
-                          disabled={acceptDeliveryMutation.isPending}
-                        >
-                          ✅ Accepter cette livraison
-                        </Button>
-                      </div>
-                    ))
-                  )}
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-green-800">Gains Aujourd'hui</h4>
+                    <p className="text-2xl font-bold text-green-600">
+                      {myDeliveries ? myDeliveries.filter((d: any) => 
+                        d.status === 'delivered' && 
+                        new Date(d.deliveredAt || d.updatedAt).toDateString() === new Date().toDateString()
+                      ).length * 500 : 0} FCFA
+                    </p>
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-blue-800">Total Livraisons</h4>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {myDeliveries ? myDeliveries.filter((d: any) => d.status === 'delivered').length : 0}
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
+      
+      <BottomNavigation />
     </div>
   );
 }
