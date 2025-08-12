@@ -196,6 +196,11 @@ export default function Pharmacies() {
                               <Badge variant={pharmacy.isOpen !== false ? 'default' : 'secondary'}>
                                 {pharmacy.isOpen !== false ? 'Ouvert' : 'Fermé'}
                               </Badge>
+                              {pharmacy.isEmergency24h && (
+                                <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
+                                  🚨 De garde 24h/24
+                                </Badge>
+                              )}
                               {index === 0 && userLocation && (
                                 <Badge variant="outline" className="text-xs">
                                   Plus proche

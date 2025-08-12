@@ -484,7 +484,11 @@ export default function PharmacyProfile() {
                       <Label>De garde 24h/24</Label>
                       <p className="text-sm text-gray-600">Service d'urgence pharmaceutique</p>
                     </div>
-                    <Switch checked={false} disabled={!editMode} />
+                    <Switch 
+                      checked={editMode ? editData.isEmergency24h : displayPharmacy.isEmergency24h}
+                      onCheckedChange={(checked) => editMode && setEditData({ ...editData, isEmergency24h: checked })}
+                      disabled={!editMode} 
+                    />
                   </div>
                 </div>
               </CardContent>

@@ -453,6 +453,13 @@ export default function DashboardPatient() {
                     <CardContent>
                       <div className="space-y-2">
                         <p className="text-sm"><strong>Pharmacie:</strong> {order.pharmacy?.name || 'En cours d\'attribution'}</p>
+                        {order.pharmacy?.isEmergency24h && (
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
+                              🚨 De garde 24h/24
+                            </Badge>
+                          </div>
+                        )}
                         <p className="text-sm"><strong>Montant:</strong> {order.totalAmount && order.totalAmount !== '0' ? `${order.totalAmount} FCFA` : 'En cours d\'évaluation'}</p>
                         <p className="text-sm"><strong>Adresse:</strong> {order.deliveryAddress}</p>
                         {order.deliveryNotes && (

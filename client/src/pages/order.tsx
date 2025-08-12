@@ -337,6 +337,11 @@ export default function OrderPage() {
                     <Clock className="h-3 w-3" />
                     {selectedPharmacy.deliveryTime} min
                   </span>
+                  {selectedPharmacy.isEmergency24h && (
+                    <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
+                      🚨 De garde 24h/24
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>
