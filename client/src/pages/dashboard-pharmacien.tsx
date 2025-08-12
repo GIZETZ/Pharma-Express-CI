@@ -360,7 +360,7 @@ export default function DashboardPharmacien() {
   };
 
   const updateMedicationPrice = (orderId: string, medIndex: number, price: string) => {
-    const key = `${orderId}-${medIndex}`;
+    const key = `${orderId}-${index}`;
     setMedicationPrices(prev => ({
       ...prev,
       [key]: price
