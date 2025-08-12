@@ -174,6 +174,30 @@ export default function DashboardPatient() {
     },
   });
 
+  // Mutation pour confirmer la livraison
+  const confirmDeliveryMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      return await apiRequest(`/api/orders/${orderId}/confirm-delivery`, {
+        method: 'POST',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/orders/current'] });
+      toast({
+        title: "Livraison confirmée",
+        description: "Votre commande a été marquée comme livrée avec succès",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de confirmer la livraison",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Mutation pour annuler une commande
   const cancelOrderMutation = useMutation({
     mutationFn: (orderId: string) =>
@@ -345,6 +369,10 @@ export default function DashboardPatient() {
     };
 
     paymentMutation.mutate(paymentData);
+  };
+
+  const handleConfirmDelivery = (orderId: string) => {
+    confirmDeliveryMutation.mutate(orderId);
   };
 
   const getPaymentMethods = () => {
@@ -610,6 +638,31 @@ export default function DashboardPatient() {
                       <Button variant="outline" className="flex items-center gap-2">
                         <MapPin className="h-4 w-4" />
                         Voir sur la carte
+                      </Button>
+                    </div>
+
+                    {/* Bouton de confirmation de livraison */}
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-green-900 mb-2">✅ Confirmer la réception</h4>
+                      <p className="text-sm text-green-800 mb-3">
+                        Une fois que vous avez reçu vos médicaments, confirmez la livraison pour terminer la commande.
+                      </p>
+                      <Button 
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => handleConfirmDelivery((currentOrder as any).id)}
+                        disabled={confirmDeliveryMutation.isPending}
+                        data-testid="button-confirm-delivery"
+                      >
+                        {confirmDeliveryMutation.isPending ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Confirmation...
+                          </>
+                        ) : (
+                          <>
+                            ✅ Confirmer la livraison
+                          </>
+                        )}
                       </Button>
                     </div>
 
