@@ -1,0 +1,67 @@
+
+> rest-express@1.0.0 dev
+> cross-env NODE_ENV=development tsx server/index.ts
+
+Using in-memory storage (Firebase temporarily disabled for development)
+✅ Pharmacie créée: {
+  id: 'f6662d15-6455-46fb-9fd5-6881846cc7f0',
+  name: 'Pharmacie Dr. Marie Kouassi',
+  phone: '+225 07 11 22 33'
+}
+✅ Pharmacie créée: {
+  id: '16fea06d-8e61-4703-9e11-37b6eaf59c91',
+  name: 'Pharmacie de la Paix',
+  phone: '+225 27 22 44 55 66'
+}
+✅ Pharmacie créée: {
+  id: 'dbfa79f8-8e1c-47ec-ab16-659ecb52573a',
+  name: 'Pharmacie du Plateau',
+  phone: '+225 27 20 21 22 23'
+}
+✅ Pharmacie créée: {
+  id: '0675f399-34a6-45a5-9742-db4f8b217900',
+  name: 'Pharmacie Centrale Plus',
+  phone: '+225 05 44 33 22'
+}
+✅ Pharmacie créée: {
+  id: '33955334-b2c5-4eae-b66b-68f742562a4f',
+  name: 'Ithiel Pharma',
+  phone: '+225 27 23 45 67 89'
+}
+7:11:54 PM [express] serving on 127.0.0.1:5000
+Session Debug: {
+  sessionID: 'stHtuUwvc2fi4osZ8bzZ_guNWVnia7J_',
+  userId: undefined,
+  cookies: 'pharma-session=s%3A8xJg6ioXJrQBO-4tkFQs69YgYgQzt0jq.7XlhKv%2FfOremk51SzJOiNjMy1cka3L0Giq1nEnnsFnk',
+  path: '/'
+}
+Session Debug: {
+  sessionID: 'qPErG5W9BQTXvMvfKMfzOYVG2sSi0UYH',
+  userId: undefined,
+  cookies: 'pharma-session=s%3A8xJg6ioXJrQBO-4tkFQs69YgYgQzt0jq.7XlhKv%2FfOremk51SzJOiNjMy1cka3L0Giq1nEnnsFnk',
+  path: '/@vite/client'
+}
+Browserslist: browsers data (caniuse-lite) is 10 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Session Debug: {
+  sessionID: 'NZpsdkSl8GnrzlfYF789GxR1xBXBsv8_',
+  userId: undefined,
+  cookies: 'pharma-session=s%3A8xJg6ioXJrQBO-4tkFQs69YgYgQzt0jq.7XlhKv%2FfOremk51SzJOiNjMy1cka3L0Giq1nEnnsFnk',
+  path: '/src/main.tsx'
+}
+Session Debug: {
+  sessionID: 'jeRt0oQXnbPA6zM6rF8bofUkjkL5r-QN',
+  userId: undefined,
+  cookies: 'pharma-session=s%3A8xJg6ioXJrQBO-4tkFQs69YgYgQzt0jq.7XlhKv%2FfOremk51SzJOiNjMy1cka3L0Giq1nEnnsFnk',
+  path: '/@react-refresh'
+}
+7:11:59 PM [vite] Pre-transform error: /home/runner/workspace/client/src/pages/dashboard-livreur.tsx: Unexpected token (221:26)
+
+  219 |                          delivery.status === 'ready_for_delivery' && delivery.deliveryPersonId === user?.id ? 'Assignée' : 'En attente'}
+  220 |                       </Badge>
+> 221 |                     </div></old_str>
+      |                           ^
+  222 |                     </div>
+  223 |                     <CardDescription>
+  224 |                       {delivery.pharmacy?.name || 'Pharmacie inconnue'}
