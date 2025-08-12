@@ -519,9 +519,34 @@ export default function DashboardPatient() {
                         )}
                         
                         {order.status === 'in_delivery' && (
-                          <Button size="sm" className="w-full mt-2" onClick={() => setActiveTab("tracking")}>
-                            Suivre la livraison
-                          </Button>
+                          <div className="mt-3 space-y-2">
+                            <Button size="sm" className="w-full" onClick={() => setActiveTab("tracking")}>
+                              📍 Suivre la livraison
+                            </Button>
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                              <p className="text-sm text-green-800 mb-2">
+                                ✅ Médicaments reçus ? Confirmez la livraison
+                              </p>
+                              <Button 
+                                size="sm"
+                                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => handleConfirmDelivery(order.id)}
+                                disabled={confirmDeliveryMutation.isPending}
+                                data-testid={`button-confirm-delivery-${order.id.slice(0, 8)}`}
+                              >
+                                {confirmDeliveryMutation.isPending ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                                    Confirmation...
+                                  </>
+                                ) : (
+                                  <>
+                                    ✅ Confirmer la livraison
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
                         )}
                       </div>
                     </CardContent>
