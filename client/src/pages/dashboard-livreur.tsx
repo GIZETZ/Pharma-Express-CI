@@ -117,14 +117,6 @@ export default function DashboardLivreur() {
               <p className="text-gray-600">
                 Bienvenue {user?.firstName} ! Gérez vos livraisons
               </p>
-              {/* Section Debug temporaire */}
-              <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                <p><strong>Debug Info:</strong></p>
-                <p>User ID: {user?.id}</p>
-                <p>Total deliveries: {myDeliveries?.length || 0}</p>
-                <p>Loading: {loadingMyDeliveries ? 'Oui' : 'Non'}</p>
-                <p>Error: {error ? 'Oui' : 'Non'}</p>
-              </div>
             </div>
           </div>
         </div>

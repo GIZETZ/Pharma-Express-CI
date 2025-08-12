@@ -54,7 +54,7 @@ const PrescriptionImage = ({ prescriptionId, className }: { prescriptionId: stri
   }
 
   return (
-    <img 
+    <img
       src={imageUrl}
       alt="Photo de l'ordonnance"
       className={className}
@@ -71,8 +71,8 @@ const PrescriptionImage = ({ prescriptionId, className }: { prescriptionId: stri
         const modalContent = document.createElement('div');
         modalContent.className = 'relative max-w-full max-h-full';
         modalContent.innerHTML = `
-          <img src="${imageUrl}" 
-               class="max-w-full max-h-full object-contain" 
+          <img src="${imageUrl}"
+               class="max-w-full max-h-full object-contain"
                alt="Photo de l'ordonnance" />
           <button class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 text-2xl font-bold">&times;</button>
         `;
@@ -175,7 +175,7 @@ const ReadyForDeliveryOrders = ({ orders }: { orders: any[] }) => {
           <div>
             <h4 className="font-medium text-blue-900 mb-1">Gestion des Livraisons</h4>
             <p className="text-sm text-blue-700">
-              Choisissez le livreur que vous souhaitez pour chaque commande. 
+              Choisissez le livreur que vous souhaitez pour chaque commande.
               Une fois assigné, le livreur recevra une notification et pourra commencer la livraison.
             </p>
           </div>
@@ -250,7 +250,7 @@ const ReadyForDeliveryOrders = ({ orders }: { orders: any[] }) => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Select
                   onValueChange={(deliveryPersonId) => {
@@ -277,7 +277,7 @@ const ReadyForDeliveryOrders = ({ orders }: { orders: any[] }) => {
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-600"></div>
                 )}
               </div>
-              
+
               {personnelLoading && (
                 <p className="text-xs text-gray-500 mt-2 flex items-center">
                   <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400 mr-1"></div>
@@ -370,11 +370,11 @@ export default function DashboardPharmacien() {
     },
   });
 
-  const { data: orders, isLoading: ordersLoading } = useQuery({ 
+  const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ["/api/pharmacien/orders"],
     refetchInterval: 5000 // Refresh every 5 seconds
   });
-  const { data: prescriptions, isLoading: prescriptionsLoading } = useQuery({ 
+  const { data: prescriptions, isLoading: prescriptionsLoading } = useQuery({
     queryKey: ["/api/pharmacien/prescriptions"],
     refetchInterval: 5000
   });
@@ -424,9 +424,9 @@ export default function DashboardPharmacien() {
       const status = medicationStatuses[statusKey] || { available: true, surBon: med.surBon || false };
       const price = medicationPrices[priceKey] || '';
 
-      return { 
-        ...med, 
-        ...status, 
+      return {
+        ...med,
+        ...status,
         price: price ? parseFloat(price) : undefined
       };
     });
@@ -448,17 +448,17 @@ export default function DashboardPharmacien() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => window.location.href = '/pharmacy-profile'}
                 className="bg-blue-50 hover:bg-blue-100 border-blue-200"
               >
                 🏪 Gérer la pharmacie
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => window.location.href = '/create-pharmacy'}
                 className="bg-green-50 hover:bg-green-100 border-green-200"
               >
@@ -494,8 +494,8 @@ export default function DashboardPharmacien() {
           <TabsContent value="orders">
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <Card 
-                  className="cursor-pointer hover:shadow-lg transition-shadow" 
+                <Card
+                  className="cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => setActiveTab("orders")}
                   data-testid="card-nouvelles-commandes"
                 >
@@ -514,8 +514,8 @@ export default function DashboardPharmacien() {
                   </CardContent>
                 </Card>
 
-                <Card 
-                  className="cursor-pointer hover:shadow-lg transition-shadow" 
+                <Card
+                  className="cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => setActiveTab("preparation")}
                   data-testid="card-en-preparation"
                 >
@@ -534,8 +534,8 @@ export default function DashboardPharmacien() {
                   </CardContent>
                 </Card>
 
-                <Card 
-                  className="cursor-pointer hover:shadow-lg transition-shadow" 
+                <Card
+                  className="cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => setActiveTab("preparation")}
                   data-testid="card-pretes"
                 >
@@ -554,8 +554,8 @@ export default function DashboardPharmacien() {
                   </CardContent>
                 </Card>
 
-                <Card 
-                  className="cursor-pointer hover:shadow-lg transition-shadow" 
+                <Card
+                  className="cursor-pointer hover:shadow-lg transition-shadow"
                   data-testid="card-livrees"
                 >
                   <CardContent className="p-4">
@@ -597,7 +597,7 @@ export default function DashboardPharmacien() {
                         Commande #{order.id.slice(0, 8)}
                       </CardTitle>
                       <Badge variant={order.status === 'pending' ? "secondary" : "outline"}>
-                        {order.status === 'pending' ? 'Nouvelle' : 
+                        {order.status === 'pending' ? 'Nouvelle' :
                          order.status === 'confirmed' ? 'Confirmée' :
                          order.status === 'preparing' ? 'En préparation' :
                          order.status}
@@ -668,7 +668,7 @@ export default function DashboardPharmacien() {
                                   <div className="border rounded-lg p-4 bg-gray-50">
                                     <p className="text-sm text-gray-600 mb-3">Ordonnance ID: {order.prescriptionId}</p>
                                     <div className="bg-white rounded-lg overflow-hidden border">
-                                      <PrescriptionImage 
+                                      <PrescriptionImage
                                         prescriptionId={order.prescriptionId}
                                         className="w-full h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity"
                                       />
@@ -724,8 +724,8 @@ export default function DashboardPharmacien() {
                                             {/* Image affichée directement */}
                                             {visibleImages[`${order.id}-${index}`] && (
                                               <div className="border-t p-4 bg-gray-50">
-                                                <img 
-                                                  src={doc.data} 
+                                                <img
+                                                  src={doc.data}
                                                   alt={`Document BON: ${doc.name}`}
                                                   className="w-full max-h-80 object-contain rounded cursor-pointer hover:shadow-lg transition-shadow"
                                                   onClick={(e) => {
@@ -741,8 +741,8 @@ export default function DashboardPharmacien() {
                                                     const modalContent = document.createElement('div');
                                                     modalContent.className = 'relative max-w-full max-h-full';
                                                     modalContent.innerHTML = `
-                                                      <img src="${doc.data}" 
-                                                           class="max-w-full max-h-full object-contain" 
+                                                      <img src="${doc.data}"
+                                                           class="max-w-full max-h-full object-contain"
                                                            alt="Document BON: ${doc.name}" />
                                                       <button class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 text-2xl font-bold">&times;</button>
                                                     `;
@@ -790,13 +790,13 @@ export default function DashboardPharmacien() {
                                   <div className="border rounded-lg p-4 bg-gray-50">
                                     <h5 className="font-medium mb-2">Informations de la commande</h5>
                                     <div className="space-y-1 text-sm">
-                                      <p><span className="font-medium">Date:</span> {new Date(order.createdAt).toLocaleDateString("fr-FR", { 
-                                        weekday: 'long', 
-                                        year: 'numeric', 
-                                        month: 'long', 
-                                        day: 'numeric', 
-                                        hour: '2-digit', 
-                                        minute: '2-digit' 
+                                      <p><span className="font-medium">Date:</span> {new Date(order.createdAt).toLocaleDateString("fr-FR", {
+                                        weekday: 'long',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
                                       })}</p>
                                       <p><span className="font-medium">Notes:</span> {order.deliveryNotes || "Aucune note"}</p>
                                       {order.totalAmount && (
@@ -831,7 +831,7 @@ export default function DashboardPharmacien() {
                                             <Switch
                                               id={`available-${statusKey}`}
                                               checked={currentStatus.available}
-                                              onCheckedChange={(checked) => 
+                                              onCheckedChange={(checked) =>
                                                 toggleMedicationStatus(order.id, index, 'available', checked)
                                               }
                                             />
@@ -844,7 +844,7 @@ export default function DashboardPharmacien() {
                                             <Switch
                                               id={`surbon-${statusKey}`}
                                               checked={currentStatus.surBon}
-                                              onCheckedChange={(checked) => 
+                                              onCheckedChange={(checked) =>
                                                 toggleMedicationStatus(order.id, index, 'surBon', checked)
                                               }
                                             />
@@ -892,7 +892,7 @@ export default function DashboardPharmacien() {
                                             <Switch
                                               id={`available-${statusKey}`}
                                               checked={currentStatus.available}
-                                              onCheckedChange={(checked) => 
+                                              onCheckedChange={(checked) =>
                                                 toggleMedicationStatus(order.id, index, 'available', checked)
                                               }
                                             />
@@ -905,7 +905,7 @@ export default function DashboardPharmacien() {
                                             <Switch
                                               id={`surbon-${statusKey}`}
                                               checked={currentStatus.surBon}
-                                              onCheckedChange={(checked) => 
+                                              onCheckedChange={(checked) =>
                                                 toggleMedicationStatus(order.id, index, 'surBon', checked)
                                               }
                                             />
@@ -942,8 +942,8 @@ export default function DashboardPharmacien() {
                               <div className="flex space-x-2 mt-4 pt-4 border-t">
                                 <Button
                                   onClick={() => {
-                                    const medications = order.medications && typeof order.medications === 'string' 
-                                      ? JSON.parse(order.medications) 
+                                    const medications = order.medications && typeof order.medications === 'string'
+                                      ? JSON.parse(order.medications)
                                       : order.medications || [];
 
                                     handleSendResponse(order.id, medications);
@@ -1147,6 +1147,7 @@ export default function DashboardPharmacien() {
                       <span className="bg-green-100 rounded-full w-8 h-8 flex items-center justify-center mr-2">📦</span>
                       Prêtes pour Livraison - Assignation des Livreurs
                     </h3>
+                    {/* The following line was replaced as per the changes */}
                     <ReadyForDeliveryOrders orders={orders || []} />
                   </div>
                 </div>
