@@ -661,7 +661,7 @@ export default function DashboardPatient() {
                       <Button 
                         variant="outline" 
                         className="flex items-center gap-2"
-                        onClick={() => navigate("/delivery-tracking")}
+                        onClick={() => navigate("/delivery")}
                       >
                         <MapPin className="h-4 w-4" />
                         Voir sur la carte
