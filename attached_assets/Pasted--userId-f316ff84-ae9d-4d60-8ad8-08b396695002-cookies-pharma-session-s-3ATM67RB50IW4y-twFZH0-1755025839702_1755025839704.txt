@@ -1,0 +1,1037 @@
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:57:51 PM [express] GET /api/orders 304 in 1ms :: []
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:57:52 PM [express] GET /api/orders/current 200 in 1ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:57:58 PM [express] GET /api/orders/current 200 in 1ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:02 PM [express] GET /api/orders 304 in 1ms :: []
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:03 PM [express] GET /api/orders/current 200 in 1ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:08 PM [express] GET /api/orders/current 200 in 2ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:12 PM [express] GET /api/orders 304 in 1ms :: []
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:13 PM [express] GET /api/orders/current 200 in 1ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:19 PM [express] GET /api/orders/current 200 in 1ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:22 PM [express] GET /api/orders 304 in 1ms :: []
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:24 PM [express] GET /api/orders/current 200 in 1ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:29 PM [express] GET /api/orders/current 200 in 2ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:32 PM [express] GET /api/orders 304 in 2ms :: []
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:34 PM [express] GET /api/orders/current 200 in 2ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:39 PM [express] GET /api/orders/current 200 in 1ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:42 PM [express] GET /api/orders 304 in 1ms :: []
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:45 PM [express] GET /api/orders/current 200 in 2ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:50 PM [express] GET /api/orders/current 200 in 1ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:53 PM [express] GET /api/orders 304 in 1ms :: []
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:58:55 PM [express] GET /api/orders/current 200 in 1ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:59:00 PM [express] GET /api/orders/current 200 in 1ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:59:03 PM [express] GET /api/orders 304 in 1ms :: []
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:59:05 PM [express] GET /api/orders/current 200 in 1ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:59:11 PM [express] GET /api/orders/current 200 in 1ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:59:13 PM [express] GET /api/orders 304 in 2ms :: []
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:59:16 PM [express] GET /api/orders/current 200 in 1ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:59:22 PM [express] GET /api/orders/current 200 in 2ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:59:23 PM [express] GET /api/orders 304 in 1ms :: []
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+6:59:27 PM [express] GET /api/orders/current 200 in 1ms
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/pharmacies'
+}
+Fetching pharmacies with params: { lat: undefined, lng: undefined, radius: 50 }
+Found 5 pharmacies
+6:59:30 PM [express] GET /api/pharmacies 200 in 2ms :: [{"id":"9ab9d25d-0330-4799-bede-8ca35b99d58a"…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/favicon.ico'
+}
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/location/reverse'
+}
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/pharmacies'
+}
+Fetching pharmacies with params: { lat: '6.848512', lng: '-5.275648', radius: '50' }
+Found 5 pharmacies
+6:59:31 PM [express] GET /api/pharmacies 200 in 1ms :: [{"id":"3e7a8e51-345c-42af-91a7-e2165b0a2bde"…
+6:59:32 PM [express] GET /api/location/reverse 304 in 463ms :: {"formatted_address":"M'Lock Extensio…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/location/reverse'
+}
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/favicon.ico'
+}
+6:59:33 PM [express] GET /api/location/reverse 304 in 223ms :: {"formatted_address":"M'Lock Extensio…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+Order request body: [Object: null prototype] {
+  pharmacyId: '9ab9d25d-0330-4799-bede-8ca35b99d58a',
+  deliveryAddress: "M'Lock Extension, Assabou, Kpangbassou, Yamoussoukro, Côte d’Ivoire",
+  deliveryNotes: "Donc c'est comment.",
+  medications: '[{"name":"Kpata","surBon":false},{"name":"Licorne","surBon":true},{"name":"Pkèlè","surBon":true},{"name":"Maniere","surBon":false}]',
+  status: 'pending',
+  deliveryLatitude: '6.848512',
+  deliveryLongitude: '-5.275648'
+}
+Order files: [Object: null prototype] {
+  prescriptionPhoto: [
+    {
+      fieldname: 'prescriptionPhoto',
+      originalname: 'icon-192.png',
+      encoding: '7bit',
+      mimetype: 'image/png',
+      buffer: <Buffer 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52 00 00 00 c0 00 00 00 c0 08 06 00 00 00 52 dc 6c 07 00 00 00 01 73 52 47 42 00 ae ce 1c e9 00 00 00 04 ... 32985 more bytes>,
+      size: 33035
+    }
+  ],
+  bonDocument0: [
+    {
+      fieldname: 'bonDocument0',
+      originalname: 'WhatsApp-Image-2025-07-19-Ã -19.10.02_ca43486a.png',
+      encoding: '7bit',
+      mimetype: 'image/png',
+      buffer: <Buffer 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52 00 00 0a 00 00 00 05 a0 08 02 00 00 00 1d 62 8d 88 00 00 00 ff 69 43 43 50 69 63 63 00 00 18 d3 63 60 ... 847493 more bytes>,
+      size: 847543
+    }
+  ]
+}
+Prescription photo found: icon-192.png
+Created prescription with ID: f9ed316c-981c-476d-90e3-278528959e04
+7:06:13 PM [express] POST /api/orders 201 in 1651ms :: {"id":"e73d78c0-3704-4166-ae4b-199239cc8e44",…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/auth/user'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+7:06:15 PM [express] GET /api/auth/user 304 in 1ms :: {"id":"f316ff84-ae9d-4d60-8ad8-08b396695002","…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+7:06:15 PM [express] GET /api/orders 200 in 9ms :: [{"id":"e73d78c0-3704-4166-ae4b-199239cc8e44","us…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/pharmacies'
+}
+Fetching pharmacies with params: { lat: undefined, lng: undefined, radius: 50 }
+Found 5 pharmacies
+7:06:15 PM [express] GET /api/pharmacies 200 in 1ms :: [{"id":"9ab9d25d-0330-4799-bede-8ca35b99d58a"…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/favicon.ico'
+}
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+7:06:15 PM [express] GET /api/orders/current 200 in 13ms :: {"id":"e73d78c0-3704-4166-ae4b-199239cc8…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/location/reverse'
+}
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/pharmacies'
+}
+Fetching pharmacies with params: { lat: '6.848512', lng: '-5.275648', radius: '10' }
+Found 5 pharmacies
+7:06:15 PM [express] GET /api/pharmacies 200 in 1ms :: [{"id":"3e7a8e51-345c-42af-91a7-e2165b0a2bde"…
+7:06:16 PM [express] GET /api/location/reverse 304 in 530ms :: {"formatted_address":"M'Lock Extensio…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/orders'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:19 PM [express] GET /api/pharmacien/orders 200 in 9ms :: [{"id":"e73d78c0-3704-4166-ae4b-199239…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/prescriptions'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:19 PM [express] GET /api/pharmacien/prescriptions 200 in 6ms :: [{"id":"f9ed316c-981c-476d-90e3…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/prescriptions/f9ed316c-981c-476d-90e3-278528959e04'
+}
+7:06:23 PM [express] GET /api/prescriptions/f9ed316c-981c-476d-90e3-278528959e04 200 in 2ms :: {"id"…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/prescriptions'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:25 PM [express] GET /api/pharmacien/prescriptions 304 in 2ms :: [{"id":"f9ed316c-981c-476d-90e3…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/orders'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:26 PM [express] GET /api/pharmacien/orders 304 in 9ms :: [{"id":"e73d78c0-3704-4166-ae4b-199239…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/prescriptions'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:30 PM [express] GET /api/pharmacien/prescriptions 304 in 2ms :: [{"id":"f9ed316c-981c-476d-90e3…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/orders'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:31 PM [express] GET /api/pharmacien/orders 304 in 11ms :: [{"id":"e73d78c0-3704-4166-ae4b-19923…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/prescriptions'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:35 PM [express] GET /api/pharmacien/prescriptions 304 in 2ms :: [{"id":"f9ed316c-981c-476d-90e3…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/orders'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:36 PM [express] GET /api/pharmacien/orders 304 in 8ms :: [{"id":"e73d78c0-3704-4166-ae4b-199239…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/prescriptions'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:41 PM [express] GET /api/pharmacien/prescriptions 304 in 2ms :: [{"id":"f9ed316c-981c-476d-90e3…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/orders'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:42 PM [express] GET /api/pharmacien/orders 304 in 12ms :: [{"id":"e73d78c0-3704-4166-ae4b-19923…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/prescriptions'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:46 PM [express] GET /api/pharmacien/prescriptions 304 in 2ms :: [{"id":"f9ed316c-981c-476d-90e3…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/orders'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:47 PM [express] GET /api/pharmacien/orders 304 in 8ms :: [{"id":"e73d78c0-3704-4166-ae4b-199239…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/prescriptions'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:51 PM [express] GET /api/pharmacien/prescriptions 304 in 1ms :: [{"id":"f9ed316c-981c-476d-90e3…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/orders'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:52 PM [express] GET /api/pharmacien/orders 304 in 11ms :: [{"id":"e73d78c0-3704-4166-ae4b-19923…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/prescriptions'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:56 PM [express] GET /api/pharmacien/prescriptions 304 in 1ms :: [{"id":"f9ed316c-981c-476d-90e3…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/orders/e73d78c0-3704-4166-ae4b-199239cc8e44/send-response'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:57 PM [express] POST /api/pharmacien/orders/e73d78c0-3704-4166-ae4b-199239cc8e44/send-response …
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/orders'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:06:57 PM [express] GET /api/pharmacien/orders 200 in 8ms :: [{"id":"e73d78c0-3704-4166-ae4b-199239…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+7:07:02 PM [express] GET /api/orders/current 200 in 8ms :: {"id":"e73d78c0-3704-4166-ae4b-199239cc8e…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+7:07:05 PM [express] GET /api/orders 200 in 8ms :: [{"id":"e73d78c0-3704-4166-ae4b-199239cc8e44","us…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+7:07:08 PM [express] GET /api/orders/current 304 in 8ms :: {"id":"e73d78c0-3704-4166-ae4b-199239cc8e…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+7:07:14 PM [express] GET /api/orders/current 304 in 12ms :: {"id":"e73d78c0-3704-4166-ae4b-199239cc8…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+7:07:17 PM [express] GET /api/orders 304 in 8ms :: [{"id":"e73d78c0-3704-4166-ae4b-199239cc8e44","us…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/e73d78c0-3704-4166-ae4b-199239cc8e44'
+}
+7:07:18 PM [express] GET /api/orders/e73d78c0-3704-4166-ae4b-199239cc8e44 200 in 8ms :: {"id":"e73d7…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/favicon.ico'
+}
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/payment'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+Payment processed: {
+  orderId: 'e73d78c0-3704-4166-ae4b-199239cc8e44',
+  paymentMethod: 'wave',
+  amount: 4370,
+  deliveryFee: 1000,
+  transactionId: undefined,
+  timestamp: '2025-08-12T19:07:31.565Z'
+}
+7:07:31 PM [express] POST /api/orders/payment 200 in 10ms :: {"message":"Payment processed successfu…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+7:07:31 PM [express] GET /api/orders 200 in 11ms :: [{"id":"e73d78c0-3704-4166-ae4b-199239cc8e44","u…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/favicon.ico'
+}
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/location/reverse'
+}
+7:07:32 PM [express] GET /api/location/reverse 304 in 457ms :: {"formatted_address":"M'Lock Extensio…
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/api/orders/current'
+}
+Auth Check: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  hasSession: true
+}
+7:07:56 PM [express] GET /api/orders/current 200 in 18ms :: {"id":"e73d78c0-3704-4166-ae4b-199239cc8…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/prescriptions'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:07:57 PM [express] GET /api/pharmacien/prescriptions 304 in 2ms :: [{"id":"f9ed316c-981c-476d-90e3…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/orders'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:07:59 PM [express] GET /api/pharmacien/orders 200 in 15ms :: [{"id":"e73d78c0-3704-4166-ae4b-19923…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/delivery-personnel'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:07:59 PM [express] GET /api/pharmacien/delivery-personnel 200 in 2ms :: [{"id":"9fe061e7-02d3-416e…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/prescriptions'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:08:02 PM [express] GET /api/pharmacien/prescriptions 304 in 1ms :: [{"id":"f9ed316c-981c-476d-90e3…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/orders'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:08:05 PM [express] GET /api/pharmacien/orders 304 in 17ms :: [{"id":"e73d78c0-3704-4166-ae4b-19923…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/prescriptions'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:08:07 PM [express] GET /api/pharmacien/prescriptions 304 in 1ms :: [{"id":"f9ed316c-981c-476d-90e3…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/orders/e73d78c0-3704-4166-ae4b-199239cc8e44/assign-delivery'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:08:07 PM [express] POST /api/pharmacien/orders/e73d78c0-3704-4166-ae4b-199239cc8e44/assign-deliver…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/orders'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:08:09 PM [express] GET /api/pharmacien/orders 200 in 7ms :: [{"id":"e73d78c0-3704-4166-ae4b-199239…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/prescriptions'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:08:13 PM [express] GET /api/pharmacien/prescriptions 304 in 2ms :: [{"id":"f9ed316c-981c-476d-90e3…
+Session Debug: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  cookies: 'pharma-session=s%3ADZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_.cA2DBduep0iS%2Bj3TUvZoI0bB%2BRrnfPY2mcKN4g%2Be4JY',
+  path: '/api/pharmacien/orders'
+}
+Auth Check: {
+  sessionID: 'DZx8ZONdyXBlbxw92LsAVDpK0y4A2YE_',
+  userId: '881bf50c-f216-4c0f-a190-462929eacae0',
+  hasSession: true
+}
+7:08:14 PM [express] GET /api/pharmacien/orders 304 in 7ms :: [{"id":"e73d78c0-3704-4166-ae4b-199239…
+7:10:18 PM [vite] hmr update /src/pages/dashboard-livreur.tsx, /src/index.css?v=3sSNQEYO357Uo_hWNEk5P
+Session Debug: {
+  sessionID: 'TM67RB50IW4y_twFZH0_dzYyja9HIXwt',
+  userId: 'f316ff84-ae9d-4d60-8ad8-08b396695002',
+  cookies: 'pharma-session=s%3ATM67RB50IW4y_twFZH0_dzYyja9HIXwt.q22LZWUiTbcABYuGW7yy1%2BIIl%2FFC3CnyDooqGEPVV6I',
+  path: '/src/pages/dashboard-livreur.tsx'
+}
+7:10:19 PM [vite] Internal server error: /home/runner/workspace/client/src/pages/dashboard-livreur.tsx: Unexpected token (220:30)
+
+  218 |                          delivery.status === 'delivered' ? 'Livrée' : 
+  219 |                          delivery.status === 'ready_for_delivery' && delivery.deliveryPersonId === user?.id ? 'Assignée' : 'En attente'}
+> 220 |                       </Badge></old_str>
+      |                               ^
+  221 |                     </div>
+  222 |                     <CardDescription>
+  223 |                       {delivery.pharmacy?.name || 'Pharmacie inconnue'}
+  Plugin: vite:react-babel
+  File: /home/runner/workspace/client/src/pages/dashboard-livreur.tsx:220:30
+  218|                           delivery.status === 'delivered' ? 'Livrée' : 
+  219|                           delivery.status === 'ready_for_delivery' && delivery.deliveryPersonId === user?.id ? 'Assignée' : 'En attente'}
+  220|                        </Badge></old_str>
+     |                                ^
+  221|                      </div>
+  222|                      <CardDescription>
+      at toParseError (/home/runner/workspace/node_modules/@babel/parser/src/parse-error.ts:95:45)
+      at raise (/home/runner/workspace/node_modules/@babel/parser/src/tokenizer/index.ts:1497:19)
+      at unexpected (/home/runner/workspace/node_modules/@babel/parser/src/tokenizer/index.ts:1537:16)
+      at checkExpressionErrors (/home/runner/workspace/node_modules/@babel/parser/src/parser/util.ts:258:12)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:341:12)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3607:22)
+      at parseExpressionBase (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:221:23)
+      at callback (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:212:39)
+      at allowInAnd (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:3117:12)
+      at parseExpression (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:212:17)
+      at jsxParseExpressionContainer (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:376:33)
+      at jsxParseElementAt (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:500:24)
+      at jsxParseElementAt (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:483:34)
+      at jsxParseElementAt (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:483:34)
+      at jsxParseElementAt (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:483:34)
+      at jsxParseElement (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:559:19)
+      at parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:573:21)
+      at parseExprSubscripts (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:714:23)
+      at parseUpdate (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:693:21)
+      at parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:655:23)
+      at parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3735:20)
+      at parseMaybeUnaryOrPrivate (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:389:14)
+      at parseExprOps (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:401:23)
+      at parseMaybeConditional (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:356:23)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:298:21)
+      at fn (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3588:23)
+      at tryParse (/home/runner/workspace/node_modules/@babel/parser/src/parser/util.ts:174:20)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3587:20)
+      at callback (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:252:12)
+      at allowInAnd (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:3117:12)
+      at parseMaybeAssignAllowIn (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:251:17)
+      at parseParenAndDistinguishExpression (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:1771:16)
+      at parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:1131:21)
+      at parseExprAtom (/home/runner/workspace/node_modules/@babel/parser/src/plugins/jsx/index.ts:583:22)
+      at parseExprSubscripts (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:714:23)
+      at parseUpdate (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:693:21)
+      at parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:655:23)
+      at parseMaybeUnary (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3735:20)
+      at parseMaybeUnaryOrPrivate (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:389:14)
+      at parseExprOps (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:401:23)
+      at parseMaybeConditional (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:356:23)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:298:21)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3607:22)
+      at parseExpressionBase (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:221:23)
+      at callback (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:212:39)
+      at allowInAnd (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:3112:16)
+      at parseExpression (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:212:17)
+      at parseReturnStatement (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:1091:28)
+      at parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/src/parser/statement.ts:498:21)
+      at parseStatementContent (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3056:20)
