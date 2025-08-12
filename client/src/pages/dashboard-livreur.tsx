@@ -24,7 +24,14 @@ export default function DashboardLivreur() {
   // Récupérer les commandes assignées à ce livreur
   const { data: myDeliveries, isLoading: loadingMyDeliveries } = useQuery({
     queryKey: ["/api/livreur/deliveries"],
-    enabled: true
+    enabled: true,
+    select: (data) => {
+      // Filter deliveries that are assigned to this user OR that have the user's ID
+      return data?.filter((delivery: any) => 
+        delivery.deliveryPersonId === user?.id || 
+        delivery.status === 'in_delivery' && delivery.deliveryPersonId === user?.id
+      ) || [];
+    }
   });
 
   // Récupérer les livraisons disponibles
@@ -204,11 +211,13 @@ export default function DashboardLivreur() {
                       </CardTitle>
                       <Badge variant={
                         delivery.status === 'in_delivery' ? 'default' : 
-                        delivery.status === 'delivered' ? 'secondary' : 'destructive'
+                        delivery.status === 'delivered' ? 'secondary' : 
+                        delivery.status === 'ready_for_delivery' && delivery.deliveryPersonId === user?.id ? 'outline' : 'destructive'
                       }>
                         {delivery.status === 'in_delivery' ? 'En livraison' : 
-                         delivery.status === 'delivered' ? 'Livrée' : 'En attente'}
-                      </Badge>
+                         delivery.status === 'delivered' ? 'Livrée' : 
+                         delivery.status === 'ready_for_delivery' && delivery.deliveryPersonId === user?.id ? 'Assignée' : 'En attente'}
+                      </Badge></old_str>
                     </div>
                     <CardDescription>
                       {delivery.pharmacy?.name || 'Pharmacie inconnue'}
@@ -260,6 +269,15 @@ export default function DashboardLivreur() {
 
                     {/* Actions */}
                     <div className="flex gap-2">
+                      {delivery.status === 'ready_for_delivery' && delivery.deliveryPersonId === user?.id && (
+                        <Button
+                          onClick={() => handleUpdateDeliveryStatus(delivery.id, 'in_delivery')}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700"
+                          disabled={updateDeliveryMutation.isPending}
+                        >
+                          Commencer la Livraison 🚀
+                        </Button>
+                      )}
                       {delivery.status === 'in_delivery' && (
                         <Button
                           onClick={() => handleUpdateDeliveryStatus(delivery.id, 'delivered')}
@@ -291,7 +309,8 @@ export default function DashboardLivreur() {
                               <Label>Statut</Label>
                               <Badge className="ml-2">
                                 {delivery.status === 'in_delivery' ? 'En livraison' : 
-                                 delivery.status === 'delivered' ? 'Livrée' : 'En attente'}
+                                 delivery.status === 'delivered' ? 'Livrée' : 
+                                 delivery.status === 'ready_for_delivery' && delivery.deliveryPersonId === user?.id ? 'Assignée' : 'En attente'}
                               </Badge>
                             </div>
                             <div>

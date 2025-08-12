@@ -911,9 +911,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      // Get only orders assigned to this delivery person
+      // Get orders assigned to this delivery person (including ready_for_delivery status)
       const allDeliveries = await storage.getDeliveryOrders();
-      const myDeliveries = allDeliveries.filter(delivery => delivery.deliveryPersonId === user.id);
+      const myDeliveries = allDeliveries.filter(delivery => 
+        delivery.deliveryPersonId === user.id && 
+        (delivery.status === 'ready_for_delivery' || delivery.status === 'in_delivery' || delivery.status === 'delivered')
+      );
       
       res.json(myDeliveries);
     } catch (error) {
