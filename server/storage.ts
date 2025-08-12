@@ -145,6 +145,25 @@ export class MemStorage implements IStorage {
     // Seed pharmacies
     const testPharmacies = [
       {
+        name: "Pharmacie Dr. Marie Kouassi",
+        address: "Quartier Riviera Golf, Cocody",
+        latitude: 5.3364,
+        longitude: -4.0267,
+        phone: "+225 07 11 22 33",
+        rating: 4.8,
+        deliveryTime: "25",
+        isOpen: true,
+        openingHours: {
+          monday: { open: "08:00", close: "20:00" },
+          tuesday: { open: "08:00", close: "20:00" },
+          wednesday: { open: "08:00", close: "20:00" },
+          thursday: { open: "08:00", close: "20:00" },
+          friday: { open: "08:00", close: "20:00" },
+          saturday: { open: "08:00", close: "18:00" },
+          sunday: { open: "09:00", close: "17:00" }
+        }
+      },
+      {
         name: "Pharmacie de la Paix",
         address: "Boulevard de la Paix, Cocody",
         latitude: 5.3364,
@@ -437,6 +456,35 @@ export class MemStorage implements IStorage {
         userFullName.includes(p.name.toLowerCase())
       );
       console.log('getPharmacyByUserId - Pharmacy by partial name match:', pharmacy ? pharmacy.id : 'not found');
+    }
+
+    // If still not found, auto-create a pharmacy for this pharmacist user
+    if (!pharmacy) {
+      const pharmacyName = `Pharmacie ${user.firstName} ${user.lastName}`;
+      console.log('getPharmacyByUserId - Auto-creating pharmacy:', pharmacyName);
+      
+      const newPharmacyData: InsertPharmacy = {
+        name: pharmacyName,
+        address: user.address || "Abidjan, Côte d'Ivoire",
+        latitude: 5.3364, // Default Abidjan coordinates
+        longitude: -4.0267,
+        phone: user.phone,
+        rating: 4.5,
+        deliveryTime: "30",
+        isOpen: true,
+        openingHours: {
+          monday: { open: "08:00", close: "20:00" },
+          tuesday: { open: "08:00", close: "20:00" },
+          wednesday: { open: "08:00", close: "20:00" },
+          thursday: { open: "08:00", close: "20:00" },
+          friday: { open: "08:00", close: "20:00" },
+          saturday: { open: "08:00", close: "18:00" },
+          sunday: { open: "09:00", close: "17:00" }
+        }
+      };
+      
+      pharmacy = await this.createPharmacy(newPharmacyData);
+      console.log('getPharmacyByUserId - Auto-created pharmacy with ID:', pharmacy.id);
     }
 
     // If found but user doesn't have pharmacyId set, update it
