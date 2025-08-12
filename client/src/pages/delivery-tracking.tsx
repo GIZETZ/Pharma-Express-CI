@@ -1,15 +1,19 @@
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import BottomNavigation from "@/components/bottom-navigation";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { Order, DeliveryPerson } from "@shared/schema";
 
 export default function DeliveryTracking() {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-  // Mock current order data - in real app this would come from API
+  // Get current order being tracked
   const { data: currentOrder, isLoading: orderLoading } = useQuery<Order>({
     queryKey: ['/api/orders/current'],
   });
@@ -19,16 +23,68 @@ export default function DeliveryTracking() {
     enabled: !!currentOrder?.deliveryPersonId,
   });
 
+  // Mutation to confirm delivery
+  const confirmDeliveryMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      return await apiRequest(`/api/orders/${orderId}/confirm-delivery`, {
+        method: 'POST',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/orders/current'] });
+      toast({
+        title: "Livraison confirmée",
+        description: "Votre commande a été marquée comme livrée avec succès",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de confirmer la livraison",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleConfirmDelivery = () => {
+    if (currentOrder) {
+      confirmDeliveryMutation.mutate(currentOrder.id);
+    }
+  };
+
   const goBack = () => {
     setLocation("/home");
   };
 
   const getStatusSteps = () => {
+    const status = currentOrder?.status;
     const steps = [
-      { key: 'pending', label: 'Commande confirmée', time: "Aujourd'hui à 14:30", completed: true },
-      { key: 'confirmed', label: 'Préparation en pharmacie', time: "Aujourd'hui à 14:45", completed: true },
-      { key: 'in_transit', label: 'En cours de livraison', time: "Maintenant - Jean-Claude, livreur", completed: true, active: true },
-      { key: 'delivered', label: 'Livraison terminée', time: "En attente", completed: false },
+      { 
+        key: 'pending', 
+        label: 'Commande confirmée', 
+        time: currentOrder?.createdAt ? new Date(currentOrder.createdAt).toLocaleString('fr-FR') : "En attente", 
+        completed: status !== 'pending' 
+      },
+      { 
+        key: 'ready_for_delivery', 
+        label: 'Préparation terminée', 
+        time: status && ['ready_for_delivery', 'in_delivery', 'delivered'].includes(status) ? "Prêt pour livraison" : "En attente", 
+        completed: status && ['ready_for_delivery', 'in_delivery', 'delivered'].includes(status) 
+      },
+      { 
+        key: 'in_delivery', 
+        label: 'En cours de livraison', 
+        time: status === 'in_delivery' ? "En cours..." : status === 'delivered' ? "Terminé" : "En attente", 
+        completed: status && ['in_delivery', 'delivered'].includes(status),
+        active: status === 'in_delivery'
+      },
+      { 
+        key: 'delivered', 
+        label: 'Livraison terminée', 
+        time: status === 'delivered' ? "Confirmé" : "En attente de votre confirmation", 
+        completed: status === 'delivered' 
+      },
     ];
     return steps;
   };
@@ -164,6 +220,27 @@ export default function DeliveryTracking() {
                 </div>
               ))}
             </div>
+
+            {/* Confirmation Button for Patient */}
+            {currentOrder?.status === 'in_delivery' && (
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-green-800">Confirmer la réception</h4>
+                    <p className="text-sm text-green-700 mt-1">
+                      Le livreur est arrivé ? Confirmez la réception de votre commande
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleConfirmDelivery}
+                    disabled={confirmDeliveryMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    {confirmDeliveryMutation.isPending ? 'Confirmation...' : 'Confirmer la livraison ✅'}
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

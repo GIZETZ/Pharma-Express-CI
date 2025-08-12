@@ -249,27 +249,23 @@ export default function DashboardLivreur() {
                       <p className="text-sm text-green-700">{delivery.deliveryAddress}</p>
                     </div>
 
-                    {/* Médicaments */}
-                    {delivery.medications && delivery.medications.length > 0 && (
-                      <div className="bg-yellow-50 p-4 rounded-lg">
-                        <h4 className="font-semibold text-yellow-800 mb-2 flex items-center">
-                          💊 Médicaments à Livrer
-                        </h4>
-                        <ul className="text-sm text-yellow-700 space-y-1">
-                          {delivery.medications.map((med: any, index: number) => (
-                            <li key={index} className="flex justify-between">
-                              <span>{med.name} (Qté: {med.quantity})</span>
-                              <span className="font-semibold">{med.price} FCFA</span>
-                            </li>
-                          ))}
-                        </ul>
-                        <Separator className="my-2" />
-                        <div className="flex justify-between font-bold">
-                          <span>Total:</span>
-                          <span>{delivery.totalAmount || 0} FCFA</span>
-                        </div>
+                    {/* Informations de Livraison (sans détails médicaments) */}
+                    <div className="bg-yellow-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-yellow-800 mb-2 flex items-center">
+                        💊 Livraison Médicaments
+                      </h4>
+                      <p className="text-sm text-yellow-700">
+                        <strong>Nombre d'articles:</strong> {delivery.medications?.length || 0} médicament(s)
+                      </p>
+                      <p className="text-sm text-yellow-700">
+                        <strong>Type:</strong> Prescription médicale confidentielle
+                      </p>
+                      <Separator className="my-2" />
+                      <div className="flex justify-between font-bold">
+                        <span>Montant à collecter:</span>
+                        <span>{delivery.totalAmount || 0} FCFA</span>
                       </div>
-                    )}
+                    </div>
 
                     {/* Actions */}
                     <div className="flex gap-2">
@@ -283,13 +279,14 @@ export default function DashboardLivreur() {
                         </Button>
                       )}
                       {delivery.status === 'in_delivery' && (
-                        <Button
-                          onClick={() => handleUpdateDeliveryStatus(delivery.id, 'delivered')}
-                          className="flex-1 bg-green-600 hover:bg-green-700"
-                          disabled={updateDeliveryMutation.isPending}
-                        >
-                          Marquer comme Livrée ✅
-                        </Button>
+                        <div className="flex-1 bg-blue-50 border border-blue-200 rounded-md p-3 text-center">
+                          <p className="text-sm text-blue-700 font-medium">
+                            🏠 Livraison en cours
+                          </p>
+                          <p className="text-xs text-blue-600 mt-1">
+                            Le patient confirmera la réception
+                          </p>
+                        </div>
                       )}
                       <Dialog>
                         <DialogTrigger asChild>

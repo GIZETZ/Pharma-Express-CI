@@ -82,6 +82,16 @@ Repository: https://github.com/GIZETZ/Pharma-Express-CI.git
 
 ### Recent Changes (January 2025)
 - ✅ Migration from Replit Agent to standard Replit environment completed (January 12, 2025)
+- ✅ **SECURITY ENHANCEMENT**: Patient-controlled delivery confirmation system (January 12, 2025)
+  - Removed delivery person's ability to mark orders as delivered
+  - Only patients can now confirm delivery completion via new API endpoint
+  - Added `/api/orders/:orderId/confirm-delivery` endpoint with ownership validation
+- ✅ **PRIVACY PROTECTION**: Medical confidentiality for delivery personnel (January 12, 2025)  
+  - Medication names are now hidden from delivery persons
+  - Delivery dashboard shows only order count and total amount
+  - Protects patient medical privacy during delivery process
+- ✅ Enhanced delivery workflow security with role-based restrictions
+- ✅ Updated delivery tracking page with patient confirmation interface
 - ✅ Fixed delivery order display issue in livreur dashboard (January 12, 2025)
 - ✅ Corrected getDeliveryOrders filter to include 'delivered' status orders
 - ✅ Fixed assignDeliveryPerson to maintain proper status flow

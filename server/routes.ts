@@ -963,7 +963,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update delivery status (livreur)
+  // Update delivery status (livreur) - only allows changing to 'in_delivery'
   app.post('/api/livreur/deliveries/:orderId/status', requireAuth, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.session.userId);
@@ -974,11 +974,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { orderId } = req.params;
       const { status } = req.body;
 
+      // Les livreurs ne peuvent que commencer la livraison, pas la marquer comme livrée
+      if (status !== 'in_delivery') {
+        return res.status(403).json({ message: 'Delivery person can only start delivery, not mark as completed' });
+      }
+
+      // Vérifier que la commande est assignée à ce livreur
+      const order = await storage.getOrderById(orderId);
+      if (!order || order.deliveryPersonId !== user.id) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
       const updatedOrder = await storage.updateOrderStatus(orderId, status);
       res.json(updatedOrder);
     } catch (error) {
       console.error('Error updating delivery status:', error);
       res.status(500).json({ message: 'Failed to update delivery status' });
+    }
+  });
+
+  // Patient confirms delivery
+  app.post('/api/orders/:orderId/confirm-delivery', requireAuth, async (req: any, res) => {
+    try {
+      const { orderId } = req.params;
+      const userId = req.session.userId;
+
+      // Vérifier que l'utilisateur est le propriétaire de la commande
+      const order = await storage.getOrderById(orderId);
+      if (!order || order.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Vérifier que la commande est en cours de livraison
+      if (order.status !== 'in_delivery') {
+        return res.status(400).json({ message: 'Order is not being delivered' });
+      }
+
+      const updatedOrder = await storage.updateOrderStatus(orderId, 'delivered');
+      res.json({ message: 'Delivery confirmed successfully', order: updatedOrder });
+    } catch (error) {
+      console.error('Error confirming delivery:', error);
+      res.status(500).json({ message: 'Failed to confirm delivery' });
     }
   });
 
