@@ -109,12 +109,24 @@ export default function DashboardLivreur() {
     <div className="min-h-screen bg-gray-50 p-6 pb-24">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-purple-600 mb-2">
-            🚴 Tableau de bord Livreur
-          </h1>
-          <p className="text-gray-600">
-            Bienvenue {user?.firstName} ! Gérez vos livraisons (500 FCFA fixe par mission)
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-blue-600 mb-2">
+                🚚 Tableau de bord Livreur
+              </h1>
+              <p className="text-gray-600">
+                Bienvenue {user?.firstName} ! Gérez vos livraisons
+              </p>
+              {/* Section Debug temporaire */}
+              <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                <p><strong>Debug Info:</strong></p>
+                <p>User ID: {user?.id}</p>
+                <p>Total deliveries: {myDeliveries?.length || 0}</p>
+                <p>Loading: {loadingMyDeliveries ? 'Oui' : 'Non'}</p>
+                <p>Error: {error ? 'Oui' : 'Non'}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Résumé des notifications */}
@@ -190,19 +202,17 @@ export default function DashboardLivreur() {
           {/* Mes Livraisons Assignées */}
           <TabsContent value="my-deliveries" className="space-y-4">
             {!myDeliveries || myDeliveries.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    📦
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                    Aucune livraison assignée
-                  </h3>
-                  <p className="text-gray-500">
-                    Vos commandes assignées apparaîtront ici
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="border rounded-lg p-6 bg-gray-50 text-center">
+                <div className="text-gray-400 text-4xl mb-2">📦</div>
+                <h3 className="font-semibold mb-2">Aucune livraison disponible</h3>
+                <p className="text-sm text-gray-600">
+                  Les commandes assignées ou disponibles apparaîtront ici
+                </p>
+                <div className="mt-4 text-xs text-gray-500">
+                  <p>Statut de connexion: {user ? 'Connecté' : 'Déconnecté'}</p>
+                  <p>ID utilisateur: {user?.id?.slice(0, 8)}...</p>
+                </div>
+              </div>
             ) : (
               myDeliveries.map((delivery: any) => (
                 <Card key={delivery.id} className="border-l-4 border-l-purple-500">
