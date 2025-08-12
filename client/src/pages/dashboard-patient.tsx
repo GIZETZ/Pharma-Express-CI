@@ -177,7 +177,7 @@ export default function DashboardPatient() {
   // Mutation pour confirmer la livraison
   const confirmDeliveryMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      return await apiRequest(`/api/orders/${orderId}/confirm-delivery`, "POST");
+      return await apiRequest("POST", `/api/orders/${orderId}/confirm-delivery`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
