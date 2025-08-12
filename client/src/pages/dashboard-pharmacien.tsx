@@ -1090,7 +1090,7 @@ export default function DashboardPharmacien() {
                       <span className="bg-green-100 rounded-full w-8 h-8 flex items-center justify-center mr-2">📦</span>
                       Prêtes pour Livraison
                     </h3>
-                    <ReadyForDeliveryOrders orders={orders} />
+                    <ReadyForDeliveryOrders orders={orders || []} />
                   </div>
                 </div>
               </CardContent>
