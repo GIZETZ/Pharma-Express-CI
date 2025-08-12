@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -111,6 +112,139 @@ const PrescriptionImage = ({ prescriptionId, className }: { prescriptionId: stri
         document.body.appendChild(modal);
       }}
     />
+  );
+};
+
+// Component for handling ready-for-delivery orders
+const ReadyForDeliveryOrders = ({ orders }: { orders: any[] }) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch delivery personnel
+  const { data: deliveryPersonnel, isLoading: personnelLoading } = useQuery({
+    queryKey: ['/api/pharmacien/delivery-personnel'],
+    enabled: true
+  });
+
+  // Assign delivery person mutation
+  const assignDeliveryMutation = useMutation({
+    mutationFn: async ({ orderId, deliveryPersonId }: { orderId: string, deliveryPersonId: string }) => {
+      const response = await apiRequest('POST', `/api/pharmacien/orders/${orderId}/assign-delivery`, {
+        deliveryPersonId
+      });
+      if (!response.ok) {
+        throw new Error('Failed to assign delivery person');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/pharmacien/orders'] });
+      toast({
+        title: "Livreur assigné",
+        description: "Le livreur a été assigné avec succès à cette commande",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible d'assigner le livreur",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const readyOrders = orders?.filter((order: any) => order.status === 'ready_for_delivery') || [];
+
+  if (readyOrders.length === 0) {
+    return (
+      <div className="border rounded-lg p-6 bg-gray-50 text-center">
+        <div className="text-gray-400 mb-2">📦</div>
+        <p className="text-sm text-gray-600">Aucune commande prête pour livraison</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {readyOrders.map((order: any) => (
+        <div key={order.id} className="border rounded-lg p-4 bg-green-50">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h4 className="font-semibold">Commande #{order.id.slice(0, 8)}</h4>
+              <p className="text-sm text-gray-600">
+                Patient: {order.user?.firstName} {order.user?.lastName} • {order.user?.phone}
+              </p>
+            </div>
+            <Badge className="bg-green-600">Prête</Badge>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="text-sm">
+              <span className="font-medium">Montant total:</span> {order.totalAmount} FCFA
+            </div>
+            <div className="text-sm">
+              <span className="font-medium">Date:</span> {new Date(order.createdAt).toLocaleDateString("fr-FR")}
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <p className="text-sm font-medium text-gray-700 mb-1">Adresse de livraison</p>
+            <p className="text-sm text-gray-600">{order.deliveryAddress}</p>
+          </div>
+
+          {/* Delivery assignment section */}
+          {order.deliveryPersonId ? (
+            <div className="bg-white rounded-lg p-3 border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-700">✅ Livreur assigné</p>
+                  <p className="text-sm text-gray-600">
+                    {deliveryPersonnel?.find((p: any) => p.id === order.deliveryPersonId)?.firstName} {' '}
+                    {deliveryPersonnel?.find((p: any) => p.id === order.deliveryPersonId)?.lastName} • {' '}
+                    {deliveryPersonnel?.find((p: any) => p.id === order.deliveryPersonId)?.phone}
+                  </p>
+                </div>
+                <Badge variant="outline" className="text-green-700 border-green-300">
+                  En cours de livraison
+                </Badge>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg p-3 border">
+              <Label className="text-sm font-medium">Assigner un livreur</Label>
+              <div className="flex items-center space-x-2 mt-2">
+                <Select
+                  onValueChange={(deliveryPersonId) => {
+                    assignDeliveryMutation.mutate({ orderId: order.id, deliveryPersonId });
+                  }}
+                  disabled={assignDeliveryMutation.isPending || personnelLoading}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Choisir un livreur..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {deliveryPersonnel?.map((person: any) => (
+                      <SelectItem key={person.id} value={person.id}>
+                        {person.firstName} {person.lastName} • {person.phone}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {assignDeliveryMutation.isPending && (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-600"></div>
+                )}
+              </div>
+              {personnelLoading && (
+                <p className="text-xs text-gray-500 mt-1">Chargement des livreurs...</p>
+              )}
+              {!personnelLoading && (!deliveryPersonnel || deliveryPersonnel.length === 0) && (
+                <p className="text-xs text-red-500 mt-1">Aucun livreur disponible</p>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
   );
 };
 
@@ -897,44 +1031,67 @@ export default function DashboardPharmacien() {
               <CardHeader>
                 <CardTitle>⚗️ Validation & Préparation</CardTitle>
                 <CardDescription>
-                  Finalisez la préparation des commandes validées
+                  Commandes confirmées à préparer et commandes prêtes pour livraison
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {orders?.filter((order: any) => order.status === 'confirmed').map((order: any) => (
-                    <div key={order.id} className="border rounded-lg p-4 bg-blue-50">
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <h4 className="font-semibold">Commande #{order.id.slice(0, 8)}</h4>
-                          <p className="text-sm text-gray-600">
-                            Patient: {order.user?.firstName} {order.user?.lastName}
-                          </p>
+                <div className="space-y-6">
+                  {/* Section: Commandes en préparation */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3 flex items-center">
+                      <span className="bg-blue-100 rounded-full w-8 h-8 flex items-center justify-center mr-2">⚗️</span>
+                      En Préparation
+                    </h3>
+                    <div className="space-y-4">
+                      {orders?.filter((order: any) => order.status === 'confirmed').length === 0 ? (
+                        <div className="border rounded-lg p-6 bg-gray-50 text-center">
+                          <div className="text-gray-400 mb-2">⚗️</div>
+                          <p className="text-sm text-gray-600">Aucune commande en préparation</p>
                         </div>
-                        <Badge>En préparation</Badge>
-                      </div>
+                      ) : orders?.filter((order: any) => order.status === 'confirmed').map((order: any) => (
+                        <div key={order.id} className="border rounded-lg p-4 bg-blue-50">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h4 className="font-semibold">Commande #{order.id.slice(0, 8)}</h4>
+                              <p className="text-sm text-gray-600">
+                                Patient: {order.user?.firstName} {order.user?.lastName}
+                              </p>
+                            </div>
+                            <Badge>En préparation</Badge>
+                          </div>
 
-                      <div className="flex items-center space-x-4 mb-3">
-                        <div className="text-sm">
-                          <span className="font-medium">Montant total:</span> {order.totalAmount} FCFA
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">Adresse:</span> {order.deliveryAddress}
-                        </div>
-                      </div>
+                          <div className="flex items-center space-x-4 mb-3">
+                            <div className="text-sm">
+                              <span className="font-medium">Montant total:</span> {order.totalAmount} FCFA
+                            </div>
+                            <div className="text-sm">
+                              <span className="font-medium">Adresse:</span> {order.deliveryAddress}
+                            </div>
+                          </div>
 
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          className="bg-blue-600 hover:bg-blue-700"
-                          onClick={() => handleOrderUpdate(order.id, 'ready_for_delivery')}
-                          disabled={updateOrderMutation.isPending}
-                        >
-                          📦 Prêt pour livraison
-                        </Button>
-                      </div>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              className="bg-blue-600 hover:bg-blue-700"
+                              onClick={() => handleOrderUpdate(order.id, 'ready_for_delivery')}
+                              disabled={updateOrderMutation.isPending}
+                            >
+                              📦 Prêt pour livraison
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Section: Commandes prêtes pour livraison */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3 flex items-center">
+                      <span className="bg-green-100 rounded-full w-8 h-8 flex items-center justify-center mr-2">📦</span>
+                      Prêtes pour Livraison
+                    </h3>
+                    <ReadyForDeliveryOrders orders={orders} />
+                  </div>
                 </div>
               </CardContent>
             </Card>

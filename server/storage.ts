@@ -59,6 +59,9 @@ export interface IStorage {
 
   // Delivery person operations
   getDeliveryPerson(id: string): Promise<DeliveryPerson | undefined>;
+  getAvailableDeliveryPersonnel(): Promise<User[]>;
+  getDeliveryOrders(): Promise<Order[]>;
+  assignDeliveryPerson(orderId: string, deliveryPersonId: string): Promise<Order | undefined>;
 
   // Notification operations
   getUserNotifications(userId: string): Promise<Notification[]>;
@@ -618,6 +621,12 @@ export class MemStorage implements IStorage {
   // Delivery person operations
   async getDeliveryPerson(id: string): Promise<DeliveryPerson | undefined> {
     return this.deliveryPersons.get(id);
+  }
+
+  async getAvailableDeliveryPersonnel(): Promise<User[]> {
+    return Array.from(this.users.values())
+      .filter(user => user.role === 'livreur' && user.verificationStatus === 'approved' && user.isActive)
+      .sort((a, b) => a.firstName.localeCompare(b.firstName));
   }
 
   // Notification operations

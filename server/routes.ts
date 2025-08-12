@@ -1169,6 +1169,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get available delivery personnel for pharmacists
+  app.get('/api/pharmacien/delivery-personnel', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'pharmacien') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const deliveryPersonnel = await storage.getAvailableDeliveryPersonnel();
+      res.json(deliveryPersonnel);
+    } catch (error) {
+      console.error('Error fetching delivery personnel:', error);
+      res.status(500).json({ message: 'Failed to fetch delivery personnel' });
+    }
+  });
+
+  // Assign delivery person to order
+  app.post('/api/pharmacien/orders/:orderId/assign-delivery', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'pharmacien') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { orderId } = req.params;
+      const { deliveryPersonId } = req.body;
+
+      if (!deliveryPersonId) {
+        return res.status(400).json({ message: 'deliveryPersonId is required' });
+      }
+
+      const updatedOrder = await storage.assignDeliveryPerson(orderId, deliveryPersonId);
+      if (!updatedOrder) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error('Error assigning delivery person:', error);
+      res.status(500).json({ message: 'Failed to assign delivery person' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
