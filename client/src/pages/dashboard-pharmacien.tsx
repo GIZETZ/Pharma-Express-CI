@@ -159,73 +159,116 @@ const ReadyForDeliveryOrders = ({ orders }: { orders: any[] }) => {
     return (
       <div className="border rounded-lg p-6 bg-gray-50 text-center">
         <div className="text-gray-400 mb-2">📦</div>
-        <p className="text-sm text-gray-600">Aucune commande prête pour livraison</p>
+        <h4 className="font-medium text-gray-700 mb-2">Aucune commande prête pour livraison</h4>
+        <p className="text-sm text-gray-600">
+          Les commandes prêtes apparaîtront ici pour que vous puissiez assigner un livreur
+        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <div className="flex items-start space-x-3">
+          <div className="text-blue-600 text-lg">ℹ️</div>
+          <div>
+            <h4 className="font-medium text-blue-900 mb-1">Gestion des Livraisons</h4>
+            <p className="text-sm text-blue-700">
+              Choisissez le livreur que vous souhaitez pour chaque commande. 
+              Une fois assigné, le livreur recevra une notification et pourra commencer la livraison.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {readyOrders.map((order: any) => (
-        <div key={order.id} className="border rounded-lg p-4 bg-green-50">
+        <div key={order.id} className="border rounded-lg p-4 bg-green-50 border-green-200">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h4 className="font-semibold">Commande #{order.id.slice(0, 8)}</h4>
-              <p className="text-sm text-gray-600">
+              <h4 className="font-semibold text-green-900">Commande #{order.id.slice(0, 8)}</h4>
+              <p className="text-sm text-green-700">
                 Patient: {order.user?.firstName} {order.user?.lastName} • {order.user?.phone}
               </p>
             </div>
-            <Badge className="bg-green-600">Prête</Badge>
+            <Badge className="bg-green-600 text-white">Prête pour livraison</Badge>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="text-sm">
-              <span className="font-medium">Montant total:</span> {order.totalAmount} FCFA
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="bg-white rounded-lg p-3 border border-green-200">
+              <p className="text-sm font-medium text-gray-700 mb-1">Montant total</p>
+              <p className="text-lg font-bold text-green-600">{order.totalAmount} FCFA</p>
             </div>
-            <div className="text-sm">
-              <span className="font-medium">Date:</span> {new Date(order.createdAt).toLocaleDateString("fr-FR")}
+            <div className="bg-white rounded-lg p-3 border border-green-200">
+              <p className="text-sm font-medium text-gray-700 mb-1">Date de commande</p>
+              <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleDateString("fr-FR")}</p>
             </div>
           </div>
 
-          <div className="mb-4">
-            <p className="text-sm font-medium text-gray-700 mb-1">Adresse de livraison</p>
+          <div className="mb-4 bg-white rounded-lg p-3 border border-green-200">
+            <p className="text-sm font-medium text-gray-700 mb-1">📍 Adresse de livraison</p>
             <p className="text-sm text-gray-600">{order.deliveryAddress}</p>
           </div>
 
           {/* Delivery assignment section */}
           {order.deliveryPersonId ? (
-            <div className="bg-white rounded-lg p-3 border">
+            <div className="bg-white rounded-lg p-4 border-2 border-green-300">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-700">✅ Livreur assigné</p>
-                  <p className="text-sm text-gray-600">
-                    {deliveryPersonnel?.find((p: any) => p.id === order.deliveryPersonId)?.firstName} {' '}
-                    {deliveryPersonnel?.find((p: any) => p.id === order.deliveryPersonId)?.lastName} • {' '}
-                    {deliveryPersonnel?.find((p: any) => p.id === order.deliveryPersonId)?.phone}
-                  </p>
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    🚴
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-green-700">✅ Livreur assigné avec succès</p>
+                    <p className="text-sm text-gray-600">
+                      <strong>
+                        {deliveryPersonnel?.find((p: any) => p.id === order.deliveryPersonId)?.firstName} {' '}
+                        {deliveryPersonnel?.find((p: any) => p.id === order.deliveryPersonId)?.lastName}
+                      </strong>
+                      {' • '}
+                      {deliveryPersonnel?.find((p: any) => p.id === order.deliveryPersonId)?.phone}
+                    </p>
+                  </div>
                 </div>
-                <Badge variant="outline" className="text-green-700 border-green-300">
-                  En cours de livraison
+                <Badge variant="outline" className="text-green-700 border-green-300 bg-green-50">
+                  🚚 En cours de livraison
                 </Badge>
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-lg p-3 border">
-              <Label className="text-sm font-medium">Assigner un livreur</Label>
-              <div className="flex items-center space-x-2 mt-2">
+            <div className="bg-white rounded-lg p-4 border-2 border-orange-300">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                  👤
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-orange-900">
+                    🔔 Choisir et assigner un livreur
+                  </Label>
+                  <p className="text-xs text-orange-700 mt-1">
+                    Sélectionnez le livreur qui effectuera cette livraison
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
                 <Select
                   onValueChange={(deliveryPersonId) => {
                     assignDeliveryMutation.mutate({ orderId: order.id, deliveryPersonId });
                   }}
                   disabled={assignDeliveryMutation.isPending || personnelLoading}
                 >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Choisir un livreur..." />
+                  <SelectTrigger className="flex-1 border-orange-300 focus:border-orange-500">
+                    <SelectValue placeholder="Sélectionner un livreur..." />
                   </SelectTrigger>
                   <SelectContent>
                     {deliveryPersonnel?.map((person: any) => (
                       <SelectItem key={person.id} value={person.id}>
-                        {person.firstName} {person.lastName} • {person.phone}
+                        <div className="flex items-center space-x-2">
+                          <span>🚴</span>
+                          <span>{person.firstName} {person.lastName}</span>
+                          <span className="text-gray-500">• {person.phone}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -234,11 +277,18 @@ const ReadyForDeliveryOrders = ({ orders }: { orders: any[] }) => {
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-600"></div>
                 )}
               </div>
+              
               {personnelLoading && (
-                <p className="text-xs text-gray-500 mt-1">Chargement des livreurs...</p>
+                <p className="text-xs text-gray-500 mt-2 flex items-center">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400 mr-1"></div>
+                  Chargement des livreurs disponibles...
+                </p>
               )}
               {!personnelLoading && (!deliveryPersonnel || deliveryPersonnel.length === 0) && (
-                <p className="text-xs text-red-500 mt-1">Aucun livreur disponible</p>
+                <p className="text-xs text-red-500 mt-2 flex items-center">
+                  <span className="mr-1">⚠️</span>
+                  Aucun livreur disponible pour le moment
+                </p>
               )}
             </div>
           )}
@@ -421,7 +471,7 @@ export default function DashboardPharmacien() {
         <Tabs defaultValue="orders" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="orders">
-              Réception Commandes
+              Nouvelles Commandes
               {orders?.filter((o: any) => o.status === 'pending')?.length > 0 && (
                 <Badge variant="destructive" className="ml-2">
                   {orders.filter((o: any) => o.status === 'pending').length}
@@ -430,7 +480,14 @@ export default function DashboardPharmacien() {
             </TabsTrigger>
             <TabsTrigger value="prescriptions">Vérification</TabsTrigger>
             <TabsTrigger value="pricing">Prix & Alternatives</TabsTrigger>
-            <TabsTrigger value="preparation">Validation & Préparation</TabsTrigger>
+            <TabsTrigger value="preparation">
+              Livraison & Livreurs
+              {orders?.filter((o: any) => o.status === 'confirmed' || o.status === 'ready_for_delivery')?.length > 0 && (
+                <Badge variant="outline" className="ml-2">
+                  {orders.filter((o: any) => o.status === 'confirmed' || o.status === 'ready_for_delivery').length}
+                </Badge>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           {/* Réception des Commandes */}
@@ -1084,37 +1141,13 @@ export default function DashboardPharmacien() {
                     </div>
                   </div>
 
-                  {/* Section: Commandes prêtes pour livraison */}
+                  {/* Section: Commandes prêtes pour livraison avec assignation de livreur */}
                   <div>
                     <h3 className="font-semibold text-lg mb-3 flex items-center">
                       <span className="bg-green-100 rounded-full w-8 h-8 flex items-center justify-center mr-2">📦</span>
-                      Prêtes pour Livraison
+                      Prêtes pour Livraison - Assignation des Livreurs
                     </h3>
-                    {/* Commandes prêtes pour livraison */}
-                    {orders && orders.filter((order: any) => order.status === 'ready_for_delivery').length > 0 ? (
-                      <div className="space-y-3">
-                        {orders.filter((order: any) => order.status === 'ready_for_delivery').map((order: any) => (
-                          <Card key={order.id} className="border-l-4 border-l-green-500">
-                            <CardContent className="p-4">
-                              <div className="flex justify-between items-center">
-                                <div>
-                                  <h4 className="font-semibold">Commande #{order.id.slice(0, 8)}</h4>
-                                  <p className="text-sm text-gray-600">{order.patient?.firstName} {order.patient?.lastName}</p>
-                                  <p className="text-sm text-gray-500">{order.deliveryAddress}</p>
-                                </div>
-                                <Badge className="bg-green-100 text-green-800">
-                                  Prête
-                                </Badge>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">
-                        Aucune commande prête pour livraison
-                      </p>
-                    )}
+                    <ReadyForDeliveryOrders orders={orders || []} />
                   </div>
                 </div>
               </CardContent>
