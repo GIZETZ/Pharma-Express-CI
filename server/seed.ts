@@ -79,13 +79,14 @@ export async function seedTestData() {
   const testPharmacies = [
     {
       name: "Pharmacie de la Paix",
-      address: "Avenue Houphouët-Boigny, Cocody",
+      address: "Avenue Houphouet-Boigny, Cocody",
       latitude: "5.3364",
       longitude: "-4.0267", 
       phone: "+225 21 22 33 44",
       rating: "4.8",
       deliveryTime: "25",
       isOpen: true,
+      isEmergency24h: true,
       openingHours: {
         monday: "08:00-20:00",
         tuesday: "08:00-20:00",
@@ -98,13 +99,14 @@ export async function seedTestData() {
     },
     {
       name: "Pharmacie du Plateau",
-      address: "Boulevard de la République, Plateau",
+      address: "Boulevard de la Republique, Plateau",
       latitude: "5.3200",
       longitude: "-4.0130",
       phone: "+225 21 32 45 78", 
       rating: "4.6",
       deliveryTime: "30",
       isOpen: true,
+      isEmergency24h: false,
       openingHours: {
         monday: "07:30-19:30",
         tuesday: "07:30-19:30", 
@@ -122,8 +124,9 @@ export async function seedTestData() {
       longitude: "-3.9889",
       phone: "+225 22 44 56 89",
       rating: "4.4",
-      deliveryTime: "40",
-      isOpen: false,
+      deliveryTime: "20",
+      isOpen: true,
+      isEmergency24h: false,
       openingHours: {
         monday: "08:00-19:00",
         tuesday: "08:00-19:00",

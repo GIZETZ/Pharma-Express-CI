@@ -33,12 +33,11 @@ export const pharmacies = pgTable("pharmacies", {
   phone: varchar("phone"),
   rating: decimal("rating", { precision: 2, scale: 1 }).default("0.0"),
   reviewCount: varchar("review_count").default("0"),
-  deliveryTime: varchar("delivery_time").default("30"),
-  deliveryRadius: varchar("delivery_radius").default("5"),
-  minDeliveryFee: varchar("min_delivery_fee").default("1000"),
+  deliveryTime: varchar("delivery_time", { length: 10 }),
   isOpen: boolean("is_open").default(true),
-  openingHours: jsonb("opening_hours"),
+  isEmergency24h: boolean("is_emergency_24h").default(false),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const prescriptions = pgTable("prescriptions", {
