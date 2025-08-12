@@ -356,6 +356,42 @@ export default function PharmacyProfile() {
               </div>
             </div>
 
+            {/* Horaires d'aujourd'hui */}
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-900">Horaires d'aujourd'hui</span>
+                </div>
+                {editMode ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="time"
+                      value={editData.openingHours?.monday?.open || displayPharmacy.openingHours?.monday?.open || '08:00'}
+                      onChange={(e) => updateOpeningHours('monday', 'open', e.target.value)}
+                      className="w-20 h-8 text-xs"
+                    />
+                    <span className="text-xs text-blue-700">à</span>
+                    <Input
+                      type="time"
+                      value={editData.openingHours?.monday?.close || displayPharmacy.openingHours?.monday?.close || '20:00'}
+                      onChange={(e) => updateOpeningHours('monday', 'close', e.target.value)}
+                      className="w-20 h-8 text-xs"
+                    />
+                  </div>
+                ) : (
+                  <span className="text-sm text-blue-700 bg-white px-2 py-1 rounded">
+                    {displayPharmacy.openingHours?.monday?.open || '08:00'} - {displayPharmacy.openingHours?.monday?.close || '20:00'}
+                  </span>
+                )}
+              </div>
+              {editMode && (
+                <p className="text-xs text-blue-600 mt-2">
+                  💡 Modifiez les horaires complets dans l'onglet "Horaires"
+                </p>
+              )}
+            </div>
+
             {editMode && (latitude && longitude) && (
               <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-800">
@@ -445,7 +481,7 @@ export default function PharmacyProfile() {
                   <Separator />
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Urgences 24h/24</Label>
+                      <Label>De garde 24h/24</Label>
                       <p className="text-sm text-gray-600">Service d'urgence pharmaceutique</p>
                     </div>
                     <Switch checked={false} disabled={!editMode} />
