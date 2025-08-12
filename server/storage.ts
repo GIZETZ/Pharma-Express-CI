@@ -229,6 +229,75 @@ export class MemStorage implements IStorage {
     for (const pharmacyData of testPharmacies) {
       await this.createPharmacy(pharmacyData);
     }
+
+    // Créer des commandes de test pour le dashboard livreur
+    await this.createTestDeliveryOrders();
+  }
+
+  private async createTestDeliveryOrders() {
+    // Récupérer les utilisateurs de test
+    const patient = Array.from(this.users.values()).find(u => u.role === 'patient');
+    const livreur = Array.from(this.users.values()).find(u => u.role === 'livreur');
+    const pharmacies = Array.from(this.pharmacies.values());
+
+    if (!patient || !livreur || pharmacies.length === 0) return;
+
+    // Créer quelques commandes de test
+    const testOrders = [
+      {
+        userId: patient.id,
+        pharmacyId: pharmacies[0].id,
+        deliveryAddress: "Riviera Golf, Cocody, Abidjan",
+        deliveryLatitude: 5.3364,
+        deliveryLongitude: -4.0267,
+        medications: [
+          { name: "Paracétamol 500mg", quantity: 2, price: "1500", dosage: "1 comprimé 3x/jour" },
+          { name: "Amoxicilline 250mg", quantity: 1, price: "3500", dosage: "1 gélule 2x/jour" }
+        ],
+        status: "ready_for_delivery",
+        totalAmount: "5000",
+        deliveryPersonId: livreur.id // Assignée au livreur
+      },
+      {
+        userId: patient.id,
+        pharmacyId: pharmacies[1].id,
+        deliveryAddress: "Plateau, Abidjan",
+        deliveryLatitude: 5.3198,
+        deliveryLongitude: -4.0267,
+        medications: [
+          { name: "Doliprane 1000mg", quantity: 1, price: "2500", dosage: "1 comprimé si douleur" }
+        ],
+        status: "in_delivery",
+        totalAmount: "2500",
+        deliveryPersonId: livreur.id // En cours de livraison
+      },
+      {
+        userId: patient.id,
+        pharmacyId: pharmacies[2].id,
+        deliveryAddress: "Marcory Zone 4, Abidjan",
+        deliveryLatitude: 5.2845,
+        deliveryLongitude: -3.9731,
+        medications: [
+          { name: "Vitamine C", quantity: 1, price: "1200", dosage: "1 comprimé/jour" }
+        ],
+        status: "ready_for_delivery",
+        totalAmount: "1200"
+        // Pas de deliveryPersonId - disponible pour assignation
+      }
+    ];
+
+    for (const orderData of testOrders) {
+      const orderId = randomUUID();
+      const order: Order = {
+        id: orderId,
+        ...orderData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      this.orders.set(orderId, order);
+    }
+
+    console.log(`✅ ${testOrders.length} commandes de test créées pour le dashboard livreur`);
   }
 
   // User operations
@@ -776,7 +845,7 @@ export class MemStorage implements IStorage {
 
   async getDeliveryOrders(): Promise<Order[]> {
     const deliveryOrders = Array.from(this.orders.values())
-      .filter(order => ['ready_for_delivery', 'in_delivery'].includes(order.status))
+      .filter(order => ['ready_for_delivery', 'in_delivery', 'delivered'].includes(order.status))
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
     // Enrichir avec les informations de la pharmacie et de l'utilisateur
@@ -809,7 +878,7 @@ export class MemStorage implements IStorage {
     if (!order) return undefined;
 
     order.deliveryPersonId = deliveryPersonId;
-    order.status = 'in_delivery';
+    // Keep status as 'ready_for_delivery' when assigned, change to 'in_delivery' when delivery starts
     order.updatedAt = new Date();
 
     this.orders.set(orderId, order);
