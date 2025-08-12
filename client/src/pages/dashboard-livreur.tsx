@@ -26,10 +26,12 @@ export default function DashboardLivreur() {
     queryKey: ["/api/livreur/deliveries"],
     enabled: true,
     select: (data) => {
-      // Filter deliveries that are assigned to this user OR that have the user's ID
+      // Filter deliveries that are assigned to this user
       return data?.filter((delivery: any) => 
-        delivery.deliveryPersonId === user?.id || 
-        delivery.status === 'in_delivery' && delivery.deliveryPersonId === user?.id
+        delivery.deliveryPersonId === user?.id && 
+        (delivery.status === 'ready_for_delivery' || 
+         delivery.status === 'in_delivery' || 
+         delivery.status === 'delivered')
       ) || [];
     }
   });

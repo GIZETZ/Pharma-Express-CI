@@ -1090,7 +1090,31 @@ export default function DashboardPharmacien() {
                       <span className="bg-green-100 rounded-full w-8 h-8 flex items-center justify-center mr-2">📦</span>
                       Prêtes pour Livraison
                     </h3>
-                    <ReadyForDeliveryOrders orders={orders || []} />
+                    {/* Commandes prêtes pour livraison */}
+                    {orders && orders.filter((order: any) => order.status === 'ready_for_delivery').length > 0 ? (
+                      <div className="space-y-3">
+                        {orders.filter((order: any) => order.status === 'ready_for_delivery').map((order: any) => (
+                          <Card key={order.id} className="border-l-4 border-l-green-500">
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <h4 className="font-semibold">Commande #{order.id.slice(0, 8)}</h4>
+                                  <p className="text-sm text-gray-600">{order.patient?.firstName} {order.patient?.lastName}</p>
+                                  <p className="text-sm text-gray-500">{order.deliveryAddress}</p>
+                                </div>
+                                <Badge className="bg-green-100 text-green-800">
+                                  Prête
+                                </Badge>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">
+                        Aucune commande prête pour livraison
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
