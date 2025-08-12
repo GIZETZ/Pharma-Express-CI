@@ -219,8 +219,6 @@ export default function DashboardLivreur() {
                          delivery.status === 'ready_for_delivery' && delivery.deliveryPersonId === user?.id ? 'Assignée' : 'En attente'}
                       </Badge>
                     </div>
-                    <CardDescription></old_str>
-                    </div>
                     <CardDescription>
                       {delivery.pharmacy?.name || 'Pharmacie inconnue'}
                     </CardDescription>
@@ -431,7 +429,7 @@ export default function DashboardLivreur() {
           </TabsContent>
         </Tabs>
       </div>
-      
+
       <BottomNavigation />
     </div>
   );
