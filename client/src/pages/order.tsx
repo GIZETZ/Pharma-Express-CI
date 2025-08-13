@@ -163,6 +163,16 @@ export default function OrderPage() {
     }));
   };
 
+  // Fonction de validation: vérifier qu'au moins une photo d'ordonnance OU un médicament est fourni
+  const validateOrder = () => {
+    const hasAddress = orderData.deliveryAddress.trim().length > 0;
+    const hasPrescriptionPhoto = orderData.prescriptionPhoto !== null;
+    const hasMedications = orderData.medications.some(med => med.name.trim().length > 0);
+    const hasRequiredBonDocuments = !orderData.medications.some(med => med.name.trim() && med.surBon) || orderData.bonDocuments.length > 0;
+    
+    return hasAddress && (hasPrescriptionPhoto || hasMedications) && hasRequiredBonDocuments;
+  };
+
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
       const formData = new FormData();
@@ -227,47 +237,34 @@ export default function OrderPage() {
       return;
     }
 
-    if (!orderData.deliveryAddress.trim()) {
+    if (!validateOrder()) {
+      let message = "Veuillez vérifier les éléments suivants : ";
+      const errors = [];
+      
+      if (!orderData.deliveryAddress.trim()) {
+        errors.push("adresse de livraison");
+      }
+      
+      if (!orderData.prescriptionPhoto && !orderData.medications.some(med => med.name.trim())) {
+        errors.push("photo d'ordonnance ou médicaments saisis");
+      }
+      
+      if (orderData.medications.some(med => med.name.trim() && med.surBon) && orderData.bonDocuments.length === 0) {
+        errors.push("documents BON pour les médicaments sur BON");
+      }
+      
+      message += errors.join(", ");
+      
       toast({
+        title: "Validation requise",
+        description: message,
         variant: "destructive",
-        title: "Adresse requise",
-        description: "Veuillez saisir votre adresse de livraison",
       });
       return;
     }
 
-    if (!orderData.medications.some(med => med.name.trim())) {
-      toast({
-        variant: "destructive",
-        title: "Médicaments requis",
-        description: "Veuillez ajouter au moins un médicament",
-      });
-      return;
-    }
-
-    if (!orderData.prescriptionPhoto) {
-      toast({
-        variant: "destructive",
-        title: "Photo d'ordonnance requise",
-        description: "Veuillez ajouter une photo de votre ordonnance",
-      });
-      return;
-    }
-
-    // Vérifier si des documents BON sont requis
+    // Include pharmacy ID in the order data  
     const validMedications = orderData.medications.filter(med => med.name.trim());
-    const hasBonMedications = validMedications.some(med => med.surBon);
-    
-    if (hasBonMedications && orderData.bonDocuments.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "Documents BON requis",
-        description: "Vous avez des médicaments sur BON, veuillez ajouter les documents nécessaires",
-      });
-      return;
-    }
-
-    // Include pharmacy ID in the order data
     const orderPayload = {
       ...orderData,
       pharmacyId: selectedPharmacy.id,
@@ -367,7 +364,7 @@ export default function OrderPage() {
           <CardContent className="space-y-6">
             {/* Photo de l'ordonnance */}
             <div>
-              <label className="block text-sm font-medium mb-3">Photo de l'ordonnance *</label>
+              <label className="block text-sm font-medium mb-3">Photo de l'ordonnance</label>
               <div className="space-y-3">
                 {!orderData.prescriptionPhoto ? (
                   <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50">
@@ -430,7 +427,7 @@ export default function OrderPage() {
 
             {/* Adresse de livraison */}
             <div>
-              <label className="block text-sm font-medium mb-2">Adresse de livraison *</label>
+              <label className="block text-sm font-medium mb-2">Adresse de livraison</label>
               
               {/* Zone d'affichage de la géolocalisation */}
               {isDetectingLocation && (
@@ -477,14 +474,8 @@ export default function OrderPage() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <label className="block text-sm font-medium">
-                  Médicaments souhaités 
-                  {!orderData.prescriptionPhoto && <span className="text-red-500">*</span>}
-                  {orderData.prescriptionPhoto && (
-                    <span className="text-green-600 text-xs ml-2">(Optionnel - la pharmacie peut saisir depuis l'ordonnance)</span>
-                  )}
-                  {!orderData.prescriptionPhoto && (
-                    <span className="text-blue-600 text-xs ml-2">(Ou ajoutez une photo d'ordonnance)</span>
-                  )}
+                  Médicaments souhaités
+                  <span className="text-gray-500 text-xs ml-2">(Optionnel si photo d'ordonnance fournie)</span>
                 </label>
                 <Button 
                   type="button" 
@@ -548,7 +539,7 @@ export default function OrderPage() {
               return (
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Documents pour validation BON *
+                    Documents pour validation BON
                     <span className="text-orange-600 text-xs ml-2">
                       (Requis car vous avez des médicaments sur BON)
                     </span>
@@ -631,7 +622,7 @@ export default function OrderPage() {
             <div className="pt-4">
               <Button
                 onClick={handleCreateOrder}
-                disabled={createOrderMutation.isPending || !orderData.deliveryAddress || (!orderData.prescriptionPhoto && !orderData.medications.some(med => med.name.trim()))}
+                disabled={createOrderMutation.isPending || !validateOrder()}
                 className="w-full bg-blue-600 hover:bg-blue-700"
               >
                 {createOrderMutation.isPending ? "Envoi en cours..." : "📤 Confirmer la commande"}
@@ -639,14 +630,10 @@ export default function OrderPage() {
               
               {/* Indicateur de validation */}
               <div className="mt-2 text-xs text-gray-500 text-center">
-                {!orderData.prescriptionPhoto && !orderData.medications.some(med => med.name.trim()) && (
-                  <span className="text-red-600">⚠️ Photo d'ordonnance ou médicaments requis</span>
+                {!validateOrder() && (
+                  <span className="text-red-600">⚠️ Vérifiez les éléments requis</span>
                 )}
-                {orderData.medications.some(med => med.name.trim() && med.surBon) && orderData.bonDocuments.length === 0 && (
-                  <span className="text-orange-600">⚠️ Documents BON requis</span>
-                )}
-                {(orderData.prescriptionPhoto || orderData.medications.some(med => med.name.trim())) && 
-                 (!orderData.medications.some(med => med.name.trim() && med.surBon) || orderData.bonDocuments.length > 0) && (
+                {validateOrder() && (
                   <span className="text-green-600">✅ Prêt à confirmer</span>
                 )}
               </div>
