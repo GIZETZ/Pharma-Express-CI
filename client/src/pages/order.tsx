@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -610,8 +611,8 @@ export default function OrderPage() {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                💡 <strong>Info:</strong> La photo d'ordonnance est obligatoire pour confirmer votre commande. 
-                La pharmacie déterminera le prix final en fonction des médicaments disponibles. 
+                💡 <strong>Info:</strong> Vous pouvez envoyer votre commande avec uniquement la photo d'ordonnance (le pharmacien saisira les médicaments) ou en saisissant vous-même les médicaments. 
+                La pharmacie déterminera le prix final et pourra modifier les détails si nécessaire. 
                 Les médicaments marqués "Sur BON" nécessitent une validation de vos documents d'assurance.
               </p>
             </div>
@@ -619,7 +620,7 @@ export default function OrderPage() {
             <div className="pt-4">
               <Button
                 onClick={handleCreateOrder}
-                disabled={createOrderMutation.isPending || !orderData.deliveryAddress || !orderData.medications.some(med => med.name.trim()) || !orderData.prescriptionPhoto}
+                disabled={createOrderMutation.isPending || !orderData.deliveryAddress || (!orderData.prescriptionPhoto && !orderData.medications.some(med => med.name.trim()))}
                 className="w-full bg-blue-600 hover:bg-blue-700"
               >
                 {createOrderMutation.isPending ? "Envoi en cours..." : "📤 Confirmer la commande"}
@@ -627,13 +628,14 @@ export default function OrderPage() {
               
               {/* Indicateur de validation */}
               <div className="mt-2 text-xs text-gray-500 text-center">
-                {!orderData.prescriptionPhoto && (
-                  <span className="text-red-600">⚠️ Photo d'ordonnance requise</span>
+                {!orderData.prescriptionPhoto && !orderData.medications.some(med => med.name.trim()) && (
+                  <span className="text-red-600">⚠️ Photo d'ordonnance ou médicaments requis</span>
                 )}
-                {orderData.prescriptionPhoto && orderData.medications.some(med => med.name.trim() && med.surBon) && orderData.bonDocuments.length === 0 && (
+                {orderData.medications.some(med => med.name.trim() && med.surBon) && orderData.bonDocuments.length === 0 && (
                   <span className="text-orange-600">⚠️ Documents BON requis</span>
                 )}
-                {orderData.prescriptionPhoto && (!orderData.medications.some(med => med.name.trim() && med.surBon) || orderData.bonDocuments.length > 0) && (
+                {(orderData.prescriptionPhoto || orderData.medications.some(med => med.name.trim())) && 
+                 (!orderData.medications.some(med => med.name.trim() && med.surBon) || orderData.bonDocuments.length > 0) && (
                   <span className="text-green-600">✅ Prêt à confirmer</span>
                 )}
               </div>

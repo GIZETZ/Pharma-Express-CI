@@ -81,7 +81,11 @@ Repository: https://github.com/GIZETZ/Pharma-Express-CI.git
 - `DEPLOYMENT.md` - Comprehensive deployment documentation
 
 ### Recent Changes (January 2025)
-- ✅ Migration from Replit Agent to standard Replit environment completed (January 12, 2025)
+- ✅ Migration from Replit Agent to standard Replit environment completed (August 13, 2025)
+- ✅ **VALIDATION LOGIC UPDATE**: Improved order submission validation (August 13, 2025)
+  - Patients can now send orders with ONLY prescription photo (pharmacist handles medication entry)
+  - Patients can send orders with manually entered medications (pharmacist can modify details)
+  - More flexible validation allows either prescription photo OR medication list
 - ✅ **SECURITY ENHANCEMENT**: Patient-controlled delivery confirmation system (January 12, 2025)
   - Removed delivery person's ability to mark orders as delivered
   - Only patients can now confirm delivery completion via new API endpoint
