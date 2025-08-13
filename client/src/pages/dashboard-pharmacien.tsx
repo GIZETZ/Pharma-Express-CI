@@ -307,6 +307,8 @@ export default function DashboardPharmacien() {
   const [medicationStatuses, setMedicationStatuses] = useState<Record<string, {available: boolean, surBon: boolean}>>({});
   const [visibleImages, setVisibleImages] = useState<Record<string, boolean>>({});
   const [medicationPrices, setMedicationPrices] = useState<Record<string, string>>({});
+  const [newMedication, setNewMedication] = useState({ name: '', price: '', surBon: false });
+  const [orderMedications, setOrderMedications] = useState<Record<string, any[]>>({});
 
   // Mutation pour mettre à jour le statut des commandes
   const updateOrderMutation = useMutation({
@@ -415,6 +417,40 @@ export default function DashboardPharmacien() {
       ...prev,
       [key]: price
     }));
+  };
+
+  // Fonction pour ajouter un nouveau médicament à une commande
+  const addMedicationToOrder = (orderId: string) => {
+    if (!newMedication.name.trim() || !newMedication.price) {
+      toast({
+        title: "Validation requise",
+        description: "Veuillez saisir le nom et le prix du médicament",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Ajouter le médicament à la liste locale pour cette commande
+    setOrderMedications(prev => {
+      const currentMeds = prev[orderId] || [];
+      return {
+        ...prev,
+        [orderId]: [...currentMeds, {
+          name: newMedication.name,
+          price: newMedication.price,
+          surBon: newMedication.surBon,
+          available: true
+        }]
+      };
+    });
+
+    // Réinitialiser le formulaire
+    setNewMedication({ name: '', price: '', surBon: false });
+
+    toast({
+      title: "Médicament ajouté",
+      description: `${newMedication.name} a été ajouté à la commande`,
+    });
   };
 
   const handleSendResponse = (orderId: string, originalMedications: any[]) => {
@@ -811,7 +847,48 @@ export default function DashboardPharmacien() {
                             {/* Gestion des médicaments */}
                             <div>
                               <h4 className="font-medium mb-3">Gestion des médicaments</h4>
+                              
+                              {/* Section pour ajouter de nouveaux médicaments */}
+                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                                <h5 className="font-medium text-blue-900 mb-3">➕ Ajouter des médicaments depuis l'ordonnance</h5>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                                  <Input
+                                    placeholder="Nom du médicament"
+                                    value={newMedication.name}
+                                    onChange={(e) => setNewMedication(prev => ({ ...prev, name: e.target.value }))}
+                                  />
+                                  <Input
+                                    type="number"
+                                    placeholder="Prix (FCFA)"
+                                    value={newMedication.price}
+                                    onChange={(e) => setNewMedication(prev => ({ ...prev, price: e.target.value }))}
+                                    min="0"
+                                    step="1"
+                                  />
+                                  <div className="flex items-center space-x-2">
+                                    <Switch
+                                      id={`new-med-surbon-${order.id}`}
+                                      checked={newMedication.surBon}
+                                      onCheckedChange={(checked) => setNewMedication(prev => ({ ...prev, surBon: checked }))}
+                                    />
+                                    <Label htmlFor={`new-med-surbon-${order.id}`} className="text-sm">
+                                      Sur BON
+                                    </Label>
+                                  </div>
+                                </div>
+                                <Button
+                                  onClick={() => addMedicationToOrder(order.id)}
+                                  disabled={!newMedication.name.trim() || !newMedication.price}
+                                  size="sm"
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  ➕ Ajouter ce médicament
+                                </Button>
+                              </div>
+
+                              {/* Liste des médicaments existants et ajoutés */}
                               <div className="space-y-3">
+                                {/* Médicaments du patient */}
                                 {order.medications && typeof order.medications === 'string' ? (
                                   JSON.parse(order.medications).map((med: any, index: number) => {
                                     const statusKey = `${order.id}-${index}`;
@@ -935,18 +1012,94 @@ export default function DashboardPharmacien() {
                                     );
                                   })
                                 ) : (
-                                  <p className="text-sm text-gray-500">Aucun médicament spécifié</p>
+                                  <p className="text-sm text-gray-500">Aucun médicament spécifié par le patient</p>
+                                )}
+
+                                {/* Médicaments ajoutés par le pharmacien */}
+                                {orderMedications[order.id] && orderMedications[order.id].length > 0 && (
+                                  <div className="border-t pt-4">
+                                    <h5 className="font-medium text-blue-900 mb-3">💊 Médicaments ajoutés depuis l'ordonnance</h5>
+                                    <div className="space-y-3">
+                                      {orderMedications[order.id].map((med: any, index: number) => {
+                                        const statusKey = `pharmacist-${order.id}-${index}`;
+                                        const currentStatus = medicationStatuses[statusKey] || { available: med.available, surBon: med.surBon };
+
+                                        return (
+                                          <div key={statusKey} className="border rounded-lg p-4 bg-blue-50">
+                                            <div className="flex items-center justify-between mb-3">
+                                              <h5 className="font-medium text-blue-900">{med.name}</h5>
+                                              <Badge variant={currentStatus.available ? "default" : "destructive"}>
+                                                {currentStatus.available ? "Disponible" : "Indisponible"}
+                                              </Badge>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 mb-3">
+                                              <div className="flex items-center space-x-2">
+                                                <Switch
+                                                  id={`available-${statusKey}`}
+                                                  checked={currentStatus.available}
+                                                  onCheckedChange={(checked) =>
+                                                    toggleMedicationStatus(order.id, index, 'available', checked)
+                                                  }
+                                                />
+                                                <Label htmlFor={`available-${statusKey}`} className="text-sm">
+                                                  Disponible en stock
+                                                </Label>
+                                              </div>
+
+                                              <div className="flex items-center space-x-2">
+                                                <Switch
+                                                  id={`surbon-${statusKey}`}
+                                                  checked={currentStatus.surBon}
+                                                  onCheckedChange={(checked) =>
+                                                    toggleMedicationStatus(order.id, index, 'surBon', checked)
+                                                  }
+                                                />
+                                                <Label htmlFor={`surbon-${statusKey}`} className="text-sm">
+                                                  Sur BON (remboursable)
+                                                </Label>
+                                              </div>
+                                            </div>
+
+                                            <div className="mt-3">
+                                              <Label htmlFor={`price-${statusKey}`} className="text-sm font-medium">
+                                                Prix (FCFA)
+                                              </Label>
+                                              <Input
+                                                id={`price-${statusKey}`}
+                                                type="number"
+                                                placeholder="Prix en FCFA"
+                                                value={medicationPrices[statusKey] || med.price || ''}
+                                                onChange={(e) => updateMedicationPrice(order.id, index, e.target.value)}
+                                                className="mt-1"
+                                                min="0"
+                                                step="1"
+                                              />
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
                                 )}
                               </div>
 
                               <div className="flex space-x-2 mt-4 pt-4 border-t">
                                 <Button
                                   onClick={() => {
-                                    const medications = order.medications && typeof order.medications === 'string'
+                                    // Combiner les médicaments du patient et ceux ajoutés par le pharmacien
+                                    const patientMedications = order.medications && typeof order.medications === 'string'
                                       ? JSON.parse(order.medications)
                                       : order.medications || [];
+                                    
+                                    const pharmacistMedications = orderMedications[order.id] || [];
+                                    
+                                    const allMedications = [
+                                      ...patientMedications,
+                                      ...pharmacistMedications
+                                    ];
 
-                                    handleSendResponse(order.id, medications);
+                                    handleSendResponse(order.id, allMedications);
                                   }}
                                   disabled={sendResponseMutation.isPending}
                                   className="bg-blue-600 hover:bg-blue-700"
