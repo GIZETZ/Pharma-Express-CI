@@ -309,6 +309,8 @@ export default function DashboardPharmacien() {
   const [medicationPrices, setMedicationPrices] = useState<Record<string, string>>({});
   const [newMedication, setNewMedication] = useState({ name: '', price: '', surBon: false });
   const [orderMedications, setOrderMedications] = useState<Record<string, any[]>>({});
+  const [editingMedication, setEditingMedication] = useState<Record<string, boolean>>({});
+  const [medicationNames, setMedicationNames] = useState<Record<string, string>>({});
 
   // Mutation pour mettre à jour le statut des commandes
   const updateOrderMutation = useMutation({
@@ -451,6 +453,40 @@ export default function DashboardPharmacien() {
       title: "Médicament ajouté",
       description: `${newMedication.name} a été ajouté à la commande`,
     });
+  };
+
+  // Fonction pour supprimer un médicament ajouté par le pharmacien
+  const removePharmaticistMedication = (orderId: string, index: number) => {
+    setOrderMedications(prev => {
+      const currentMeds = prev[orderId] || [];
+      const updatedMeds = currentMeds.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        [orderId]: updatedMeds
+      };
+    });
+
+    toast({
+      title: "Médicament supprimé",
+      description: "Le médicament a été retiré de la commande",
+    });
+  };
+
+  // Fonction pour modifier le nom d'un médicament patient
+  const updateMedicationName = (orderId: string, medIndex: number, newName: string, isPatientMed: boolean = true) => {
+    const key = isPatientMed ? `${orderId}-${medIndex}` : `pharmacist-${orderId}-${medIndex}`;
+    setMedicationNames(prev => ({
+      ...prev,
+      [key]: newName
+    }));
+  };
+
+  // Fonction pour basculer le mode d'édition d'un médicament
+  const toggleEditMode = (statusKey: string) => {
+    setEditingMedication(prev => ({
+      ...prev,
+      [statusKey]: !prev[statusKey]
+    }));
   };
 
   const handleSendResponse = (orderId: string, originalMedications: any[]) => {
@@ -897,7 +933,49 @@ export default function DashboardPharmacien() {
                                     return (
                                       <div key={index} className="border rounded-lg p-4 bg-white">
                                         <div className="flex items-center justify-between mb-3">
-                                          <h5 className="font-medium">{med.name}</h5>
+                                          {editingMedication[statusKey] ? (
+                                            <div className="flex items-center space-x-2 flex-1">
+                                              <Input
+                                                value={medicationNames[statusKey] || med.name}
+                                                onChange={(e) => updateMedicationName(order.id, index, e.target.value, true)}
+                                                className="flex-1"
+                                                placeholder="Nom du médicament"
+                                              />
+                                              <Button
+                                                size="sm"
+                                                onClick={() => toggleEditMode(statusKey)}
+                                                className="bg-green-600 hover:bg-green-700"
+                                              >
+                                                ✅
+                                              </Button>
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                  setMedicationNames(prev => {
+                                                    const updated = { ...prev };
+                                                    delete updated[statusKey];
+                                                    return updated;
+                                                  });
+                                                  toggleEditMode(statusKey);
+                                                }}
+                                              >
+                                                ❌
+                                              </Button>
+                                            </div>
+                                          ) : (
+                                            <div className="flex items-center space-x-2 flex-1">
+                                              <h5 className="font-medium">{medicationNames[statusKey] || med.name}</h5>
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => toggleEditMode(statusKey)}
+                                                className="text-blue-600 hover:text-blue-700"
+                                              >
+                                                ✏️
+                                              </Button>
+                                            </div>
+                                          )}
                                           <Badge variant={currentStatus.available ? "default" : "destructive"}>
                                             {currentStatus.available ? "Disponible" : "Indisponible"}
                                           </Badge>
@@ -1027,7 +1105,18 @@ export default function DashboardPharmacien() {
                                         return (
                                           <div key={statusKey} className="border rounded-lg p-4 bg-blue-50">
                                             <div className="flex items-center justify-between mb-3">
-                                              <h5 className="font-medium text-blue-900">{med.name}</h5>
+                                              <div className="flex items-center space-x-2 flex-1">
+                                                <h5 className="font-medium text-blue-900">{med.name}</h5>
+                                                <Button
+                                                  size="sm"
+                                                  variant="destructive"
+                                                  onClick={() => removePharmaticistMedication(order.id, index)}
+                                                  className="text-red-600 hover:text-red-700 bg-red-100 hover:bg-red-200"
+                                                  title="Supprimer ce médicament"
+                                                >
+                                                  🗑️
+                                                </Button>
+                                              </div>
                                               <Badge variant={currentStatus.available ? "default" : "destructive"}>
                                                 {currentStatus.available ? "Disponible" : "Indisponible"}
                                               </Badge>
@@ -1089,8 +1178,14 @@ export default function DashboardPharmacien() {
                                   onClick={() => {
                                     // Combiner les médicaments du patient et ceux ajoutés par le pharmacien
                                     const patientMedications = order.medications && typeof order.medications === 'string'
-                                      ? JSON.parse(order.medications)
-                                      : order.medications || [];
+                                      ? JSON.parse(order.medications).map((med: any, index: number) => {
+                                          const statusKey = `${order.id}-${index}`;
+                                          return {
+                                            ...med,
+                                            name: medicationNames[statusKey] || med.name // Utiliser le nom modifié si disponible
+                                          };
+                                        })
+                                      : [];
                                     
                                     const pharmacistMedications = orderMedications[order.id] || [];
                                     
