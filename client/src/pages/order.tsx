@@ -476,7 +476,13 @@ export default function OrderPage() {
             {/* Liste des médicaments */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="block text-sm font-medium">Médicaments souhaités *</label>
+                <label className="block text-sm font-medium">
+                  Médicaments souhaités 
+                  {!orderData.prescriptionPhoto && <span className="text-red-500">*</span>}
+                  {orderData.prescriptionPhoto && (
+                    <span className="text-green-600 text-xs ml-2">(Optionnel - la pharmacie peut saisir depuis l'ordonnance)</span>
+                  )}
+                </label>
                 <Button 
                   type="button" 
                   variant="outline" 
