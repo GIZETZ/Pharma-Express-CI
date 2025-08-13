@@ -17,7 +17,6 @@ type UserRole = "patient" | "pharmacien" | "livreur";
 
 export default function Login() {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -40,7 +39,7 @@ export default function Login() {
         description: `Bienvenue ${user.firstName} ${user.lastName}!`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      
+
       // Redirection selon le rôle de l'utilisateur
       switch (user.role) {
         case "admin":
@@ -68,9 +67,19 @@ export default function Login() {
   });
 
   const onSubmit = (data: LoginFormData) => {
-    setIsLoading(true);
     loginMutation.mutate(data);
-    setIsLoading(false);
+  };
+
+  // Fonction pour changer de profil
+  const handleRoleChange = () => {
+    setSelectedRole(null);
+    // Réinitialiser le formulaire
+    form.reset({
+      phone: "",
+      password: "",
+    });
+    // Réinitialiser les erreurs du formulaire
+    form.clearErrors();
   };
 
   // Render role selection first
@@ -90,7 +99,7 @@ export default function Login() {
             <div className="text-center mb-6">
               <p className="text-sm text-gray-600 mb-4">Sélectionnez votre profil :</p>
             </div>
-            
+
             {/* Role Selection Cards */}
             <div className="space-y-3">
               <Button
@@ -170,8 +179,8 @@ export default function Login() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setSelectedRole(null)}
-            className="mt-2"
+            onClick={handleRoleChange}
+            className="mt-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
             data-testid="button-back-to-role-selection"
           >
             ← Changer de profil
@@ -230,10 +239,10 @@ export default function Login() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isLoading}
+                disabled={loginMutation.isPending}
                 data-testid="button-login"
               >
-                {isLoading ? "Connexion..." : "Se connecter"}
+                {loginMutation.isPending ? "Connexion..." : "Se connecter"}
               </Button>
             </form>
           </Form>
