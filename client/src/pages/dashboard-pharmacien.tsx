@@ -1105,18 +1105,67 @@ export default function DashboardPharmacien() {
                                         return (
                                           <div key={statusKey} className="border rounded-lg p-4 bg-blue-50">
                                             <div className="flex items-center justify-between mb-3">
-                                              <div className="flex items-center space-x-2 flex-1">
-                                                <h5 className="font-medium text-blue-900">{med.name}</h5>
-                                                <Button
-                                                  size="sm"
-                                                  variant="destructive"
-                                                  onClick={() => removePharmaticistMedication(order.id, index)}
-                                                  className="text-red-600 hover:text-red-700 bg-red-100 hover:bg-red-200"
-                                                  title="Supprimer ce médicament"
-                                                >
-                                                  🗑️
-                                                </Button>
-                                              </div>
+                                              {editingMedication[statusKey] ? (
+                                                <div className="flex items-center space-x-2 flex-1">
+                                                  <Input
+                                                    value={medicationNames[statusKey] || med.name}
+                                                    onChange={(e) => updateMedicationName(order.id, index, e.target.value, false)}
+                                                    className="flex-1"
+                                                    placeholder="Nom du médicament"
+                                                  />
+                                                  <Button
+                                                    size="sm"
+                                                    onClick={() => toggleEditMode(statusKey)}
+                                                    className="bg-green-600 hover:bg-green-700"
+                                                  >
+                                                    ✅
+                                                  </Button>
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                      setMedicationNames(prev => {
+                                                        const updated = { ...prev };
+                                                        delete updated[statusKey];
+                                                        return updated;
+                                                      });
+                                                      toggleEditMode(statusKey);
+                                                    }}
+                                                  >
+                                                    ❌
+                                                  </Button>
+                                                  <Button
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    onClick={() => removePharmaticistMedication(order.id, index)}
+                                                    className="text-red-600 hover:text-red-700 bg-red-100 hover:bg-red-200"
+                                                    title="Supprimer ce médicament"
+                                                  >
+                                                    🗑️
+                                                  </Button>
+                                                </div>
+                                              ) : (
+                                                <div className="flex items-center space-x-2 flex-1">
+                                                  <h5 className="font-medium text-blue-900">{medicationNames[statusKey] || med.name}</h5>
+                                                  <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => toggleEditMode(statusKey)}
+                                                    className="text-blue-600 hover:text-blue-700"
+                                                  >
+                                                    ✏️
+                                                  </Button>
+                                                  <Button
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    onClick={() => removePharmaticistMedication(order.id, index)}
+                                                    className="text-red-600 hover:text-red-700 bg-red-100 hover:bg-red-200"
+                                                    title="Supprimer ce médicament"
+                                                  >
+                                                    🗑️
+                                                  </Button>
+                                                </div>
+                                              )}
                                               <Badge variant={currentStatus.available ? "default" : "destructive"}>
                                                 {currentStatus.available ? "Disponible" : "Indisponible"}
                                               </Badge>
@@ -1187,7 +1236,13 @@ export default function DashboardPharmacien() {
                                         })
                                       : [];
                                     
-                                    const pharmacistMedications = orderMedications[order.id] || [];
+                                    const pharmacistMedications = (orderMedications[order.id] || []).map((med: any, index: number) => {
+                                      const statusKey = `pharmacist-${order.id}-${index}`;
+                                      return {
+                                        ...med,
+                                        name: medicationNames[statusKey] || med.name // Utiliser le nom modifié pour les médicaments du pharmacien aussi
+                                      };
+                                    });
                                     
                                     const allMedications = [
                                       ...patientMedications,
