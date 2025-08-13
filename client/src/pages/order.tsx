@@ -482,6 +482,9 @@ export default function OrderPage() {
                   {orderData.prescriptionPhoto && (
                     <span className="text-green-600 text-xs ml-2">(Optionnel - la pharmacie peut saisir depuis l'ordonnance)</span>
                   )}
+                  {!orderData.prescriptionPhoto && (
+                    <span className="text-blue-600 text-xs ml-2">(Ou ajoutez une photo d'ordonnance)</span>
+                  )}
                 </label>
                 <Button 
                   type="button" 
@@ -617,7 +620,9 @@ export default function OrderPage() {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                💡 <strong>Info:</strong> Vous pouvez envoyer votre commande avec uniquement la photo d'ordonnance (le pharmacien saisira les médicaments) ou en saisissant vous-même les médicaments. 
+                💡 <strong>Info:</strong> Vous pouvez envoyer votre commande de deux façons : 
+                1) <strong>Photo d'ordonnance uniquement</strong> (le pharmacien saisira les médicaments) 
+                2) <strong>Médicaments saisis manuellement</strong> (avec ou sans photo). 
                 La pharmacie déterminera le prix final et pourra modifier les détails si nécessaire. 
                 Les médicaments marqués "Sur BON" nécessitent une validation de vos documents d'assurance.
               </p>
