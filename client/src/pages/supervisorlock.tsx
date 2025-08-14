@@ -333,10 +333,7 @@ export default function SupervisorLock() {
 
   const validateUserMutation = useMutation({
     mutationFn: (data: { userId: string; action: 'approve' | 'reject' }) =>
-      apiRequest(`/api/admin/validate-user`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      }),
+      apiRequest("POST", `/api/admin/validate-user`, data),
     onSuccess: (data, variables) => {
       toast({
         title: variables.action === 'approve' ? "Utilisateur approuvé" : "Utilisateur rejeté",
