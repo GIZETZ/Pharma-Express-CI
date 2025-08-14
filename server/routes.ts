@@ -1232,6 +1232,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Livreur postule à une pharmacie
+  app.post('/api/livreur/apply-to-pharmacy', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'livreur') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { pharmacyId } = req.body;
+      if (!pharmacyId) {
+        return res.status(400).json({ message: 'pharmacyId is required' });
+      }
+
+      // Vérifier que la pharmacie existe
+      const pharmacy = await storage.getPharmacy(pharmacyId);
+      if (!pharmacy) {
+        return res.status(404).json({ message: 'Pharmacy not found' });
+      }
+
+      // Mettre à jour le statut de candidature du livreur
+      const updatedUser = await storage.updateUser(req.session.userId, {
+        appliedPharmacyId: pharmacyId,
+        deliveryApplicationStatus: 'pending'
+      });
+
+      // Créer une notification pour la pharmacie
+      const pharmacyOwner = await storage.getPharmacyOwner(pharmacyId);
+      if (pharmacyOwner) {
+        await storage.createNotification({
+          userId: pharmacyOwner.id,
+          title: 'Nouvelle candidature livreur',
+          body: `${user.firstName} ${user.lastName} souhaite rejoindre votre équipe de livraison`,
+          type: 'delivery_application',
+          isRead: false,
+        });
+      }
+
+      res.json({ message: 'Application sent successfully', user: updatedUser });
+    } catch (error) {
+      console.error('Error applying to pharmacy:', error);
+      res.status(500).json({ message: 'Failed to apply to pharmacy' });
+    }
+  });
+
+  // Pharmacien gère les candidatures de livreurs
+  app.get('/api/pharmacien/delivery-applications', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'pharmacien') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Récupérer la pharmacie du pharmacien
+      const pharmacy = user.pharmacyId ? await storage.getPharmacy(user.pharmacyId) : null;
+      if (!pharmacy) {
+        return res.status(404).json({ message: 'Pharmacy not found' });
+      }
+
+      const applications = await storage.getDeliveryApplicationsForPharmacy(pharmacy.id);
+      res.json(applications);
+    } catch (error) {
+      console.error('Error fetching delivery applications:', error);
+      res.status(500).json({ message: 'Failed to fetch delivery applications' });
+    }
+  });
+
+  // Pharmacien accepte ou rejette une candidature
+  app.post('/api/pharmacien/delivery-applications/:applicationId/respond', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'pharmacien') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { applicationId } = req.params;
+      const { action } = req.body; // 'approve' ou 'reject'
+
+      if (!['approve', 'reject'].includes(action)) {
+        return res.status(400).json({ message: 'Invalid action' });
+      }
+
+      const result = await storage.respondToDeliveryApplication(applicationId, action, user.pharmacyId);
+      
+      if (!result) {
+        return res.status(404).json({ message: 'Application not found' });
+      }
+
+      res.json({ message: `Application ${action}d successfully`, result });
+    } catch (error) {
+      console.error('Error responding to delivery application:', error);
+      res.status(500).json({ message: 'Failed to respond to application' });
+    }
+  });
+
   // Assign delivery person to order
   app.post('/api/pharmacien/orders/:orderId/assign-delivery', requireAuth, async (req: any, res) => {
     try {

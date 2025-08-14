@@ -13,13 +13,15 @@ export const users = pgTable("users", {
   role: varchar("role").notNull().default("patient"), // patient, pharmacien, livreur, admin
   language: varchar("language").default("fr"),
   profileImageUrl: text("profile_image_url"),
-  pharmacyId: varchar("pharmacy_id").references(() => pharmacies.id), // Pour les pharmaciens
+  pharmacyId: varchar("pharmacy_id").references(() => pharmacies.id), // Pour les pharmaciens et livreurs
   isActive: boolean("is_active").default(true),
   // Champs pour validation d'identité (Pharmaciens et Livreurs)
   idDocumentUrl: text("id_document_url"), // Carte d'identité
   professionalDocumentUrl: text("professional_document_url"), // Diplôme pharmacien
   drivingLicenseUrl: text("driving_license_url"), // Permis de conduire
   verificationStatus: varchar("verification_status").default("pending"), // pending, approved, rejected
+  deliveryApplicationStatus: varchar("delivery_application_status").default("none"), // none, pending, approved, rejected (pour livreurs)
+  appliedPharmacyId: varchar("applied_pharmacy_id").references(() => pharmacies.id), // Pharmacie à laquelle le livreur a postulé
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

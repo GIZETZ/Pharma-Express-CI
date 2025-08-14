@@ -21,6 +21,12 @@ export default function DashboardLivreur() {
   const [isAvailable, setIsAvailable] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
+  // Rediriger si le livreur n'a pas encore de pharmacie assignée
+  if (user?.role === 'livreur' && user?.deliveryApplicationStatus !== 'approved') {
+    window.location.href = '/delivery-application';
+    return null;
+  }
+
   // Récupérer les commandes assignées à ce livreur
   const { data: myDeliveries, isLoading: loadingMyDeliveries } = useQuery({
     queryKey: ["/api/livreur/deliveries"],

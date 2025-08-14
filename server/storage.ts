@@ -319,6 +319,10 @@ export class MemStorage implements IStorage {
       password: hashedPassword,
       createdAt: new Date(),
       updatedAt: new Date(),
+      // Default values for new fields related to delivery applications
+      appliedPharmacyId: undefined,
+      deliveryApplicationStatus: user.role === 'livreur' ? 'pending' : undefined,
+      pharmacyId: undefined, // This will be set upon approval
     };
 
     this.users.set(id, newUser);
@@ -346,6 +350,11 @@ export class MemStorage implements IStorage {
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return null;
 
+    // Ensure user has access to dashboard if not a pending livreur
+    if (user.role === 'livreur' && user.deliveryApplicationStatus === 'pending') {
+      return null; // Or a specific user object indicating pending status
+    }
+
     return user;
   }
 
@@ -361,6 +370,19 @@ export class MemStorage implements IStorage {
 
     user.verificationStatus = status;
     user.updatedAt = new Date();
+
+    // If a livreur is approved, ensure their application status reflects this
+    if (user.role === 'livreur' && status === 'approved') {
+      // Assuming verification and application are linked or handled separately
+      // If verification implies immediate approval for delivery, set status here
+      if (user.deliveryApplicationStatus === 'pending') {
+         user.deliveryApplicationStatus = 'approved';
+      }
+    } else if (user.role === 'livreur' && status === 'rejected') {
+      user.deliveryApplicationStatus = 'rejected';
+      user.appliedPharmacyId = undefined; // Clear application if rejected
+    }
+
     this.users.set(userId, user);
     return user;
   }
@@ -534,7 +556,7 @@ export class MemStorage implements IStorage {
     if (!pharmacy) {
       const pharmacyName = `Pharmacie ${user.firstName} ${user.lastName}`;
       console.log('getPharmacyByUserId - Auto-creating pharmacy:', pharmacyName);
-      
+
       const newPharmacyData: InsertPharmacy = {
         name: pharmacyName,
         address: user.address || "Abidjan, Côte d'Ivoire",
@@ -554,7 +576,7 @@ export class MemStorage implements IStorage {
           sunday: { open: "09:00", close: "17:00" }
         }
       };
-      
+
       pharmacy = await this.createPharmacy(newPharmacyData);
       console.log('getPharmacyByUserId - Auto-created pharmacy with ID:', pharmacy.id);
     }
@@ -692,10 +714,85 @@ export class MemStorage implements IStorage {
     return this.deliveryPersons.get(id);
   }
 
-  async getAvailableDeliveryPersonnel(): Promise<User[]> {
-    return Array.from(this.users.values())
-      .filter(user => user.role === 'livreur' && user.verificationStatus === 'approved' && user.isActive)
-      .sort((a, b) => a.firstName.localeCompare(b.firstName));
+  // Modified method to filter approved delivery personnel who have been approved by a pharmacy
+  async getAvailableDeliveryPersonnel(): Promise<any[]> {
+    const deliveryUsers = Array.from(this.users.values()).filter(user => 
+      user.role === 'livreur' && 
+      user.verificationStatus === 'approved' &&
+      user.deliveryApplicationStatus === 'approved'
+    );
+
+    return deliveryUsers.map(user => ({
+      id: user.id,
+      name: `${user.firstName} ${user.lastName}`,
+      phone: user.phone,
+      isAvailable: true,
+      rating: 5.0,
+      pharmacyId: user.pharmacyId
+    }));
+  }
+
+  // New method to get the owner of a pharmacy (pharmacist user)
+  async getPharmacyOwner(pharmacyId: string): Promise<any | null> {
+    const users = Array.from(this.users.values());
+    return users.find(user => user.role === 'pharmacien' && user.pharmacyId === pharmacyId) || null;
+  }
+
+  // New method to get pending delivery applications for a specific pharmacy
+  async getDeliveryApplicationsForPharmacy(pharmacyId: string): Promise<any[]> {
+    const applications = Array.from(this.users.values()).filter(user => 
+      user.role === 'livreur' && 
+      user.appliedPharmacyId === pharmacyId &&
+      user.deliveryApplicationStatus === 'pending'
+    );
+
+    return applications.map(user => ({
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      address: user.address,
+      createdAt: user.createdAt,
+      verificationStatus: user.verificationStatus
+    }));
+  }
+
+  // New method to respond to a delivery application (approve or reject)
+  async respondToDeliveryApplication(applicationId: string, action: string, pharmacyId: string | undefined): Promise<any | null> {
+    const user = this.users.get(applicationId);
+    if (!user || user.role !== 'livreur' || user.deliveryApplicationStatus !== 'pending') {
+      return null;
+    }
+
+    if (action === 'approve') {
+      user.deliveryApplicationStatus = 'approved';
+      user.pharmacyId = pharmacyId; // Assign the livreur to the pharmacy
+      user.appliedPharmacyId = undefined; // Clear the applied pharmacy ID
+
+      // Create a notification for the livreur
+      await this.createNotification({
+        userId: user.id,
+        title: 'Candidature acceptée !',
+        body: 'Félicitations ! Votre candidature a été acceptée. Vous pouvez maintenant accéder à votre tableau de bord.',
+        type: 'delivery_application_response',
+        isRead: false,
+      });
+    } else { // action === 'reject'
+      user.deliveryApplicationStatus = 'rejected';
+      user.appliedPharmacyId = undefined; // Clear the applied pharmacy ID
+
+      // Create a notification for the livreur
+      await this.createNotification({
+        userId: user.id,
+        title: 'Candidature non retenue',
+        body: 'Votre candidature n\'a pas été retenue cette fois. Vous pouvez postuler à une autre pharmacie.',
+        type: 'delivery_application_response',
+        isRead: false,
+      });
+    }
+
+    this.users.set(applicationId, user);
+    return user;
   }
 
   // Notification operations
@@ -827,7 +924,7 @@ export class MemStorage implements IStorage {
     }
 
     this.orders.set(id, order);
-    
+
     // Retourner l'ordre enrichi
     const pharmacy = this.pharmacies.get(order.pharmacyId);
     return {
@@ -882,7 +979,7 @@ export class MemStorage implements IStorage {
     order.updatedAt = new Date();
 
     this.orders.set(orderId, order);
-    
+
     // Créer des notifications pour le livreur et le patient
     const deliveryPerson = this.users.get(deliveryPersonId);
     const patient = this.users.get(order.userId);
@@ -909,7 +1006,7 @@ export class MemStorage implements IStorage {
         isRead: false
       });
     }
-    
+
     // Retourner l'ordre enrichi
     return {
       ...order,

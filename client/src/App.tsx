@@ -29,6 +29,7 @@ import DashboardLivreur from "@/pages/dashboard-livreur";
 import DashboardAdmin from "@/pages/dashboard-admin";
 import PharmacyProfile from "@/pages/pharmacy-profile";
 import CreatePharmacy from "@/pages/create-pharmacy";
+import DeliveryApplication from "@/pages/delivery-application";
 
 
 function RoleDashboard() {
@@ -102,6 +103,7 @@ function Router() {
           <Route path="/edit-profile" component={EditProfile} />
           <Route path="/pharmacy-profile" component={PharmacyProfile} />
           <Route path="/create-pharmacy" component={CreatePharmacy} />
+        <Route path="/delivery-application" component={DeliveryApplication} />
           <Route path="/dashboard-livreur" component={DashboardLivreur} />
           <Route path="/delivery-address" component={DeliveryAddress} />
           <Route component={NotFound} />

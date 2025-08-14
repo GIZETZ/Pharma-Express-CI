@@ -14,6 +14,127 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import BottomNavigation from "@/components/bottom-navigation";
 
+// Composant pour gérer les candidatures de livreurs
+function DeliveryApplicationsManager() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: applications, isLoading } = useQuery({
+    queryKey: ["/api/pharmacien/delivery-applications"],
+    enabled: true
+  });
+
+  const respondToApplicationMutation = useMutation({
+    mutationFn: ({ applicationId, action }: { applicationId: string; action: string }) =>
+      apiRequest("POST", `/api/pharmacien/delivery-applications/${applicationId}/respond`, { action }),
+    onSuccess: (data, variables) => {
+      toast({
+        title: variables.action === 'approve' ? "Candidature acceptée" : "Candidature rejetée",
+        description: variables.action === 'approve'
+          ? "Le livreur peut maintenant accéder à son tableau de bord"
+          : "Le livreur a été notifié du rejet",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/pharmacien/delivery-applications"] });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de traiter la candidature",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRespondToApplication = (applicationId: string, action: string) => {
+    respondToApplicationMutation.mutate({ applicationId, action });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {!applications || applications.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              🚴
+            </div>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+              Aucune candidature en attente
+            </h3>
+            <p className="text-gray-500">
+              Les candidatures de livreurs apparaîtront ici
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        applications.map((application: any) => (
+          <Card key={application.id} className="border-l-4 border-l-orange-500">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">
+                  {application.firstName} {application.lastName}
+                </CardTitle>
+                <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                  Candidature
+                </Badge>
+              </div>
+              <CardDescription>
+                Souhaite rejoindre votre équipe de livraison
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Téléphone</Label>
+                  <p className="text-sm">{application.phone}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Adresse</Label>
+                  <p className="text-sm">{application.address}</p>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-gray-600">Statut de vérification</Label>
+                <Badge variant={application.verificationStatus === 'approved' ? 'default' : 'destructive'} className="ml-2">
+                  {application.verificationStatus === 'approved' ? 'Vérifié' : 'En attente'}
+                </Badge>
+              </div>
+
+              <Separator />
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleRespondToApplication(application.id, 'approve')}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  disabled={respondToApplicationMutation.isPending}
+                >
+                  ✅ Accepter
+                </Button>
+                <Button
+                  onClick={() => handleRespondToApplication(application.id, 'reject')}
+                  variant="destructive"
+                  className="flex-1"
+                  disabled={respondToApplicationMutation.isPending}
+                >
+                  ❌ Rejeter
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      )}
+    </div>
+  );
+}
+
 // Component to display prescription image
 const PrescriptionImage = ({ prescriptionId, className }: { prescriptionId: string, className?: string }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -302,7 +423,7 @@ export default function DashboardPharmacien() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("new-orders");
+  const [activeTab, setActiveTab] = useState("orders");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [medicationStatuses, setMedicationStatuses] = useState<Record<string, {available: boolean, surBon: boolean}>>({});
   const [visibleImages, setVisibleImages] = useState<Record<string, boolean>>({});
@@ -540,7 +661,7 @@ export default function DashboardPharmacien() {
           </div>
         </div>
 
-        <Tabs defaultValue="orders" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="orders">
               Nouvelles Commandes
@@ -883,7 +1004,7 @@ export default function DashboardPharmacien() {
                             {/* Gestion des médicaments */}
                             <div>
                               <h4 className="font-medium mb-3">Gestion des médicaments</h4>
-                              
+
                               {/* Section pour ajouter de nouveaux médicaments */}
                               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                                 <h5 className="font-medium text-blue-900 mb-3">➕ Ajouter des médicaments depuis l'ordonnance</h5>
@@ -1235,7 +1356,7 @@ export default function DashboardPharmacien() {
                                           };
                                         })
                                       : [];
-                                    
+
                                     const pharmacistMedications = (orderMedications[order.id] || []).map((med: any, index: number) => {
                                       const statusKey = `pharmacist-${order.id}-${index}`;
                                       return {
@@ -1243,7 +1364,7 @@ export default function DashboardPharmacien() {
                                         name: medicationNames[statusKey] || med.name // Utiliser le nom modifié pour les médicaments du pharmacien aussi
                                       };
                                     });
-                                    
+
                                     const allMedications = [
                                       ...patientMedications,
                                       ...pharmacistMedications
@@ -1371,7 +1492,7 @@ export default function DashboardPharmacien() {
                   Définissez les prix et proposez des alternatives si nécessaire
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <div className="text-center py-8">
                   <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     💰
@@ -1450,7 +1571,6 @@ export default function DashboardPharmacien() {
                       <span className="bg-green-100 rounded-full w-8 h-8 flex items-center justify-center mr-2">📦</span>
                       Prêtes pour Livraison - Assignation des Livreurs
                     </h3>
-                    {/* The following line was replaced as per the changes */}
                     <ReadyForDeliveryOrders orders={orders || []} />
                   </div>
                 </div>
