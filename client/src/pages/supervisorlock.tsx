@@ -462,10 +462,135 @@ export default function SupervisorLock() {
                               <p className="text-sm font-medium text-yellow-800 mb-2">
                                 📋 Documents à vérifier :
                               </p>
-                              <div className="text-sm text-yellow-700 space-y-1">
-                                <div>• Carte d'identité nationale</div>
-                                {user.role === "pharmacien" && <div>• Diplôme de pharmacien</div>}
-                                {user.role === "livreur" && <div>• Permis de conduire</div>}
+                              <div className="text-sm text-yellow-700 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span>• Carte d'identité nationale</span>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs"
+                                    onClick={() => {
+                                      // Simuler l'affichage du document
+                                      const modal = document.createElement('div');
+                                      modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50';
+                                      modal.style.cursor = 'pointer';
+                                      modal.innerHTML = `
+                                        <div class="relative max-w-4xl max-h-full p-4">
+                                          <div class="bg-white rounded-lg p-6 text-center">
+                                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                              📄
+                                            </div>
+                                            <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                                              Carte d'identité - ${user.firstName} ${user.lastName}
+                                            </h3>
+                                            <p class="text-gray-600 mb-4">
+                                              Document d'identité fourni lors de l'inscription
+                                            </p>
+                                            <div class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 mb-4">
+                                              <p class="text-gray-500">
+                                                [Document d'identité simulé]<br/>
+                                                En production, ce document serait affiché ici
+                                              </p>
+                                            </div>
+                                            <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                              Fermer
+                                            </button>
+                                          </div>
+                                        </div>
+                                      `;
+                                      modal.onclick = () => document.body.removeChild(modal);
+                                      document.body.appendChild(modal);
+                                    }}
+                                  >
+                                    👁️ Voir
+                                  </Button>
+                                </div>
+                                {user.role === "pharmacien" && (
+                                  <div className="flex items-center justify-between">
+                                    <span>• Diplôme de pharmacien</span>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-xs"
+                                      onClick={() => {
+                                        const modal = document.createElement('div');
+                                        modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50';
+                                        modal.style.cursor = 'pointer';
+                                        modal.innerHTML = `
+                                          <div class="relative max-w-4xl max-h-full p-4">
+                                            <div class="bg-white rounded-lg p-6 text-center">
+                                              <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                🎓
+                                              </div>
+                                              <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                                                Diplôme de pharmacien - ${user.firstName} ${user.lastName}
+                                              </h3>
+                                              <p class="text-gray-600 mb-4">
+                                                Diplôme de pharmacie fourni lors de l'inscription
+                                              </p>
+                                              <div class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 mb-4">
+                                                <p class="text-gray-500">
+                                                  [Diplôme de pharmacien simulé]<br/>
+                                                  En production, ce document serait affiché ici
+                                                </p>
+                                              </div>
+                                              <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                                Fermer
+                                              </button>
+                                            </div>
+                                          </div>
+                                        `;
+                                        modal.onclick = () => document.body.removeChild(modal);
+                                        document.body.appendChild(modal);
+                                      }}
+                                    >
+                                      👁️ Voir
+                                    </Button>
+                                  </div>
+                                )}
+                                {user.role === "livreur" && (
+                                  <div className="flex items-center justify-between">
+                                    <span>• Permis de conduire</span>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-xs"
+                                      onClick={() => {
+                                        const modal = document.createElement('div');
+                                        modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50';
+                                        modal.style.cursor = 'pointer';
+                                        modal.innerHTML = `
+                                          <div class="relative max-w-4xl max-h-full p-4">
+                                            <div class="bg-white rounded-lg p-6 text-center">
+                                              <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                🚗
+                                              </div>
+                                              <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                                                Permis de conduire - ${user.firstName} ${user.lastName}
+                                              </h3>
+                                              <p class="text-gray-600 mb-4">
+                                                Permis de conduire fourni lors de l'inscription
+                                              </p>
+                                              <div class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 mb-4">
+                                                <p class="text-gray-500">
+                                                  [Permis de conduire simulé]<br/>
+                                                  En production, ce document serait affiché ici
+                                                </p>
+                                              </div>
+                                              <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                                Fermer
+                                              </button>
+                                            </div>
+                                          </div>
+                                        `;
+                                        modal.onclick = () => document.body.removeChild(modal);
+                                        document.body.appendChild(modal);
+                                      }}
+                                    >
+                                      👁️ Voir
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
