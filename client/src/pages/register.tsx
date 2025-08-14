@@ -108,11 +108,9 @@ export default function Register() {
     // Create FormData for file upload
     const formData = new FormData();
     
-    // Add all form fields
+    // Add all form fields including confirmPassword for validation
     Object.keys(data).forEach(key => {
-      if (key !== 'confirmPassword') {
-        formData.append(key, (data as any)[key]);
-      }
+      formData.append(key, (data as any)[key]);
     });
 
     // Add uploaded files
