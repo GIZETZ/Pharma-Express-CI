@@ -410,6 +410,102 @@ export class MemStorage implements IStorage {
     };
   }
 
+  // Admin methods for complete management
+  async getAllOrdersForAdmin(): Promise<any[]> {
+    const allOrders = Array.from(this.orders.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    return allOrders.map(order => {
+      const pharmacy = this.pharmacies.get(order.pharmacyId);
+      const patient = this.users.get(order.userId);
+      const deliveryPerson = order.deliveryPersonId ? this.users.get(order.deliveryPersonId) : null;
+
+      return {
+        ...order,
+        pharmacy: pharmacy ? {
+          id: pharmacy.id,
+          name: pharmacy.name,
+          address: pharmacy.address,
+          phone: pharmacy.phone
+        } : null,
+        patient: patient ? {
+          firstName: patient.firstName,
+          lastName: patient.lastName,
+          phone: patient.phone
+        } : null,
+        deliveryPerson: deliveryPerson ? {
+          firstName: deliveryPerson.firstName,
+          lastName: deliveryPerson.lastName,
+          phone: deliveryPerson.phone
+        } : null,
+        totalAmount: order.totalAmount || '0'
+      };
+    });
+  }
+
+  async getWeeklyStats(weekDate: Date): Promise<{ totalRevenue: number; ordersCount: number }> {
+    const startOfWeek = new Date(weekDate);
+    startOfWeek.setDate(weekDate.getDate() - weekDate.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    const weekOrders = Array.from(this.orders.values()).filter(order => {
+      const orderDate = new Date(order.createdAt);
+      return orderDate >= startOfWeek && orderDate <= endOfWeek && 
+             ['confirmed', 'ready_for_delivery', 'in_delivery', 'delivered'].includes(order.status);
+    });
+
+    const totalRevenue = weekOrders.reduce((sum, order) => {
+      return sum + (parseFloat(order.totalAmount || '0') || 0);
+    }, 0);
+
+    return {
+      totalRevenue,
+      ordersCount: weekOrders.length
+    };
+  }
+
+  async getAllPharmaciesForAdmin(): Promise<any[]> {
+    const allPharmacies = Array.from(this.pharmacies.values());
+    
+    return allPharmacies.map(pharmacy => {
+      // Compter les commandes de cette pharmacie
+      const pharmacyOrders = Array.from(this.orders.values()).filter(order => order.pharmacyId === pharmacy.id);
+      const totalRevenue = pharmacyOrders.reduce((sum, order) => {
+        return sum + (parseFloat(order.totalAmount || '0') || 0);
+      }, 0);
+
+      return {
+        ...pharmacy,
+        totalOrders: pharmacyOrders.length,
+        totalRevenue: totalRevenue,
+        completedOrders: pharmacyOrders.filter(o => o.status === 'delivered').length
+      };
+    });
+  }
+
+  async getAllDeliveryPersonnelForAdmin(): Promise<any[]> {
+    const deliveryPersonnel = Array.from(this.users.values()).filter(user => user.role === 'livreur');
+    
+    return deliveryPersonnel.map(person => {
+      // Compter les livraisons de cette personne
+      const personDeliveries = Array.from(this.orders.values()).filter(order => order.deliveryPersonId === person.id);
+      const pharmacy = person.pharmacyId ? this.pharmacies.get(person.pharmacyId) : null;
+
+      return {
+        ...person,
+        totalDeliveries: personDeliveries.filter(o => o.status === 'delivered').length,
+        activeDeliveries: personDeliveries.filter(o => ['ready_for_delivery', 'in_delivery'].includes(o.status)).length,
+        pharmacyName: pharmacy?.name || null,
+        rating: 5.0, // Default rating
+        isActive: person.isActive !== false // Default to true if not set
+      };
+    });
+  }
+
   // Pharmacy operations
   async getPharmacies(lat?: number, lng?: number, radius?: number): Promise<Pharmacy[]> {
     // Nettoyer les doublons à chaque récupération

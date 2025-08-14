@@ -710,6 +710,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all orders for admin
+  app.get('/api/admin/orders', requireAdmin, async (req, res) => {
+    try {
+      const orders = await storage.getAllOrdersForAdmin();
+      res.json(orders);
+    } catch (error) {
+      console.error('Error fetching admin orders:', error);
+      res.status(500).json({ message: 'Failed to fetch orders' });
+    }
+  });
+
+  // Update order status (admin)
+  app.patch('/api/admin/orders/:orderId/status', requireAdmin, async (req, res) => {
+    try {
+      const { orderId } = req.params;
+      const { status } = req.body;
+
+      const updatedOrder = await storage.updateOrderStatus(orderId, status);
+      if (!updatedOrder) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      res.status(500).json({ message: 'Failed to update order status' });
+    }
+  });
+
+  // Get weekly statistics
+  app.get('/api/admin/weekly-stats', requireAdmin, async (req, res) => {
+    try {
+      const { date } = req.query;
+      const weekDate = date ? new Date(date as string) : new Date();
+      const stats = await storage.getWeeklyStats(weekDate);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching weekly stats:', error);
+      res.status(500).json({ message: 'Failed to fetch weekly statistics' });
+    }
+  });
+
+  // Get all pharmacies for admin
+  app.get('/api/admin/pharmacies', requireAdmin, async (req, res) => {
+    try {
+      const pharmacies = await storage.getAllPharmaciesForAdmin();
+      res.json(pharmacies);
+    } catch (error) {
+      console.error('Error fetching admin pharmacies:', error);
+      res.status(500).json({ message: 'Failed to fetch pharmacies' });
+    }
+  });
+
+  // Update pharmacy status
+  app.patch('/api/admin/pharmacies/:pharmacyId/status', requireAdmin, async (req, res) => {
+    try {
+      const { pharmacyId } = req.params;
+      const { isActive } = req.body;
+
+      const updatedPharmacy = await storage.updatePharmacy(pharmacyId, { isOpen: isActive });
+      if (!updatedPharmacy) {
+        return res.status(404).json({ message: 'Pharmacy not found' });
+      }
+
+      res.json(updatedPharmacy);
+    } catch (error) {
+      console.error('Error updating pharmacy status:', error);
+      res.status(500).json({ message: 'Failed to update pharmacy status' });
+    }
+  });
+
+  // Get all delivery personnel for admin
+  app.get('/api/admin/delivery-personnel', requireAdmin, async (req, res) => {
+    try {
+      const personnel = await storage.getAllDeliveryPersonnelForAdmin();
+      res.json(personnel);
+    } catch (error) {
+      console.error('Error fetching delivery personnel:', error);
+      res.status(500).json({ message: 'Failed to fetch delivery personnel' });
+    }
+  });
+
+  // Update delivery person status
+  app.patch('/api/admin/delivery-personnel/:deliveryPersonId/status', requireAdmin, async (req, res) => {
+    try {
+      const { deliveryPersonId } = req.params;
+      const { isActive } = req.body;
+
+      const updatedPerson = await storage.updateUser(deliveryPersonId, { isActive });
+      if (!updatedPerson) {
+        return res.status(404).json({ message: 'Delivery person not found' });
+      }
+
+      res.json(updatedPerson);
+    } catch (error) {
+      console.error('Error updating delivery person status:', error);
+      res.status(500).json({ message: 'Failed to update delivery person status' });
+    }
+  });
+
   // Get pharmacist orders
   app.get('/api/pharmacien/orders', requireAuth, async (req: any, res) => {
     try {

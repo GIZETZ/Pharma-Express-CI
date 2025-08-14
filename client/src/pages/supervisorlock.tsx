@@ -8,6 +8,315 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@shared/schema";
 
+// Component pour la gestion des commandes
+const OrdersManagementModule = () => {
+  const { toast } = useToast();
+  const [selectedWeek, setSelectedWeek] = useState(new Date());
+  
+  const { data: allOrders, isLoading: ordersLoading } = useQuery({
+    queryKey: ["/api/admin/orders"],
+  });
+
+  const { data: weeklyStats } = useQuery({
+    queryKey: ["/api/admin/weekly-stats", selectedWeek],
+  });
+
+  const updateOrderStatusMutation = useMutation({
+    mutationFn: (data: { orderId: string; status: string }) =>
+      apiRequest(`/api/admin/orders/${data.orderId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: data.status }),
+      }),
+    onSuccess: () => {
+      toast({
+        title: "Statut mis à jour",
+        description: "Le statut de la commande a été modifié avec succès",
+      });
+    },
+  });
+
+  if (ordersLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const validatedOrders = allOrders?.filter((order: any) => order.status === 'confirmed' || order.status === 'ready_for_delivery' || order.status === 'in_delivery' || order.status === 'delivered') || [];
+  const totalWeeklyRevenue = weeklyStats?.totalRevenue || 0;
+
+  return (
+    <div className="space-y-6">
+      {/* Statistiques hebdomadaires */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-green-600">Revenus cette semaine</h3>
+              <p className="text-2xl font-bold">{totalWeeklyRevenue.toLocaleString()} FCFA</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-blue-600">Commandes validées</h3>
+              <p className="text-2xl font-bold">{validatedOrders.length}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-orange-600">Commandes totales</h3>
+              <p className="text-2xl font-bold">{allOrders?.length || 0}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Liste des commandes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>📦 Toutes les Commandes</CardTitle>
+          <CardDescription>
+            Gestion centralisée de toutes les commandes de la plateforme
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {allOrders?.map((order: any) => (
+              <div key={order.id} className="border rounded-lg p-4 bg-white">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h3 className="font-semibold">#{order.id.slice(-8)}</h3>
+                      <Badge variant={
+                        order.status === 'delivered' ? 'default' :
+                        order.status === 'confirmed' ? 'secondary' :
+                        order.status === 'pending' ? 'destructive' : 'outline'
+                      }>
+                        {order.status}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p><strong>Patient:</strong> {order.patient?.firstName} {order.patient?.lastName}</p>
+                        <p><strong>Pharmacie:</strong> {order.pharmacy?.name}</p>
+                      </div>
+                      <div>
+                        <p><strong>Montant:</strong> {order.totalAmount} FCFA</p>
+                        <p><strong>Date:</strong> {new Date(order.createdAt).toLocaleDateString('fr-FR')}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col space-y-2">
+                    <select
+                      value={order.status}
+                      onChange={(e) => updateOrderStatusMutation.mutate({
+                        orderId: order.id,
+                        status: e.target.value
+                      })}
+                      className="px-3 py-1 border rounded text-sm"
+                    >
+                      <option value="pending">En attente</option>
+                      <option value="confirmed">Confirmée</option>
+                      <option value="ready_for_delivery">Prête livraison</option>
+                      <option value="in_delivery">En livraison</option>
+                      <option value="delivered">Livrée</option>
+                      <option value="cancelled">Annulée</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+// Component pour la gestion des pharmacies
+const PharmaciesManagementModule = () => {
+  const { toast } = useToast();
+  
+  const { data: pharmacies, isLoading: pharmaciesLoading } = useQuery({
+    queryKey: ["/api/admin/pharmacies"],
+  });
+
+  const updatePharmacyStatusMutation = useMutation({
+    mutationFn: (data: { pharmacyId: string; isActive: boolean }) =>
+      apiRequest(`/api/admin/pharmacies/${data.pharmacyId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ isActive: data.isActive }),
+      }),
+    onSuccess: () => {
+      toast({
+        title: "Statut mis à jour",
+        description: "Le statut de la pharmacie a été modifié avec succès",
+      });
+    },
+  });
+
+  if (pharmaciesLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>🏥 Gestion des Pharmacies</CardTitle>
+        <CardDescription>
+          Superviser et gérer toutes les pharmacies partenaires
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {pharmacies?.map((pharmacy: any) => (
+            <div key={pharmacy.id} className="border rounded-lg p-4 bg-white">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h3 className="font-semibold">{pharmacy.name}</h3>
+                    <Badge variant={pharmacy.isOpen ? 'default' : 'secondary'}>
+                      {pharmacy.isOpen ? 'Ouverte' : 'Fermée'}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p><strong>Adresse:</strong> {pharmacy.address}</p>
+                      <p><strong>Téléphone:</strong> {pharmacy.phone}</p>
+                    </div>
+                    <div>
+                      <p><strong>Note:</strong> ⭐ {pharmacy.rating}/5</p>
+                      <p><strong>Livraison:</strong> {pharmacy.deliveryTime} min</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col space-y-2">
+                  <Button
+                    size="sm"
+                    variant={pharmacy.isOpen ? "destructive" : "default"}
+                    onClick={() => updatePharmacyStatusMutation.mutate({
+                      pharmacyId: pharmacy.id,
+                      isActive: !pharmacy.isOpen
+                    })}
+                  >
+                    {pharmacy.isOpen ? 'Suspendre' : 'Activer'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Component pour la gestion des livreurs
+const DeliveryPersonnelManagementModule = () => {
+  const { toast } = useToast();
+  
+  const { data: deliveryPersonnel, isLoading: personnelLoading } = useQuery({
+    queryKey: ["/api/admin/delivery-personnel"],
+  });
+
+  const updateDeliveryPersonStatusMutation = useMutation({
+    mutationFn: (data: { deliveryPersonId: string; isActive: boolean }) =>
+      apiRequest(`/api/admin/delivery-personnel/${data.deliveryPersonId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ isActive: data.isActive }),
+      }),
+    onSuccess: () => {
+      toast({
+        title: "Statut mis à jour",
+        description: "Le statut du livreur a été modifié avec succès",
+      });
+    },
+  });
+
+  if (personnelLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>🚴 Gestion des Livreurs</CardTitle>
+        <CardDescription>
+          Superviser les livreurs et leurs performances
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {deliveryPersonnel?.map((person: any) => (
+            <div key={person.id} className="border rounded-lg p-4 bg-white">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h3 className="font-semibold">{person.firstName} {person.lastName}</h3>
+                    <Badge variant={person.isActive ? 'default' : 'secondary'}>
+                      {person.isActive ? 'Actif' : 'Inactif'}
+                    </Badge>
+                    <Badge variant="outline">
+                      {person.pharmacyName || 'Non assigné'}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p><strong>Téléphone:</strong> {person.phone}</p>
+                      <p><strong>Adresse:</strong> {person.address}</p>
+                    </div>
+                    <div>
+                      <p><strong>Livraisons:</strong> {person.totalDeliveries || 0}</p>
+                      <p><strong>Note:</strong> ⭐ {person.rating || 5.0}/5</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col space-y-2">
+                  <Button
+                    size="sm"
+                    variant={person.isActive ? "destructive" : "default"}
+                    onClick={() => updateDeliveryPersonStatusMutation.mutate({
+                      deliveryPersonId: person.id,
+                      isActive: !person.isActive
+                    })}
+                  >
+                    {person.isActive ? 'Suspendre' : 'Activer'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 export default function SupervisorLock() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -71,17 +380,23 @@ export default function SupervisorLock() {
         </div>
 
         <Tabs defaultValue="validation" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="validation" data-testid="tab-validation">
-              Validation Comptes
+              Validation
               {pendingUsers?.length > 0 && (
                 <Badge variant="destructive" className="ml-2">{pendingUsers.length}</Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="orders" data-testid="tab-orders">Commandes</TabsTrigger>
             <TabsTrigger value="pharmacies" data-testid="tab-pharmacies">Pharmacies</TabsTrigger>
             <TabsTrigger value="deliveries" data-testid="tab-deliveries">Livreurs</TabsTrigger>
             <TabsTrigger value="dashboard" data-testid="tab-dashboard">Tableau de Bord</TabsTrigger>
           </TabsList>
+
+          {/* Gestion des commandes */}
+          <TabsContent value="orders">
+            <OrdersManagementModule />
+          </TabsContent>
 
           {/* Validation des comptes en attente */}
           <TabsContent value="validation">
@@ -184,36 +499,12 @@ export default function SupervisorLock() {
 
           {/* Gestion des pharmacies */}
           <TabsContent value="pharmacies">
-            <Card>
-              <CardHeader>
-                <CardTitle>🏥 Gestion des Pharmacies</CardTitle>
-                <CardDescription>
-                  Superviser et gérer toutes les pharmacies partenaires
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Module de gestion des pharmacies en développement</p>
-                </div>
-              </CardContent>
-            </Card>
+            <PharmaciesManagementModule />
           </TabsContent>
 
           {/* Gestion des livreurs */}
           <TabsContent value="deliveries">
-            <Card>
-              <CardHeader>
-                <CardTitle>🚴 Gestion des Livreurs</CardTitle>
-                <CardDescription>
-                  Superviser les livreurs et leurs performances
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Module de gestion des livreurs en développement</p>
-                </div>
-              </CardContent>
-            </Card>
+            <DeliveryPersonnelManagementModule />
           </TabsContent>
 
           {/* Tableau de bord global */}
