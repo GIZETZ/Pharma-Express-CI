@@ -114,7 +114,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Routes d'authentification
-  app.post('/api/auth/register', async (req, res) => {
+  app.post('/api/auth/register', upload.fields([
+    { name: 'idDocument', maxCount: 1 },
+    { name: 'professionalDocument', maxCount: 1 },
+    { name: 'drivingLicense', maxCount: 1 }
+  ]), async (req, res) => {
     try {
       const validatedData = registerSchema.parse(req.body);
 
@@ -130,11 +134,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         verificationStatus = "pending"; // Requires admin validation
       }
 
+      // Process uploaded documents
+      let idDocumentUrl = null;
+      let professionalDocumentUrl = null;
+      let drivingLicenseUrl = null;
+
+      if (req.files) {
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        
+        if (files['idDocument'] && files['idDocument'][0]) {
+          const idDoc = files['idDocument'][0];
+          idDocumentUrl = `data:${idDoc.mimetype};base64,${idDoc.buffer.toString('base64')}`;
+          console.log('ID Document uploaded:', idDoc.originalname);
+        }
+
+        if (files['professionalDocument'] && files['professionalDocument'][0]) {
+          const profDoc = files['professionalDocument'][0];
+          professionalDocumentUrl = `data:${profDoc.mimetype};base64,${profDoc.buffer.toString('base64')}`;
+          console.log('Professional Document uploaded:', profDoc.originalname);
+        }
+
+        if (files['drivingLicense'] && files['drivingLicense'][0]) {
+          const drivingDoc = files['drivingLicense'][0];
+          drivingLicenseUrl = `data:${drivingDoc.mimetype};base64,${drivingDoc.buffer.toString('base64')}`;
+          console.log('Driving License uploaded:', drivingDoc.originalname);
+        }
+      }
+
       // Créer l'utilisateur
       const { confirmPassword, ...userData } = validatedData;
       const user = await storage.createUser({
         ...userData,
         verificationStatus,
+        idDocumentUrl,
+        professionalDocumentUrl,
+        drivingLicenseUrl,
       });
 
       // Démarrer la session

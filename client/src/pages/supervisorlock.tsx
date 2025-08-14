@@ -12,7 +12,7 @@ import { User } from "@shared/schema";
 const OrdersManagementModule = () => {
   const { toast } = useToast();
   const [selectedWeek, setSelectedWeek] = useState(new Date());
-  
+
   const { data: allOrders, isLoading: ordersLoading } = useQuery({
     queryKey: ["/api/admin/orders"],
   });
@@ -145,7 +145,7 @@ const OrdersManagementModule = () => {
 // Component pour la gestion des pharmacies
 const PharmaciesManagementModule = () => {
   const { toast } = useToast();
-  
+
   const { data: pharmacies, isLoading: pharmaciesLoading } = useQuery({
     queryKey: ["/api/admin/pharmacies"],
   });
@@ -231,7 +231,7 @@ const PharmaciesManagementModule = () => {
 // Component pour la gestion des livreurs
 const DeliveryPersonnelManagementModule = () => {
   const { toast } = useToast();
-  
+
   const { data: deliveryPersonnel, isLoading: personnelLoading } = useQuery({
     queryKey: ["/api/admin/delivery-personnel"],
   });
@@ -340,7 +340,7 @@ export default function SupervisorLock() {
     onSuccess: (data, variables) => {
       toast({
         title: variables.action === 'approve' ? "Utilisateur approuvé" : "Utilisateur rejeté",
-        description: variables.action === 'approve' 
+        description: variables.action === 'approve'
           ? "L'utilisateur peut maintenant accéder à la plateforme"
           : "L'utilisateur a été rejeté et en sera informé",
       });
@@ -470,13 +470,13 @@ export default function SupervisorLock() {
                                     variant="outline"
                                     className="text-xs"
                                     onClick={() => {
-                                      // Simuler l'affichage du document
+                                      // Afficher le vrai document uploadé
                                       const modal = document.createElement('div');
                                       modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50';
                                       modal.style.cursor = 'pointer';
                                       modal.innerHTML = `
                                         <div class="relative max-w-4xl max-h-full p-4">
-                                          <div class="bg-white rounded-lg p-6 text-center">
+                                          <div class="bg-white rounded-lg p-6 text-center max-h-[90vh] overflow-y-auto">
                                             <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                               📄
                                             </div>
@@ -486,11 +486,11 @@ export default function SupervisorLock() {
                                             <p class="text-gray-600 mb-4">
                                               Document d'identité fourni lors de l'inscription
                                             </p>
-                                            <div class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 mb-4">
-                                              <p class="text-gray-500">
-                                                [Document d'identité simulé]<br/>
-                                                En production, ce document serait affiché ici
-                                              </p>
+                                            <div class="bg-gray-50 border rounded-lg p-4 mb-4">
+                                              ${user.idDocumentUrl ?
+                                                `<img src="${user.idDocumentUrl}" alt="Document d'identité" class="max-w-full h-auto rounded border"/>` :
+                                                '<p class="text-gray-500">Aucun document d\'identité fourni</p>'
+                                              }
                                             </div>
                                             <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                                               Fermer
@@ -498,99 +498,66 @@ export default function SupervisorLock() {
                                           </div>
                                         </div>
                                       `;
-                                      modal.onclick = () => document.body.removeChild(modal);
+
+                                      modal.addEventListener('click', () => {
+                                        document.body.removeChild(modal);
+                                      });
+
                                       document.body.appendChild(modal);
                                     }}
                                   >
-                                    👁️ Voir
+                                    Voir document
                                   </Button>
                                 </div>
-                                {user.role === "pharmacien" && (
-                                  <div className="flex items-center justify-between">
-                                    <span>• Diplôme de pharmacien</span>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="text-xs"
-                                      onClick={() => {
-                                        const modal = document.createElement('div');
-                                        modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50';
-                                        modal.style.cursor = 'pointer';
-                                        modal.innerHTML = `
-                                          <div class="relative max-w-4xl max-h-full p-4">
-                                            <div class="bg-white rounded-lg p-6 text-center">
-                                              <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                🎓
-                                              </div>
-                                              <h3 class="text-lg font-semibold text-gray-900 mb-2">
-                                                Diplôme de pharmacien - ${user.firstName} ${user.lastName}
-                                              </h3>
-                                              <p class="text-gray-600 mb-4">
-                                                Diplôme de pharmacie fourni lors de l'inscription
-                                              </p>
-                                              <div class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 mb-4">
-                                                <p class="text-gray-500">
-                                                  [Diplôme de pharmacien simulé]<br/>
-                                                  En production, ce document serait affiché ici
-                                                </p>
-                                              </div>
-                                              <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                                                Fermer
-                                              </button>
+                                <div className="flex items-center justify-between">
+                                  <span>• {user.role === 'pharmacien' ? 'Diplôme de pharmacien' : 'Permis de conduire'}</span>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-xs ml-2"
+                                    onClick={() => {
+                                      // Afficher le document professionnel/permis
+                                      const modal = document.createElement('div');
+                                      modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50';
+                                      modal.style.cursor = 'pointer';
+                                      const documentUrl = user.role === 'pharmacien' ? user.professionalDocumentUrl : user.drivingLicenseUrl;
+                                      const documentTitle = user.role === 'pharmacien' ? 'Diplôme de pharmacien' : 'Permis de conduire';
+
+                                      modal.innerHTML = `
+                                        <div class="relative max-w-4xl max-h-full p-4">
+                                          <div class="bg-white rounded-lg p-6 text-center max-h-[90vh] overflow-y-auto">
+                                            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                              ${user.role === 'pharmacien' ? '🎓' : '🚗'}
                                             </div>
-                                          </div>
-                                        `;
-                                        modal.onclick = () => document.body.removeChild(modal);
-                                        document.body.appendChild(modal);
-                                      }}
-                                    >
-                                      👁️ Voir
-                                    </Button>
-                                  </div>
-                                )}
-                                {user.role === "livreur" && (
-                                  <div className="flex items-center justify-between">
-                                    <span>• Permis de conduire</span>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="text-xs"
-                                      onClick={() => {
-                                        const modal = document.createElement('div');
-                                        modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50';
-                                        modal.style.cursor = 'pointer';
-                                        modal.innerHTML = `
-                                          <div class="relative max-w-4xl max-h-full p-4">
-                                            <div class="bg-white rounded-lg p-6 text-center">
-                                              <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                🚗
-                                              </div>
-                                              <h3 class="text-lg font-semibold text-gray-900 mb-2">
-                                                Permis de conduire - ${user.firstName} ${user.lastName}
-                                              </h3>
-                                              <p class="text-gray-600 mb-4">
-                                                Permis de conduire fourni lors de l'inscription
-                                              </p>
-                                              <div class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 mb-4">
-                                                <p class="text-gray-500">
-                                                  [Permis de conduire simulé]<br/>
-                                                  En production, ce document serait affiché ici
-                                                </p>
-                                              </div>
-                                              <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                                                Fermer
-                                              </button>
+                                            <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                                              ${documentTitle} - ${user.firstName} ${user.lastName}
+                                            </h3>
+                                            <p class="text-gray-600 mb-4">
+                                              Document professionnel fourni lors de l'inscription
+                                            </p>
+                                            <div class="bg-gray-50 border rounded-lg p-4 mb-4">
+                                              ${documentUrl ?
+                                                `<img src="${documentUrl}" alt="${documentTitle}" class="max-w-full h-auto rounded border"/>` :
+                                                `<p class="text-gray-500">Aucun ${documentTitle.toLowerCase()} fourni</p>`
+                                              }
                                             </div>
+                                            <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                              Fermer
+                                            </button>
                                           </div>
-                                        `;
-                                        modal.onclick = () => document.body.removeChild(modal);
-                                        document.body.appendChild(modal);
-                                      }}
-                                    >
-                                      👁️ Voir
-                                    </Button>
-                                  </div>
-                                )}
+                                        </div>
+                                      `;
+
+                                      modal.addEventListener('click', () => {
+                                        document.body.removeChild(modal);
+                                      });
+
+                                      document.body.appendChild(modal);
+                                    }}
+                                  >
+                                    Voir
+                                  </Button>
+                                </div>
                               </div>
                             </div>
                           </div>

@@ -44,8 +44,19 @@ export default function Register() {
   }, [selectedRole, form]);
 
   const registerMutation = useMutation({
-    mutationFn: async (data: RegisterFormData) => {
-      const response = await apiRequest('POST', '/api/auth/register', data);
+    mutationFn: async (data: RegisterFormData | FormData) => {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        credentials: 'include',
+        body: data instanceof FormData ? data : JSON.stringify(data),
+        headers: data instanceof FormData ? {} : { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Registration failed');
+      }
+      
       return response.json();
     },
     onSuccess: (user) => {
@@ -93,7 +104,35 @@ export default function Register() {
 
   const onSubmit = (data: RegisterFormData) => {
     setIsLoading(true);
-    registerMutation.mutate(data);
+    
+    // Create FormData for file upload
+    const formData = new FormData();
+    
+    // Add all form fields
+    Object.keys(data).forEach(key => {
+      if (key !== 'confirmPassword') {
+        formData.append(key, (data as any)[key]);
+      }
+    });
+
+    // Add uploaded files
+    const idDocumentInput = document.querySelector('[data-testid="input-id-document"]') as HTMLInputElement;
+    const professionalDocumentInput = document.querySelector('[data-testid="input-professional-document"]') as HTMLInputElement;
+    const drivingLicenseInput = document.querySelector('[data-testid="input-driving-license"]') as HTMLInputElement;
+
+    if (idDocumentInput?.files?.[0]) {
+      formData.append('idDocument', idDocumentInput.files[0]);
+    }
+
+    if (professionalDocumentInput?.files?.[0]) {
+      formData.append('professionalDocument', professionalDocumentInput.files[0]);
+    }
+
+    if (drivingLicenseInput?.files?.[0]) {
+      formData.append('drivingLicense', drivingLicenseInput.files[0]);
+    }
+
+    registerMutation.mutate(formData as any);
     setIsLoading(false);
   };
 

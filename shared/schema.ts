@@ -98,6 +98,10 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  idDocumentUrl: z.string().optional(),
+  professionalDocumentUrl: z.string().optional(),
+  drivingLicenseUrl: z.string().optional(),
 });
 
 // Auth schemas
