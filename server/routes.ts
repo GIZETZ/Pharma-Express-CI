@@ -844,6 +844,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin respond to delivery application
+  app.post('/api/admin/delivery-applications/:applicationId/respond', requireAdmin, async (req, res) => {
+    try {
+      const { applicationId } = req.params;
+      const { action } = req.body;
+
+      if (!['approve', 'reject'].includes(action)) {
+        return res.status(400).json({ message: 'Invalid action' });
+      }
+
+      // Get the user making the application
+      const user = await storage.getUser(applicationId);
+      if (!user || user.role !== 'livreur') {
+        return res.status(404).json({ message: 'Delivery person not found' });
+      }
+
+      if (!user.appliedPharmacyId) {
+        return res.status(400).json({ message: 'No pharmacy application found' });
+      }
+
+      const result = await storage.respondToDeliveryApplication(applicationId, action, user.appliedPharmacyId);
+      
+      if (!result) {
+        return res.status(404).json({ message: 'Application not found' });
+      }
+
+      res.json({ message: `Application ${action}d successfully`, result });
+    } catch (error) {
+      console.error('Error responding to delivery application:', error);
+      res.status(500).json({ message: 'Failed to respond to application' });
+    }
+  });
+
   // Get pharmacist orders
   app.get('/api/pharmacien/orders', requireAuth, async (req: any, res) => {
     try {

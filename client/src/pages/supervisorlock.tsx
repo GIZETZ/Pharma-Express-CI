@@ -356,8 +356,34 @@ export default function SupervisorLock() {
     },
   });
 
-  const handleValidation = (userId: string, action: 'approve' | 'reject') => {
-    validateUserMutation.mutate({ userId, action });
+  const handleValidation = async (userId: string, action: 'approve' | 'reject') => {
+    // Check if this is a delivery person with pharmacy application
+    const user = pendingUsers?.find(u => u.id === userId);
+    if (user?.role === 'livreur' && user.appliedPharmacyId) {
+      // Use the admin delivery application response endpoint
+      try {
+        const response = await apiRequest('POST', `/api/admin/delivery-applications/${userId}/respond`, {
+          action
+        });
+        if (!response.ok) {
+          throw new Error('Failed to respond to delivery application');
+        }
+        toast({
+          title: action === 'approve' ? 'Livreur approuvé' : 'Candidature rejetée',
+          description: `La candidature a été ${action === 'approve' ? 'acceptée' : 'rejetée'} avec succès`,
+        });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/pending-users'] });
+      } catch (error: any) {
+        toast({
+          title: 'Erreur',
+          description: error.message || 'Impossible de traiter la candidature',
+          variant: 'destructive'
+        });
+      }
+    } else {
+      // Use the regular user validation for other roles
+      validateUserMutation.mutate({ userId, action });
+    }
   };
 
   if (isLoading) {
