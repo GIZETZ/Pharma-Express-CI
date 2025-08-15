@@ -1455,6 +1455,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cvDocument: files?.cvDocument?.[0] ? `uploaded_${Date.now()}_cv.${files.cvDocument[0].originalname.split('.').pop()}` : null,
       };
 
+      // Vérifier si le numéro de téléphone est déjà utilisé par un autre utilisateur
+      if (phone && phone !== user.phone) {
+        const existingUserWithPhone = await storage.getUserByPhone(phone);
+        if (existingUserWithPhone && existingUserWithPhone.id !== user.id) {
+          return res.status(400).json({ 
+            message: 'Ce numéro de téléphone est déjà utilisé par un autre utilisateur' 
+          });
+        }
+      }
+
       // Préparer les données à mettre à jour
       const updateData: any = {
         appliedPharmacyId: pharmacyId,
@@ -1586,6 +1596,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error responding to delivery application:', error);
       res.status(500).json({ message: 'Failed to respond to application' });
+    }
+  });
+
+  // Get delivery application status for the current user
+  app.get('/api/delivery/application-status', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'livreur') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const applicationStatus = {
+        status: user.deliveryApplicationStatus || 'none',
+        appliedPharmacyId: user.appliedPharmacyId,
+        appliedAt: user.updatedAt,
+        documents: {
+          idDocument: !!user.idDocumentUrl,
+          drivingLicense: !!user.drivingLicenseUrl,
+          cv: !!user.professionalDocumentUrl,
+        }
+      };
+
+      res.json(applicationStatus);
+    } catch (error) {
+      console.error('Error fetching application status:', error);
+      res.status(500).json({ message: 'Failed to fetch application status' });
     }
   });
 

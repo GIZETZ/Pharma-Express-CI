@@ -32,6 +32,7 @@ import DashboardAdmin from "@/pages/dashboard-admin";
 import PharmacyProfile from "@/pages/pharmacy-profile";
 import CreatePharmacy from "@/pages/create-pharmacy";
 import DeliveryApplication from "@/pages/delivery-application";
+import { lazy } from 'react';
 
 
 function RoleDashboard() {
@@ -115,8 +116,9 @@ function Router() {
           <Route path="/edit-profile" component={EditProfile} />
           <Route path="/pharmacy-profile" component={PharmacyProfile} />
           <Route path="/create-pharmacy" component={CreatePharmacy} />
-        <Route path="/delivery-application" component={DeliveryApplication} />
-          <Route path="/dashboard-livreur" component={DashboardLivreur} />
+          <Route path="/delivery-application" component={DeliveryApplication} />
+          <Route path="/application-status" component={lazy(() => import("./pages/application-status"))} />
+          <Route path="/delivery-tracking" component={DeliveryTracking} />
           <Route path="/delivery-address" component={DeliveryAddress} />
           <Route path="/help-center" component={HelpCenter} />
           <Route path="/privacy-policy" component={PrivacyPolicy} />

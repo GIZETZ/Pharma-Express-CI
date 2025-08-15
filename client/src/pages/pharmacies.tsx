@@ -24,7 +24,7 @@ export default function Pharmacies() {
         async (position) => {
           const { latitude, longitude } = position.coords;
           setUserLocation({ lat: latitude, lng: longitude });
-          
+
           // Reverse geocoding pour obtenir l'adresse
           try {
             const response = await fetch(`/api/location/reverse?lat=${latitude}&lng=${longitude}`);
@@ -62,7 +62,7 @@ export default function Pharmacies() {
       }
       const data = await response.json();
       console.log('Pharmacies received:', data);
-      
+
       // Sort pharmacies by distance if user location is available
       if (userLocation && Array.isArray(data)) {
         return data.sort((a, b) => {
@@ -77,7 +77,7 @@ export default function Pharmacies() {
           return distanceA - distanceB;
         });
       }
-      
+
       return data || [];
     },
     enabled: true,
@@ -135,6 +135,12 @@ export default function Pharmacies() {
       });
     }
   });
+
+  const handleApplyToPharmacy = (pharmacy: any) => {
+    applyToPharmacyMutation.mutate(pharmacy.id);
+    localStorage.setItem('selectedPharmacyForApplication', JSON.stringify(pharmacy));
+    navigate('/delivery-application');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 pb-20">
@@ -207,7 +213,7 @@ export default function Pharmacies() {
                       userLocation.lat, userLocation.lng,
                       parseFloat(pharmacy.latitude) || 0, parseFloat(pharmacy.longitude) || 0
                     ) : null;
-                    
+
                     return (
                       <Card key={pharmacy.id} className="hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
                         <CardContent className="p-4">
@@ -267,39 +273,56 @@ export default function Pharmacies() {
                             </span>
                           </div>
                           {user?.role === 'livreur' ? (
-                            <Button 
-                              className="w-full" 
-                              size="sm" 
-                              onClick={() => {
-                                localStorage.setItem('selectedPharmacyForApplication', JSON.stringify(pharmacy));
-                                navigate('/delivery-application');
-                              }}
-                              disabled={
-                                user?.deliveryApplicationStatus === 'pending' ||
-                                (user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId && user?.pharmacyId !== pharmacy.id) ||
-                                pharmacy.isOpen === false
-                              }
-                            >
-                              {user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId === pharmacy.id ? (
-                                <div className="flex items-center gap-1">
-                                  <UserCheck className="h-4 w-4" />
-                                  Embauché
-                                </div>
-                              ) : user?.deliveryApplicationStatus === 'pending' && user?.appliedPharmacyId === pharmacy.id ? (
-                                'Candidature en cours'
-                              ) : user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId && user?.pharmacyId !== pharmacy.id ? (
-                                'Déjà embauché ailleurs'
-                              ) : user?.deliveryApplicationStatus === 'pending' && user?.appliedPharmacyId && user?.appliedPharmacyId !== pharmacy.id ? (
-                                'Candidature en cours ailleurs'
-                              ) : pharmacy.isOpen === false ? (
-                                'Fermée'
-                              ) : (
-                                <div className="flex items-center gap-1">
-                                  <Briefcase className="h-4 w-4" />
-                                  Postuler
-                                </div>
-                              )}
-                            </Button>
+                            user?.appliedPharmacyId === pharmacy.id ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-pharma-green text-pharma-green hover:bg-pharma-green/10 w-full"
+                                onClick={() => navigate('/application-status')}
+                              >
+                                Voir ma candidature
+                              </Button>
+                            ) : user?.appliedPharmacyId ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled
+                                className="text-gray-400 border-gray-300 w-full"
+                              >
+                                Déjà postulé ailleurs
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                className="bg-pharma-green hover:bg-pharma-green/90 text-white w-full"
+                                onClick={() => handleApplyToPharmacy(pharmacy)}
+                                disabled={
+                                  user?.deliveryApplicationStatus === 'pending' ||
+                                  (user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId && user?.pharmacyId !== pharmacy.id) ||
+                                  pharmacy.isOpen === false
+                                }
+                              >
+                                {user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId === pharmacy.id ? (
+                                  <div className="flex items-center gap-1">
+                                    <UserCheck className="h-4 w-4" />
+                                    Embauché
+                                  </div>
+                                ) : user?.deliveryApplicationStatus === 'pending' && user?.appliedPharmacyId === pharmacy.id ? (
+                                  'Candidature en cours'
+                                ) : user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId && user?.pharmacyId !== pharmacy.id ? (
+                                  'Déjà embauché ailleurs'
+                                ) : user?.deliveryApplicationStatus === 'pending' && user?.appliedPharmacyId && user?.appliedPharmacyId !== pharmacy.id ? (
+                                  'Candidature en cours ailleurs'
+                                ) : pharmacy.isOpen === false ? (
+                                  'Fermée'
+                                ) : (
+                                  <div className="flex items-center gap-1">
+                                    <Briefcase className="h-4 w-4" />
+                                    Postuler
+                                  </div>
+                                )}
+                              </Button>
+                            )
                           ) : (
                             <Button 
                               className="w-full" 
