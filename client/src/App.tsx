@@ -20,6 +20,8 @@ import DeliveryTracking from "@/pages/delivery-tracking";
 import Profile from "@/pages/profile";
 import EditProfile from "@/pages/edit-profile";
 import DeliveryAddress from "@/pages/delivery-address";
+import HelpCenter from "./pages/help-center";
+import PrivacyPolicy from "./pages/privacy-policy";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import NotFound from "@/pages/not-found";
@@ -41,7 +43,7 @@ function RoleDashboard() {
   if (user.role === "pharmacien" && user.verificationStatus === "pending") {
     return <PendingValidation />;
   }
-  
+
   // For delivery persons, check both verification status and delivery application status
   if (user.role === "livreur" && (user.verificationStatus === "pending" || user.deliveryApplicationStatus === "pending")) {
     return <PendingValidation />;
@@ -51,7 +53,7 @@ function RoleDashboard() {
   if ((user.role === "pharmacien" || user.role === "livreur") && user.verificationStatus === "rejected") {
     return <PendingValidation />; // Could create a separate rejection page
   }
-  
+
   // Check if delivery application was rejected
   if (user.role === "livreur" && user.deliveryApplicationStatus === "rejected") {
     return <PendingValidation />;
@@ -116,6 +118,8 @@ function Router() {
         <Route path="/delivery-application" component={DeliveryApplication} />
           <Route path="/dashboard-livreur" component={DashboardLivreur} />
           <Route path="/delivery-address" component={DeliveryAddress} />
+          <Route path="/help-center" component={HelpCenter} />
+          <Route path="/privacy-policy" component={PrivacyPolicy} />
           <Route component={NotFound} />
         </>
       ) : (
