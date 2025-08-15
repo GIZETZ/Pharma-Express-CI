@@ -117,7 +117,8 @@ function Router() {
           <Route path="/pharmacy-profile" component={PharmacyProfile} />
           <Route path="/create-pharmacy" component={CreatePharmacy} />
           <Route path="/delivery-application" component={DeliveryApplication} />
-          <Route path="/application-status" component={lazy(() => import("./pages/application-status"))} />
+          <Route path="/application-status" element={<ApplicationStatus />} />
+              <Route path="/delivery-application-status" element={<ApplicationStatus />} />
           <Route path="/delivery-tracking" component={DeliveryTracking} />
           <Route path="/delivery-address" component={DeliveryAddress} />
           <Route path="/help-center" component={HelpCenter} />

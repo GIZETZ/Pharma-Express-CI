@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import BottomNavigation from "@/components/bottom-navigation";
-import { MapPin, Clock, Star, Phone, UserCheck, Briefcase } from "lucide-react";
+import { MapPin, Clock, Star, Phone, UserCheck, Briefcase, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -42,10 +42,10 @@ export default function Pharmacies() {
   }, []);
 
   // Pharmacies triées par distance si géolocalisation disponible
-  const { data: pharmacies, isLoading: pharmaciesLoading, refetch: refetchPharmacies } = useQuery({ 
+  const { data: pharmacies, isLoading: pharmaciesLoading, refetch: refetchPharmacies } = useQuery({
     queryKey: ["/api/pharmacies", userLocation],
     queryFn: async () => {
-      const url = userLocation 
+      const url = userLocation
         ? `/api/pharmacies?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=50`
         : `/api/pharmacies`;
       console.log('Fetching pharmacies from:', url);
@@ -104,9 +104,9 @@ export default function Pharmacies() {
     const R = 6371; // Radius of the Earth in kilometers
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = 
+    const a =
       Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
       Math.sin(dLng/2) * Math.sin(dLng/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c; // Distance in kilometers
@@ -152,15 +152,15 @@ export default function Pharmacies() {
                 {user?.role === 'livreur' ? '🚚 Postuler dans une Pharmacie' : '🏥 Pharmacies & Commandes'}
               </h1>
               <p className="text-gray-600">
-                {user?.role === 'livreur' 
+                {user?.role === 'livreur'
                   ? `Bienvenue ${user?.firstName} ! Choisissez une pharmacie pour postuler comme livreur`
                   : `Bienvenue ${user?.firstName} ! Localisez une pharmacie et passez commande`
                 }
               </p>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => refetchPharmacies()}
               disabled={pharmaciesLoading}
             >
@@ -187,13 +187,13 @@ export default function Pharmacies() {
               {user?.role === 'livreur' ? 'Pharmacies Disponibles' : 'Localiser une Pharmacie'}
             </CardTitle>
             <CardDescription>
-              {user?.role === 'livreur' 
-                ? (userLocation 
+              {user?.role === 'livreur'
+                ? (userLocation
                     ? "Choisissez une pharmacie pour postuler comme livreur (triées par proximité)"
                     : "Choisissez une pharmacie pour postuler comme livreur"
                   )
-                : (userLocation 
-                    ? "Pharmacies triées par proximité selon votre position" 
+                : (userLocation
+                    ? "Pharmacies triées par proximité selon votre position"
                     : "Trouvez les pharmacies disponibles"
                   )
               }
@@ -324,9 +324,9 @@ export default function Pharmacies() {
                               </Button>
                             )
                           ) : (
-                            <Button 
-                              className="w-full" 
-                              size="sm" 
+                            <Button
+                              className="w-full"
+                              size="sm"
                               onClick={() => {
                                 localStorage.setItem('selectedPharmacy', JSON.stringify(pharmacy));
                                 navigate('/order');
@@ -349,15 +349,15 @@ export default function Pharmacies() {
                         <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
                       )}
                       <p>
-                        {user?.role === 'livreur' 
+                        {user?.role === 'livreur'
                           ? 'Aucune pharmacie disponible pour postuler'
                           : 'Aucune pharmacie trouvée'
                         }
                       </p>
                       <p className="text-sm">Veuillez réessayer plus tard</p>
                     </div>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => refetchPharmacies()}
                       disabled={pharmaciesLoading}
                     >

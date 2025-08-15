@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -662,7 +663,7 @@ export default function DashboardPharmacien() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="orders">
               Nouvelles Commandes
               {orders?.filter((o: any) => o.status === 'pending')?.length > 0 && (
@@ -678,6 +679,9 @@ export default function DashboardPharmacien() {
                   {orders.filter((o: any) => o.status === 'confirmed' || o.status === 'ready_for_delivery').length}
                 </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="applications">
+              Candidatures Livreurs
             </TabsTrigger>
           </TabsList>
 
@@ -1407,6 +1411,21 @@ export default function DashboardPharmacien() {
           </TabsContent>
 
           
+
+          {/* Candidatures de Livreurs */}
+          <TabsContent value="applications">
+            <Card>
+              <CardHeader>
+                <CardTitle>👥 Candidatures de Livreurs</CardTitle>
+                <CardDescription>
+                  Gérez les candidatures des livreurs qui souhaitent rejoindre votre pharmacie
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DeliveryApplicationsManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Validation et Préparation */}
           <TabsContent value="preparation">
