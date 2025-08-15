@@ -175,9 +175,7 @@ export default function HelpCenter() {
               <AccordionItem value="item-10">
                 <AccordionTrigger>Mes données personnelles sont-elles sécurisées ?</AccordionTrigger>
                 <AccordionContent>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Pour toute question concernant vos données personnelles, contactez-nous :
-                  </p>
+                  Oui, nous utilisons un cryptage de niveau bancaire pour protéger vos données. Consultez notre politique de confidentialité pour plus de détails sur la protection de vos informations personnelles.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
