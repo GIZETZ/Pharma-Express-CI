@@ -13,13 +13,16 @@ export const userSchema = z.object({
   role: z.enum(["patient", "pharmacien", "livreur", "admin"]).default("patient"),
   language: z.string().default("fr"),
   profileImageUrl: z.string().optional(),
-  pharmacyId: z.string().optional(), // For pharmacists
+  pharmacyId: z.string().optional(), // For pharmacists and approved delivery persons
   isActive: z.boolean().default(true),
   // Identity validation fields (Pharmacists and Delivery personnel)
   idDocumentUrl: z.string().optional(), // ID card
   professionalDocumentUrl: z.string().optional(), // Pharmacist diploma
   drivingLicenseUrl: z.string().optional(), // Driving license
   verificationStatus: z.enum(["pending", "approved", "rejected"]).default("pending"),
+  // Delivery application fields
+  deliveryApplicationStatus: z.enum(["none", "pending", "approved", "rejected"]).default("none").optional(),
+  appliedPharmacyId: z.string().optional(), // Pharmacy the delivery person applied to
   createdAt: z.date(),
   updatedAt: z.date(),
 });

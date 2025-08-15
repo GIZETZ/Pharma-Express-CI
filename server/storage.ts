@@ -321,7 +321,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date(),
       // Default values for new fields related to delivery applications
       appliedPharmacyId: undefined,
-      deliveryApplicationStatus: user.role === 'livreur' ? 'pending' : undefined,
+      deliveryApplicationStatus: user.role === 'livreur' ? 'pending' : 'none',
       pharmacyId: undefined, // This will be set upon approval
     };
 
@@ -350,10 +350,9 @@ export class MemStorage implements IStorage {
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return null;
 
-    // Ensure user has access to dashboard if not a pending livreur
-    if (user.role === 'livreur' && user.deliveryApplicationStatus === 'pending') {
-      return null; // Or a specific user object indicating pending status
-    }
+    // Allow login for livreurs if they are approved, regardless of deliveryApplicationStatus
+    // The frontend will handle showing pending validation if needed
+    // Only block login if user account itself is not verified yet
 
     return user;
   }

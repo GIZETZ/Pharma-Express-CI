@@ -38,13 +38,23 @@ function RoleDashboard() {
   if (!user) return null;
 
   // Check if professional account is pending validation
-  if ((user.role === "pharmacien" || user.role === "livreur") && user.verificationStatus === "pending") {
+  if (user.role === "pharmacien" && user.verificationStatus === "pending") {
+    return <PendingValidation />;
+  }
+  
+  // For delivery persons, check both verification status and delivery application status
+  if (user.role === "livreur" && (user.verificationStatus === "pending" || user.deliveryApplicationStatus === "pending")) {
     return <PendingValidation />;
   }
 
   // Check if professional account was rejected
   if ((user.role === "pharmacien" || user.role === "livreur") && user.verificationStatus === "rejected") {
     return <PendingValidation />; // Could create a separate rejection page
+  }
+  
+  // Check if delivery application was rejected
+  if (user.role === "livreur" && user.deliveryApplicationStatus === "rejected") {
+    return <PendingValidation />;
   }
 
   switch (user.role) {

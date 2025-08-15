@@ -102,6 +102,8 @@ export const insertUserSchema = createInsertSchema(users).omit({
   idDocumentUrl: z.string().optional(),
   professionalDocumentUrl: z.string().optional(),
   drivingLicenseUrl: z.string().optional(),
+  deliveryApplicationStatus: z.enum(["none", "pending", "approved", "rejected"]).optional(),
+  appliedPharmacyId: z.string().optional(),
 });
 
 // Auth schemas
