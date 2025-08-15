@@ -11,7 +11,7 @@ import {
   insertNotificationSchema,
   registerSchema,
   loginSchema
-} from "@shared/firebase-schema";
+} from "@shared/schema";
 
 // Create storage instance
 const storage = createStorage();
