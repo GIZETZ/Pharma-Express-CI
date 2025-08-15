@@ -1481,15 +1481,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Mettre à jour le profil du livreur avec toutes les informations
       const updatedUser = await storage.updateUser(req.session.userId, updateData);
 
-      // Créer une notification pour la pharmacie
+      // Créer une notification pour le pharmacien propriétaire de la pharmacie
       try {
-        await storage.createNotification({
-          userId: pharmacy.id, // Pour l'instant, utiliser l'ID de la pharmacie
-          title: 'Nouvelle candidature livreur',
-          body: `${user.firstName} ${user.lastName} a envoyé une candidature complète avec documents`,
-          type: 'delivery_application',
-          isRead: false,
-        });
+        const pharmacyOwner = await storage.getPharmacyOwner(pharmacyId);
+        if (pharmacyOwner) {
+          await storage.createNotification({
+            userId: pharmacyOwner.id,
+            title: 'Nouvelle candidature livreur',
+            body: `${user.firstName} ${user.lastName} a envoyé une candidature complète avec documents`,
+            type: 'delivery_application',
+            isRead: false,
+          });
+          console.log('Notification created for pharmacy owner:', pharmacyOwner.id);
+        } else {
+          console.log('No pharmacy owner found for pharmacy:', pharmacyId);
+        }
       } catch (notificationError) {
         console.log('Notification creation failed (non-critical):', notificationError);
       }

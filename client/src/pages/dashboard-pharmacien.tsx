@@ -22,7 +22,16 @@ function DeliveryApplicationsManager() {
 
   const { data: applications, isLoading } = useQuery({
     queryKey: ["/api/pharmacien/delivery-applications"],
-    enabled: true
+    enabled: true,
+    queryFn: async () => {
+      const response = await fetch("/api/pharmacien/delivery-applications", {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch applications');
+      }
+      return response.json();
+    }
   });
 
   const respondToApplicationMutation = useMutation({

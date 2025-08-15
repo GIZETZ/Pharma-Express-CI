@@ -830,7 +830,24 @@ export class MemStorage implements IStorage {
   // New method to get the owner of a pharmacy (pharmacist user)
   async getPharmacyOwner(pharmacyId: string): Promise<any | null> {
     const users = Array.from(this.users.values());
-    return users.find(user => user.role === 'pharmacien' && user.pharmacyId === pharmacyId) || null;
+    const owner = users.find(user => user.role === 'pharmacien' && user.pharmacyId === pharmacyId);
+    
+    if (!owner) {
+      // Fallback: try to find by pharmacy phone number
+      const pharmacy = this.pharmacies.get(pharmacyId);
+      if (pharmacy && pharmacy.phone) {
+        const ownerByPhone = users.find(user => 
+          user.role === 'pharmacien' && user.phone === pharmacy.phone
+        );
+        if (ownerByPhone) {
+          // Update user with pharmacy ID for future reference
+          await this.updateUser(ownerByPhone.id, { pharmacyId });
+          return ownerByPhone;
+        }
+      }
+    }
+    
+    return owner || null;
   }
 
   // New method to get pending delivery applications for a specific pharmacy
@@ -953,6 +970,43 @@ export class MemStorage implements IStorage {
     notification.isRead = true;
     this.notifications.set(id, notification);
     return notification;
+  }
+
+  // New method to get pharmacist orders
+  async getPharmacistOrders(pharmacyId: string): Promise<any[]> {
+    const orders = Array.from(this.orders.values()).filter(order => 
+      order.pharmacyId === pharmacyId
+    );
+
+    // Enrich with user and pharmacy data
+    return orders.map(order => ({
+      ...order,
+      user: this.users.get(order.userId),
+      pharmacy: this.pharmacies.get(order.pharmacyId)
+    }));
+  }
+
+  // New method to get all pharmacist orders (fallback)
+  async getAllPharmacistOrders(): Promise<any[]> {
+    const orders = Array.from(this.orders.values());
+
+    // Enrich with user and pharmacy data
+    return orders.map(order => ({
+      ...order,
+      user: this.users.get(order.userId),
+      pharmacy: this.pharmacies.get(order.pharmacyId)
+    }));
+  }
+
+  // New method to get all prescriptions
+  async getAllPrescriptions(): Promise<any[]> {
+    const prescriptions = Array.from(this.prescriptions.values());
+
+    // Enrich with user data
+    return prescriptions.map(prescription => ({
+      ...prescription,
+      user: this.users.get(prescription.userId)
+    }));
   }
 
   // Méthodes supplémentaires pour les pharmaciens

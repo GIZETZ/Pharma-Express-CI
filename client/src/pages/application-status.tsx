@@ -21,7 +21,13 @@ export default function ApplicationStatus() {
   const { data: pharmacy, isLoading: pharmacyLoading } = useQuery({
     queryKey: ['/api/pharmacies', user?.appliedPharmacyId],
     enabled: !!user?.appliedPharmacyId,
-    queryFn: () => apiRequest("GET", `/api/pharmacies/${user.appliedPharmacyId}`)
+    queryFn: async () => {
+      const response = await fetch(`/api/pharmacies/${user.appliedPharmacyId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch pharmacy');
+      }
+      return response.json();
+    }
   });
 
   // Mutation to cancel application
@@ -151,7 +157,7 @@ export default function ApplicationStatus() {
             )}
 
             {/* User application info */}
-            {user.deliveryApplicationStatus === 'pending' && (
+            {(user.deliveryApplicationStatus === 'pending' || user.appliedPharmacyId) && (
               <div className="bg-yellow-50 p-4 rounded-lg">
                 <h4 className="font-semibold text-yellow-800 mb-2 flex items-center">
                   <FileText className="h-4 w-4 mr-1" />
@@ -159,6 +165,10 @@ export default function ApplicationStatus() {
                 </h4>
                 <div className="space-y-2 text-sm text-yellow-700">
                   <p><strong>Candidature envoyée:</strong> {user.createdAt ? new Date(user.createdAt).toLocaleDateString('fr-FR') : 'Date inconnue'}</p>
+                  <p><strong>Statut:</strong> {user.deliveryApplicationStatus || 'En attente'}</p>
+                  {user.appliedPharmacyId && (
+                    <p><strong>Pharmacie visée:</strong> {pharmacy?.name || 'Chargement...'}</p>
+                  )}
                   <p><strong>Documents fournis:</strong></p>
                   <ul className="list-disc list-inside ml-4 space-y-1">
                     {user.idDocumentUrl && <li>Carte d'identité ✓</li>}
