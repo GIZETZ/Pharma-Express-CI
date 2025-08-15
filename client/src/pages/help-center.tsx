@@ -1,3 +1,4 @@
+
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -123,7 +124,7 @@ export default function HelpCenter() {
               <AccordionItem value="item-4">
                 <AccordionTrigger>Comment modifier mon adresse de livraison ?</AccordionTrigger>
                 <AccordionContent>
-                  Allez dans "Mon Profil" > "Adresses de livraison" pour ajouter, modifier ou supprimer vos adresses. Vous pouvez utiliser la géolocalisation pour une localisation précise.
+                  Allez dans "Mon Profil" puis "Adresses de livraison" pour ajouter, modifier ou supprimer vos adresses. Vous pouvez utiliser la géolocalisation pour une localisation précise.
                 </AccordionContent>
               </AccordionItem>
 
