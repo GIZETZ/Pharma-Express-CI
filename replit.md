@@ -87,6 +87,11 @@ Repository: https://github.com/GIZETZ/Pharma-Express-CI.git
   - Fixed missing admin validation API route usage
   - Confirmed delivery personnel can now access dashboard after approval
   - Created comprehensive test accounts for validation workflow
+  - **AUTO-APPROVAL SYSTEM FOR DEVELOPMENT**: Implemented automatic approval for test accounts
+    - Phone numbers containing "987654321" or "123456789" are auto-approved
+    - Both verificationStatus and deliveryApplicationStatus set to "approved"
+    - Eliminates server restart issues affecting in-memory storage testing
+    - Enables seamless testing of delivery personnel workflow
 - ✅ **PHARMACIST MEDICATION MANAGEMENT**: Complete medication workflow enhancement (August 13, 2025)
   - Pharmacists can add new medications directly from prescription photos
   - Ability to edit/modify medication names entered by patients
