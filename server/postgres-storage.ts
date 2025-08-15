@@ -180,7 +180,7 @@ export class PostgresStorage implements IStorage {
     const result = await db.insert(users).values({
       ...user,
       password: hashedPassword,
-      deliveryApplicationStatus: user.role === 'livreur' ? 'pending' : 'none',
+      deliveryApplicationStatus: user.role === 'livreur' ? 'none' : 'none',
     }).returning();
     return result[0];
   }

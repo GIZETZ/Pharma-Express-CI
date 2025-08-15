@@ -1,105 +1,109 @@
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLocation } from "wouter";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/useAuth";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { ArrowLeft, Upload, FileText, Briefcase } from "lucide-react";
+
+const applicationSchema = z.object({
+  pharmacyId: z.string().min(1, "ID de pharmacie requis"),
+  motivationLetter: z.string().min(50, "La lettre de motivation doit contenir au moins 50 caractères"),
+  experience: z.string().min(10, "Veuillez décrire votre expérience"),
+  availability: z.string().min(5, "Veuillez indiquer vos disponibilités"),
+  phone: z.string().min(10, "Numéro de téléphone requis"),
+  idDocument: z.any().optional(),
+  drivingLicense: z.any().optional(),
+  cvDocument: z.any().optional(),
+});
+
+type ApplicationForm = z.infer<typeof applicationSchema>;
 
 export default function DeliveryApplication() {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-  const [selectedPharmacy, setSelectedPharmacy] = useState<any>(null);
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Récupérer toutes les pharmacies
-  const { data: pharmacies, isLoading: loadingPharmacies } = useQuery({
-    queryKey: ["/api/pharmacies"],
-    enabled: true
+  // Get pharmacy from localStorage (passed from pharmacies page)
+  const selectedPharmacy = JSON.parse(localStorage.getItem('selectedPharmacyForApplication') || '{}');
+
+  const form = useForm<ApplicationForm>({
+    resolver: zodResolver(applicationSchema),
+    defaultValues: {
+      pharmacyId: selectedPharmacy.id || '',
+      motivationLetter: '',
+      experience: '',
+      availability: '',
+      phone: '',
+    },
   });
 
-  // Mutation pour postuler à une pharmacie
-  const applyToPharmacyMutation = useMutation({
-    mutationFn: (pharmacyId: string) =>
-      apiRequest("POST", "/api/livreur/apply-to-pharmacy", { pharmacyId }),
+  const applicationMutation = useMutation({
+    mutationFn: async (data: ApplicationForm) => {
+      const formData = new FormData();
+      formData.append('pharmacyId', data.pharmacyId);
+      formData.append('motivationLetter', data.motivationLetter);
+      formData.append('experience', data.experience);
+      formData.append('availability', data.availability);
+      formData.append('phone', data.phone);
+      
+      if (data.idDocument?.[0]) {
+        formData.append('idDocument', data.idDocument[0]);
+      }
+      if (data.drivingLicense?.[0]) {
+        formData.append('drivingLicense', data.drivingLicense[0]);
+      }
+      if (data.cvDocument?.[0]) {
+        formData.append('cvDocument', data.cvDocument[0]);
+      }
+
+      return await apiRequest('/api/delivery/apply', {
+        method: 'POST',
+        body: formData,
+      });
+    },
     onSuccess: () => {
       toast({
-        title: "Candidature envoyée",
-        description: "Votre candidature a été envoyée à la pharmacie. Vous recevrez une notification de leur réponse.",
+        title: "Candidature envoyée ✅",
+        description: "Votre candidature a été envoyée avec succès. La pharmacie vous contactera bientôt.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      localStorage.removeItem('selectedPharmacyForApplication');
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      setLocation('/pharmacies');
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
-        title: "Erreur",
-        description: "Impossible d'envoyer votre candidature",
+        title: "Erreur d'envoi",
+        description: error.message || "Une erreur est survenue lors de l'envoi de votre candidature.",
         variant: "destructive",
       });
     },
   });
 
-  const handleApplyToPharmacy = (pharmacyId: string) => {
-    applyToPharmacyMutation.mutate(pharmacyId);
+  const onSubmit = (data: ApplicationForm) => {
+    setIsSubmitting(true);
+    applicationMutation.mutate(data);
   };
 
-  if (loadingPharmacies) {
+  if (!selectedPharmacy.id) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-      </div>
-    );
-  }
-
-  // Si l'utilisateur a déjà postulé
-  if (user?.deliveryApplicationStatus === 'pending') {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-2xl mx-auto">
-          <Card className="text-center">
-            <CardContent className="p-8">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                ⏳
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Candidature en attente
-              </h1>
-              <p className="text-gray-600 mb-4">
-                Votre candidature a été envoyée à la pharmacie. Vous recevrez une notification dès qu'elle aura été traitée.
-              </p>
-              <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                En attente de validation
-              </Badge>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Si l'utilisateur a été rejeté
-  if (user?.deliveryApplicationStatus === 'rejected') {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-2xl mx-auto">
-          <Card className="text-center">
-            <CardContent className="p-8">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                ❌
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                Candidature rejetée
-              </h1>
-              <p className="text-gray-600 mb-4">
-                Votre candidature n'a pas été acceptée. Vous pouvez postuler à une autre pharmacie.
-              </p>
-              <Button
-                onClick={() => window.location.reload()}
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                Postuler à une autre pharmacie
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-md mx-auto pt-8">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <h3 className="font-semibold text-gray-900 mb-2">Pharmacie non sélectionnée</h3>
+              <p className="text-gray-600 mb-4">Vous devez sélectionner une pharmacie depuis la liste pour postuler.</p>
+              <Button onClick={() => setLocation('/pharmacies')}>
+                Retour aux pharmacies
               </Button>
             </CardContent>
           </Card>
@@ -109,83 +113,224 @@ export default function DeliveryApplication() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-purple-600 mb-2">
-            🚴 Postuler comme Livreur
-          </h1>
-          <p className="text-gray-600">
-            Choisissez une pharmacie pour laquelle vous souhaitez travailler
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 p-4">
+        <div className="max-w-md mx-auto flex items-center space-x-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setLocation('/pharmacies')}
+            data-testid="button-back"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-lg font-semibold text-gray-900">Candidature livreur</h1>
+            <p className="text-sm text-gray-600">{selectedPharmacy.name}</p>
+          </div>
         </div>
+      </div>
 
-        <div className="grid gap-6">
-          {pharmacies && pharmacies.length > 0 ? (
-            pharmacies.map((pharmacy: any) => (
-              <Card key={pharmacy.id} className="border-l-4 border-l-purple-500 hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl text-purple-800">
-                      {pharmacy.name}
-                    </CardTitle>
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                      Recrute
-                    </Badge>
-                  </div>
-                  <CardDescription className="flex items-center">
-                    📍 {pharmacy.address}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-sm font-medium text-gray-600">Note</span>
-                      <p className="text-sm">⭐ {pharmacy.rating || '4.5'}/5</p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-gray-600">Téléphone</span>
-                      <p className="text-sm">{pharmacy.phone || 'Non renseigné'}</p>
-                    </div>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <h4 className="font-semibold text-purple-800 mb-2">💰 Avantages</h4>
-                    <ul className="text-sm text-purple-700 space-y-1">
-                      <li>• 500 FCFA par livraison</li>
-                      <li>• Horaires flexibles</li>
-                      <li>• Paiement hebdomadaire</li>
-                      <li>• Formation fournie</li>
-                    </ul>
-                  </div>
+      <div className="max-w-md mx-auto p-4 space-y-4">
+        {/* Pharmacy Info */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-pharma-green rounded-full flex items-center justify-center">
+                <Briefcase className="h-6 w-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900">{selectedPharmacy.name}</h3>
+                <p className="text-sm text-gray-600">{selectedPharmacy.address}</p>
+                <p className="text-xs text-pharma-green font-medium">Recherche livreur</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-                  <Button
-                    onClick={() => handleApplyToPharmacy(pharmacy.id)}
-                    className="w-full bg-purple-600 hover:bg-purple-700"
-                    disabled={applyToPharmacyMutation.isPending}
-                  >
-                    {applyToPharmacyMutation.isPending ? "Envoi en cours..." : "Postuler à cette pharmacie 🚀"}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  🏪
+        {/* Application Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Formulaire de candidature</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                {/* Lettre de motivation */}
+                <FormField
+                  control={form.control}
+                  name="motivationLetter"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lettre de motivation *</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Expliquez pourquoi vous souhaitez travailler pour cette pharmacie..."
+                          className="min-h-[100px]"
+                          {...field}
+                          data-testid="textarea-motivation"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Expérience */}
+                <FormField
+                  control={form.control}
+                  name="experience"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Expérience en livraison *</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Décrivez votre expérience en livraison (moto, scooter, etc.)..."
+                          {...field}
+                          data-testid="textarea-experience"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Disponibilités */}
+                <FormField
+                  control={form.control}
+                  name="availability"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Disponibilités *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Ex: Lundi-Vendredi 8h-18h, Weekend disponible"
+                          {...field}
+                          data-testid="input-availability"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Téléphone */}
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Téléphone de contact *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="+225 XX XX XX XX"
+                          {...field}
+                          data-testid="input-phone"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Documents */}
+                <div className="space-y-3">
+                  <h4 className="font-medium text-gray-900">Documents à joindre</h4>
+                  
+                  <FormField
+                    control={form.control}
+                    name="idDocument"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center space-x-2">
+                          <FileText className="h-4 w-4" />
+                          <span>Carte d'identité *</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="file"
+                            accept="image/*,.pdf"
+                            onChange={(e) => field.onChange(e.target.files)}
+                            data-testid="input-id-document"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="drivingLicense"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center space-x-2">
+                          <FileText className="h-4 w-4" />
+                          <span>Permis de conduire *</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="file"
+                            accept="image/*,.pdf"
+                            onChange={(e) => field.onChange(e.target.files)}
+                            data-testid="input-driving-license"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="cvDocument"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center space-x-2">
+                          <Upload className="h-4 w-4" />
+                          <span>CV (optionnel)</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="file"
+                            accept="image/*,.pdf,.doc,.docx"
+                            onChange={(e) => field.onChange(e.target.files)}
+                            data-testid="input-cv"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                  Aucune pharmacie disponible
-                </h3>
-                <p className="text-gray-500">
-                  Les pharmacies apparaîtront ici dès qu'elles seront disponibles
-                </p>
-              </CardContent>
-            </Card>
-          )}
+
+                {/* Submit Button */}
+                <Button 
+                  type="submit" 
+                  className="w-full bg-pharma-green hover:bg-pharma-green/90" 
+                  disabled={isSubmitting || applicationMutation.isPending}
+                  data-testid="button-submit-application"
+                >
+                  {isSubmitting || applicationMutation.isPending ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Envoi en cours...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <Upload className="h-4 w-4" />
+                      <span>Envoyer la candidature</span>
+                    </div>
+                  )}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+
+        <div className="text-center text-xs text-gray-500 pb-8">
+          Votre candidature sera examinée par la pharmacie sous 24-48h
         </div>
       </div>
     </div>

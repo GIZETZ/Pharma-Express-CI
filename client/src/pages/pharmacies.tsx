@@ -270,20 +270,17 @@ export default function Pharmacies() {
                             <Button 
                               className="w-full" 
                               size="sm" 
-                              onClick={() => applyToPharmacyMutation.mutate(pharmacy.id)}
+                              onClick={() => {
+                                localStorage.setItem('selectedPharmacyForApplication', JSON.stringify(pharmacy));
+                                navigate('/delivery-application');
+                              }}
                               disabled={
-                                applyToPharmacyMutation.isPending || 
                                 user?.deliveryApplicationStatus === 'pending' ||
                                 (user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId !== pharmacy.id) ||
                                 pharmacy.isOpen === false
                               }
                             >
-                              {applyToPharmacyMutation.isPending ? (
-                                <div className="flex items-center gap-2">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                  Envoi...
-                                </div>
-                              ) : user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId === pharmacy.id ? (
+                              {user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId === pharmacy.id ? (
                                 <div className="flex items-center gap-1">
                                   <UserCheck className="h-4 w-4" />
                                   Embauché

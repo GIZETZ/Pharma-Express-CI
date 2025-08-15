@@ -1399,7 +1399,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Livreur postule à une pharmacie
+  // Nouvelle API : Candidature complète avec documents
+  app.post('/api/delivery/apply', requireAuth, upload.fields([
+    { name: 'idDocument', maxCount: 1 },
+    { name: 'drivingLicense', maxCount: 1 },
+    { name: 'cvDocument', maxCount: 1 }
+  ]), async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'livreur') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { pharmacyId, motivationLetter, experience, availability, phone } = req.body;
+      
+      if (!pharmacyId || !motivationLetter || !experience || !availability || !phone) {
+        return res.status(400).json({ message: 'Tous les champs obligatoires doivent être remplis' });
+      }
+
+      // Vérifier que la pharmacie existe
+      const pharmacy = await storage.getPharmacy(pharmacyId);
+      if (!pharmacy) {
+        return res.status(404).json({ message: 'Pharmacy not found' });
+      }
+
+      // Dans un environnement de production, vous stockeriez les fichiers dans un service cloud
+      // Pour l'instant, on simule le stockage avec des URLs factices
+      const files = req.files as any;
+      const documents = {
+        idDocument: files?.idDocument?.[0] ? `uploaded_${Date.now()}_id.${files.idDocument[0].originalname.split('.').pop()}` : null,
+        drivingLicense: files?.drivingLicense?.[0] ? `uploaded_${Date.now()}_license.${files.drivingLicense[0].originalname.split('.').pop()}` : null,
+        cvDocument: files?.cvDocument?.[0] ? `uploaded_${Date.now()}_cv.${files.cvDocument[0].originalname.split('.').pop()}` : null,
+      };
+
+      // Mettre à jour le profil du livreur avec toutes les informations
+      const updatedUser = await storage.updateUser(req.session.userId, {
+        appliedPharmacyId: pharmacyId,
+        deliveryApplicationStatus: 'pending',
+        phone: phone,
+        idDocumentUrl: documents.idDocument,
+        drivingLicenseUrl: documents.drivingLicense,
+        // Stocker également les données de candidature dans des champs personnalisés si nécessaire
+      });
+
+      // Créer une notification pour la pharmacie
+      try {
+        await storage.createNotification({
+          userId: pharmacy.id, // Pour l'instant, utiliser l'ID de la pharmacie
+          title: 'Nouvelle candidature livreur',
+          body: `${user.firstName} ${user.lastName} a envoyé une candidature complète avec documents`,
+          type: 'delivery_application',
+          isRead: false,
+        });
+      } catch (notificationError) {
+        console.log('Notification creation failed (non-critical):', notificationError);
+      }
+
+      res.json({ 
+        message: 'Candidature envoyée avec succès', 
+        user: updatedUser,
+        documents: documents
+      });
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      res.status(500).json({ message: 'Erreur lors de l\'envoi de la candidature' });
+    }
+  });
+
+  // Livreur postule à une pharmacie (ancienne API, gardée pour compatibilité)
   app.post('/api/livreur/apply-to-pharmacy', requireAuth, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.session.userId);
