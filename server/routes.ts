@@ -1625,6 +1625,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cancel delivery application
+  app.post('/api/livreur/cancel-application', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'livreur') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Check if user has an active pending application
+      if (!user.appliedPharmacyId || user.deliveryApplicationStatus !== 'pending') {
+        return res.status(400).json({ message: 'No active application to cancel' });
+      }
+
+      // Reset application status
+      const updatedUser = await storage.updateUser(req.session.userId, {
+        appliedPharmacyId: undefined,
+        deliveryApplicationStatus: 'none'
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Create notification for user
+      await storage.createNotification({
+        userId: req.session.userId,
+        title: 'Candidature annulée',
+        body: 'Votre candidature a été annulée avec succès. Vous pouvez maintenant postuler ailleurs.',
+        type: 'application_cancelled',
+        isRead: false,
+      });
+
+      res.json({ 
+        message: 'Application cancelled successfully', 
+        user: updatedUser 
+      });
+    } catch (error) {
+      console.error('Error cancelling application:', error);
+      res.status(500).json({ message: 'Failed to cancel application' });
+    }
+  });
+
   // Assign delivery person to order
   app.post('/api/pharmacien/orders/:orderId/assign-delivery', requireAuth, async (req: any, res) => {
     try {

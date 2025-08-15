@@ -1,22 +1,49 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, FileText, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { ArrowLeft, FileText, Clock, CheckCircle, XCircle, AlertCircle, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export default function ApplicationStatus() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, refetch: refetchUser } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   // Get applied pharmacy info if user has applied
-  const { data: pharmacy } = useQuery({
+  const { data: pharmacy, isLoading: pharmacyLoading } = useQuery({
     queryKey: ['/api/pharmacies', user?.appliedPharmacyId],
     enabled: !!user?.appliedPharmacyId,
     queryFn: () => apiRequest("GET", `/api/pharmacies/${user.appliedPharmacyId}`)
+  });
+
+  // Mutation to cancel application
+  const cancelApplicationMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/livreur/cancel-application"),
+    onSuccess: () => {
+      toast({
+        title: "Candidature annulée",
+        description: "Votre candidature a été annulée avec succès. Vous pouvez maintenant postuler ailleurs.",
+      });
+      // Refresh user data
+      refetchUser();
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      setShowCancelConfirm(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible d'annuler la candidature",
+        variant: "destructive",
+      });
+    }
   });
 
   if (!user || user.role !== 'livreur') {
@@ -58,6 +85,7 @@ export default function ApplicationStatus() {
   };
 
   const statusInfo = getStatusInfo(user.deliveryApplicationStatus || 'none');
+  const hasActiveApplication = user.appliedPharmacyId && user.deliveryApplicationStatus === 'pending';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -97,7 +125,7 @@ export default function ApplicationStatus() {
             </p>
 
             {/* Pharmacy Info if applied */}
-            {pharmacy && user.appliedPharmacyId && (
+            {pharmacy && user.appliedPharmacyId && !pharmacyLoading && (
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h4 className="font-semibold text-blue-800 mb-2 flex items-center">
                   🏥 Pharmacie concernée
@@ -111,6 +139,14 @@ export default function ApplicationStatus() {
                 <p className="text-sm text-blue-700">
                   <strong>Téléphone:</strong> {pharmacy.phone}
                 </p>
+              </div>
+            )}
+
+            {pharmacyLoading && user.appliedPharmacyId && (
+              <div className="bg-blue-50 p-4 rounded-lg animate-pulse">
+                <div className="h-4 bg-blue-200 rounded mb-2"></div>
+                <div className="h-3 bg-blue-200 rounded mb-1"></div>
+                <div className="h-3 bg-blue-200 rounded"></div>
               </div>
             )}
 
@@ -154,11 +190,56 @@ export default function ApplicationStatus() {
               )}
 
               {user.deliveryApplicationStatus === 'pending' && (
-                <div className="text-center text-sm text-gray-500 p-4 border rounded-lg bg-gray-50">
-                  <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                  <p>Candidature en cours d'examen...</p>
-                  <p className="text-xs mt-1">La pharmacie vous contactera sous 24-48h</p>
-                </div>
+                <>
+                  <div className="text-center text-sm text-gray-500 p-4 border rounded-lg bg-gray-50">
+                    <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p>Candidature en cours d'examen...</p>
+                    <p className="text-xs mt-1">La pharmacie vous contactera sous 24-48h</p>
+                  </div>
+                  
+                  {/* Cancel Application Button */}
+                  {hasActiveApplication && (
+                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-600 mb-3">
+                        Vous souhaitez annuler votre candidature et postuler ailleurs ?
+                      </p>
+                      {!showCancelConfirm ? (
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowCancelConfirm(true)}
+                          className="w-full border-red-300 text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Annuler ma candidature
+                        </Button>
+                      ) : (
+                        <div className="space-y-2">
+                          <p className="text-xs text-red-700 font-medium">
+                            Êtes-vous sûr ? Cette action est irréversible.
+                          </p>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setShowCancelConfirm(false)}
+                              className="flex-1"
+                            >
+                              Annuler
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => cancelApplicationMutation.mutate()}
+                              disabled={cancelApplicationMutation.isPending}
+                              className="flex-1 bg-red-600 hover:bg-red-700"
+                            >
+                              {cancelApplicationMutation.isPending ? 'Annulation...' : 'Confirmer'}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
 
               {!user.appliedPharmacyId && (
