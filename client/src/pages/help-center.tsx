@@ -1,4 +1,3 @@
-
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,7 +45,7 @@ export default function HelpCenter() {
               <Phone className="w-5 h-5 mr-2" />
               Appeler le support: +225 07 67 15 01 56
             </Button>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <Button
                 variant="outline"
@@ -176,7 +175,9 @@ export default function HelpCenter() {
               <AccordionItem value="item-10">
                 <AccordionTrigger>Mes données personnelles sont-elles sécurisées ?</AccordionTrigger>
                 <AccordionContent>
-                  Oui, nous utilisons un cryptage de niveau bancaire pour protéger vos données. Consultez notre politique de confidentialité pour plus de détails sur la protection de vos informations.
+                  <p className="text-sm text-gray-600 mb-4">
+                    Pour toute question concernant vos données personnelles, contactez-nous :
+                  </p>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
