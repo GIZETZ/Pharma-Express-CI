@@ -10,11 +10,36 @@ export default function PendingValidation() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    // Simulate checking validation status
-    setTimeout(() => {
-      setIsRefreshing(false);
+    try {
+      // Fetch updated user data from server
+      const response = await fetch('/api/auth/user', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        
+        // Check if user is now approved
+        if (userData.verificationStatus === 'approved' && 
+            (userData.role !== 'livreur' || userData.deliveryApplicationStatus === 'approved')) {
+          // User is approved, redirect to appropriate dashboard
+          window.location.href = userData.role === 'livreur' ? '/dashboard-livreur' : 
+                                userData.role === 'pharmacien' ? '/dashboard-pharmacien' : '/dashboard-patient';
+        } else {
+          // Still pending, just reload the page to show any updates
+          window.location.reload();
+        }
+      } else {
+        // Error or unauthorized, reload page
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Erreur lors de la vérification du statut:', error);
       window.location.reload();
-    }, 2000);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const getRoleDisplayName = () => {

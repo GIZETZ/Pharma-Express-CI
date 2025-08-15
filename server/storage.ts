@@ -321,8 +321,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date(),
       // Default values for new fields related to delivery applications
       appliedPharmacyId: undefined,
-      deliveryApplicationStatus: user.role === 'livreur' ? 
-        (user.phone?.includes("987654321") || user.phone?.includes("123456789") ? 'approved' : 'pending') : 'none',
+      deliveryApplicationStatus: user.role === 'livreur' ? 'pending' : 'none',
       pharmacyId: undefined, // This will be set upon approval
     };
 

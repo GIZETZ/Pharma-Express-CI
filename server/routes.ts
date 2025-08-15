@@ -131,16 +131,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Set verification status based on role
       let verificationStatus = "approved"; // Default for patients
       if (validatedData.role === "pharmacien" || validatedData.role === "livreur") {
-        // For development testing, auto-approve test accounts
-        if (validatedData.phone.includes("987654321") || validatedData.phone.includes("123456789")) {
-          console.log(`🚀 Auto-approving test account: ${validatedData.phone}`);
-          verificationStatus = "approved";
-        } else {
-          verificationStatus = "pending"; // Requires admin validation
-        }
+        verificationStatus = "pending"; // Requires admin validation
       }
-
-      console.log(`📋 Registration - Phone: ${validatedData.phone}, Role: ${validatedData.role}, Status: ${verificationStatus}`);
 
       // Process uploaded documents
       let idDocumentUrl = null;
