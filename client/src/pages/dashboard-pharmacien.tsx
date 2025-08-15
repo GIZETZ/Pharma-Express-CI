@@ -662,7 +662,7 @@ export default function DashboardPharmacien() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="orders">
               Nouvelles Commandes
               {orders?.filter((o: any) => o.status === 'pending')?.length > 0 && (
@@ -671,8 +671,6 @@ export default function DashboardPharmacien() {
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="prescriptions">Vérification</TabsTrigger>
-            <TabsTrigger value="pricing">Prix & Alternatives</TabsTrigger>
             <TabsTrigger value="preparation">
               Livraison & Livreurs
               {orders?.filter((o: any) => o.status === 'confirmed' || o.status === 'ready_for_delivery')?.length > 0 && (
@@ -1408,103 +1406,7 @@ export default function DashboardPharmacien() {
             </div>
           </TabsContent>
 
-          {/* Vérification des Médicaments */}
-          <TabsContent value="prescriptions">
-            <Card>
-              <CardHeader>
-                <CardTitle>🔍 Vérification des Médicaments</CardTitle>
-                <CardDescription>
-                  Vérifiez la disponibilité et conformité des médicaments
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {prescriptionsLoading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                      <p className="mt-4 text-gray-600">Chargement des prescriptions...</p>
-                    </div>
-                  ) : prescriptions?.length === 0 ? (
-                    <div className="text-center py-8">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        🔍
-                      </div>
-                      <h3 className="font-semibold mb-2">Aucune prescription à vérifier</h3>
-                      <p className="text-sm text-gray-600">Les prescriptions à vérifier apparaîtront ici</p>
-                    </div>
-                  ) : prescriptions?.map((prescription: any) => (
-                    <div key={prescription.id} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="font-semibold">Ordonnance #{prescription.id.slice(0, 8)}</h4>
-                          <p className="text-sm text-gray-600">
-                            Patient: {prescription.user?.firstName} {prescription.user?.lastName}
-                          </p>
-                        </div>
-                        <Badge variant="outline">À vérifier</Badge>
-                      </div>
-
-                      <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                        <p className="text-sm font-medium mb-2">Médicaments prescrits:</p>
-                        <div className="space-y-1">
-                          {prescription.medications?.map((med: any, index: number) => (
-                            <div key={index} className="flex items-center justify-between text-sm">
-                              <span>{med.name} - {med.dosage}</span>
-                              <Badge variant={med.available ? "default" : "destructive"}>
-                                {med.available ? "Disponible" : "Indisponible"}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={() => handleOrderUpdate(prescription.id, 'confirmed')}
-                          disabled={updateOrderMutation.isPending}
-                        >
-                          ✅ Valider
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleOrderUpdate(prescription.id, 'rejected')}
-                          disabled={updateOrderMutation.isPending}
-                        >
-                          ❌ Rejeter
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Proposition de Prix et Alternatives */}
-          <TabsContent value="pricing">
-            <Card>
-              <CardHeader>
-                <CardTitle>💰 Proposition de Prix & Alternatives</CardTitle>
-                <CardDescription>
-                  Définissez les prix et proposez des alternatives si nécessaire
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    💰
-                  </div>
-                  <h3 className="font-semibold mb-2">Module de Tarification</h3>
-                  <p className="text-sm text-gray-600">
-                    Fonctionnalité de gestion des prix en développement
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          
 
           {/* Validation et Préparation */}
           <TabsContent value="preparation">
