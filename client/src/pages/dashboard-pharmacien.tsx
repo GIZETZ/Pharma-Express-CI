@@ -20,18 +20,25 @@ function DeliveryApplicationsManager() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: applications, isLoading } = useQuery({
+  const { data: applications, isLoading, error } = useQuery({
     queryKey: ["/api/pharmacien/delivery-applications"],
     enabled: true,
     queryFn: async () => {
+      console.log('🔄 Fetching delivery applications...');
       const response = await fetch("/api/pharmacien/delivery-applications", {
         credentials: 'include'
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch applications');
+        const errorText = await response.text();
+        console.error('❌ Failed to fetch applications:', response.status, errorText);
+        throw new Error(`Failed to fetch applications: ${response.status}`);
       }
-      return response.json();
-    }
+      const data = await response.json();
+      console.log('📬 Applications received:', data);
+      return data;
+    },
+    refetchInterval: 10000, // Refresh every 10 seconds
+    retry: 3
   });
 
   const respondToApplicationMutation = useMutation({
@@ -63,7 +70,32 @@ function DeliveryApplicationsManager() {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+        <p className="ml-2 text-gray-600">Chargement des candidatures...</p>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            ⚠️
+          </div>
+          <h3 className="text-lg font-semibold text-red-700 mb-2">
+            Erreur de chargement
+          </h3>
+          <p className="text-red-600 mb-4">
+            Impossible de charger les candidatures: {error.message}
+          </p>
+          <Button 
+            onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/pharmacien/delivery-applications"] })}
+            variant="outline"
+          >
+            Réessayer
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 

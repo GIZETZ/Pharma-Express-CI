@@ -1559,17 +1559,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/pharmacien/delivery-applications', requireAuth, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.session.userId);
+      console.log('🏥 Pharmacien requesting applications:', {
+        userId: req.session.userId,
+        userRole: user?.role,
+        pharmacyId: user?.pharmacyId
+      });
+
       if (!user || user.role !== 'pharmacien') {
         return res.status(403).json({ message: 'Access denied' });
       }
 
       // Récupérer la pharmacie du pharmacien
-      const pharmacy = user.pharmacyId ? await storage.getPharmacy(user.pharmacyId) : null;
+      let pharmacy = null;
+      if (user.pharmacyId) {
+        pharmacy = await storage.getPharmacy(user.pharmacyId);
+      }
+
+      // Fallback: chercher par téléphone si pas de pharmacyId
       if (!pharmacy) {
+        const allPharmacies = await storage.getPharmacies();
+        pharmacy = allPharmacies.find(p => p.phone === user.phone);
+        
+        if (pharmacy) {
+          // Mettre à jour l'utilisateur avec l'ID de pharmacie
+          await storage.updateUser(req.session.userId, { pharmacyId: pharmacy.id });
+          console.log('📋 Pharmacie trouvée par téléphone et mise à jour:', pharmacy.id);
+        }
+      }
+
+      if (!pharmacy) {
+        console.log('❌ Aucune pharmacie trouvée pour le pharmacien');
         return res.status(404).json({ message: 'Pharmacy not found' });
       }
 
+      console.log('🏪 Pharmacie trouvée:', {
+        id: pharmacy.id,
+        name: pharmacy.name,
+        phone: pharmacy.phone
+      });
+
       const applications = await storage.getDeliveryApplicationsForPharmacy(pharmacy.id);
+      console.log(`📬 Retour de ${applications.length} candidatures`);
+      
       res.json(applications);
     } catch (error) {
       console.error('Error fetching delivery applications:', error);

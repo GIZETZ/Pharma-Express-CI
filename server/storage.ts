@@ -232,6 +232,9 @@ export class MemStorage implements IStorage {
 
     // Créer des commandes de test pour le dashboard livreur
     await this.createTestDeliveryOrders();
+    
+    // Créer des candidatures de test pour les pharmacies
+    await this.createTestDeliveryApplications();
   }
 
   private async createTestDeliveryOrders() {
@@ -298,6 +301,66 @@ export class MemStorage implements IStorage {
     }
 
     console.log(`✅ ${testOrders.length} commandes de test créées pour le dashboard livreur`);
+  }
+
+  private async createTestDeliveryApplications() {
+    // Récupérer les pharmacies et créer quelques livreurs candidats
+    const pharmacies = Array.from(this.pharmacies.values());
+    if (pharmacies.length === 0) return;
+
+    // Créer des livreurs candidats
+    const testDeliveryApplicants = [
+      {
+        firstName: "Mohamed",
+        lastName: "Traore",
+        phone: "+225 07 88 99 00",
+        address: "Adjamé, Abidjan",
+        password: "livreur456",
+        role: "livreur" as const,
+        language: "fr",
+        isActive: true,
+        verificationStatus: "approved" as const,
+        deliveryApplicationStatus: "pending" as const,
+        appliedPharmacyId: pharmacies[0].id // Postule à la première pharmacie
+      },
+      {
+        firstName: "Fatou",
+        lastName: "Coulibaly",
+        phone: "+225 05 11 22 33",
+        address: "Treichville, Abidjan",
+        password: "livreur789",
+        role: "livreur" as const,
+        language: "fr",
+        isActive: true,
+        verificationStatus: "approved" as const,
+        deliveryApplicationStatus: "pending" as const,
+        appliedPharmacyId: pharmacies[1] ? pharmacies[1].id : pharmacies[0].id // Postule à la deuxième pharmacie ou première si pas de deuxième
+      },
+      {
+        firstName: "Ibrahim",
+        lastName: "Ouattara",
+        phone: "+225 01 44 55 66",
+        address: "Koumassi, Abidjan",
+        password: "livreur101",
+        role: "livreur" as const,
+        language: "fr",
+        isActive: true,
+        verificationStatus: "approved" as const,
+        deliveryApplicationStatus: "pending" as const,
+        appliedPharmacyId: pharmacies[0].id // Postule aussi à la première pharmacie
+      }
+    ];
+
+    for (const applicantData of testDeliveryApplicants) {
+      // Vérifier qu'un utilisateur avec ce téléphone n'existe pas déjà
+      const existingUser = await this.getUserByPhone(applicantData.phone);
+      if (!existingUser) {
+        await this.createUser(applicantData);
+        console.log(`✅ Candidat livreur créé: ${applicantData.firstName} ${applicantData.lastName} -> Pharmacie ${applicantData.appliedPharmacyId}`);
+      }
+    }
+
+    console.log(`✅ ${testDeliveryApplicants.length} candidatures de livreurs créées pour test`);
   }
 
   // User operations
@@ -852,11 +915,26 @@ export class MemStorage implements IStorage {
 
   // New method to get pending delivery applications for a specific pharmacy
   async getDeliveryApplicationsForPharmacy(pharmacyId: string): Promise<any[]> {
-    const applications = Array.from(this.users.values()).filter(user => 
-      user.role === 'livreur' && 
-      user.appliedPharmacyId === pharmacyId &&
-      user.deliveryApplicationStatus === 'pending'
-    );
+    console.log('🔍 Recherche des candidatures pour pharmacie:', pharmacyId);
+    
+    const applications = Array.from(this.users.values()).filter(user => {
+      const isLivreur = user.role === 'livreur';
+      const hasApplied = user.appliedPharmacyId === pharmacyId;
+      const isPending = user.deliveryApplicationStatus === 'pending';
+      
+      console.log(`User ${user.firstName} ${user.lastName}:`, {
+        isLivreur,
+        appliedPharmacyId: user.appliedPharmacyId,
+        hasApplied,
+        deliveryApplicationStatus: user.deliveryApplicationStatus,
+        isPending,
+        matches: isLivreur && hasApplied && isPending
+      });
+      
+      return isLivreur && hasApplied && isPending;
+    });
+
+    console.log(`📋 Trouvé ${applications.length} candidatures pour la pharmacie ${pharmacyId}`);
 
     return applications.map(user => ({
       id: user.id,
@@ -865,7 +943,9 @@ export class MemStorage implements IStorage {
       phone: user.phone,
       address: user.address,
       createdAt: user.createdAt,
-      verificationStatus: user.verificationStatus
+      verificationStatus: user.verificationStatus,
+      appliedPharmacyId: user.appliedPharmacyId,
+      deliveryApplicationStatus: user.deliveryApplicationStatus
     }));
   }
 
