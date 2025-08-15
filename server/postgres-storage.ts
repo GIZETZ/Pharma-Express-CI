@@ -452,4 +452,186 @@ export class PostgresStorage implements IStorage {
     const result = await db.update(notifications).set({ isRead: true }).where(eq(notifications.id, id)).returning();
     return result[0];
   }
+
+  // Additional methods for pharmacy management
+  async getAllPharmacistOrders(): Promise<Order[]> {
+    return await db.select().from(orders).orderBy(desc(orders.createdAt));
+  }
+
+  async getPharmacistOrders(pharmacyId: string): Promise<Order[]> {
+    return await db.select().from(orders).where(eq(orders.pharmacyId, pharmacyId)).orderBy(desc(orders.createdAt));
+  }
+
+  async getAllPrescriptions(): Promise<Prescription[]> {
+    return await db.select().from(prescriptions).orderBy(desc(prescriptions.createdAt));
+  }
+
+  // Delivery application methods
+  async getPharmacyOwner(pharmacyId: string): Promise<User | null> {
+    // Try to find user by pharmacyId first
+    const ownerByPharmacyId = await db.select().from(users).where(
+      and(
+        eq(users.role, 'pharmacien'),
+        eq(users.pharmacyId, pharmacyId)
+      )
+    ).limit(1);
+    
+    if (ownerByPharmacyId.length > 0) {
+      return ownerByPharmacyId[0];
+    }
+
+    // Fallback: find by pharmacy phone number
+    const pharmacy = await this.getPharmacy(pharmacyId);
+    if (pharmacy?.phone) {
+      const ownerByPhone = await db.select().from(users).where(
+        and(
+          eq(users.role, 'pharmacien'),
+          eq(users.phone, pharmacy.phone)
+        )
+      ).limit(1);
+      
+      if (ownerByPhone.length > 0) {
+        // Update user with pharmacy ID for future reference
+        await this.updateUser(ownerByPhone[0].id, { pharmacyId });
+        return ownerByPhone[0];
+      }
+    }
+    
+    return null;
+  }
+
+  async getDeliveryApplicationsForPharmacy(pharmacyId: string): Promise<User[]> {
+    return await db.select().from(users).where(
+      and(
+        eq(users.role, 'livreur'),
+        eq(users.appliedPharmacyId, pharmacyId),
+        eq(users.deliveryApplicationStatus, 'pending')
+      )
+    );
+  }
+
+  async respondToDeliveryApplication(applicationId: string, action: string, pharmacyId: string | undefined): Promise<User | null> {
+    const user = await this.getUser(applicationId);
+    if (!user || user.role !== 'livreur' || user.deliveryApplicationStatus !== 'pending') {
+      return null;
+    }
+
+    const updates: any = {
+      updatedAt: new Date(),
+    };
+
+    if (action === 'approve') {
+      updates.deliveryApplicationStatus = 'approved';
+      updates.pharmacyId = pharmacyId;
+      updates.appliedPharmacyId = null;
+
+      // Create notification for the livreur
+      await this.createNotification({
+        userId: user.id,
+        title: 'Candidature acceptée !',
+        body: 'Félicitations ! Votre candidature a été acceptée. Vous pouvez maintenant accéder à votre tableau de bord.',
+        type: 'delivery_application_response',
+        isRead: false,
+      });
+    } else { // action === 'reject'
+      updates.deliveryApplicationStatus = 'rejected';
+      updates.appliedPharmacyId = null;
+
+      // Create notification for the livreur
+      await this.createNotification({
+        userId: user.id,
+        title: 'Candidature non retenue',
+        body: 'Votre candidature n\'a pas été retenue cette fois. Vous pouvez postuler à une autre pharmacie.',
+        type: 'delivery_application_response',
+        isRead: false,
+      });
+    }
+
+    const result = await db.update(users).set(updates).where(eq(users.id, applicationId)).returning();
+    return result[0] || null;
+  }
+
+  // Admin methods
+  async getAllOrdersForAdmin(): Promise<any[]> {
+    const allOrders = await db.select().from(orders).orderBy(desc(orders.createdAt));
+    
+    return allOrders.map(order => ({
+      ...order,
+      pharmacy: null, // Would need joins to populate
+      patient: null,  // Would need joins to populate
+      deliveryPerson: null, // Would need joins to populate
+      totalAmount: order.totalAmount || '0'
+    }));
+  }
+
+  async getWeeklyStats(weekDate: Date): Promise<{ totalRevenue: number; ordersCount: number }> {
+    const startOfWeek = new Date(weekDate);
+    startOfWeek.setDate(weekDate.getDate() - weekDate.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    const weekOrders = await db.select().from(orders).where(
+      and(
+        // Date filtering would need proper SQL date functions
+        or(
+          eq(orders.status, 'confirmed'),
+          eq(orders.status, 'ready_for_delivery'),
+          eq(orders.status, 'in_delivery'),
+          eq(orders.status, 'delivered')
+        )
+      )
+    );
+
+    const totalRevenue = weekOrders.reduce((sum, order) => {
+      return sum + (parseFloat(order.totalAmount || '0') || 0);
+    }, 0);
+
+    return {
+      totalRevenue,
+      ordersCount: weekOrders.length
+    };
+  }
+
+  async getAllPharmaciesForAdmin(): Promise<any[]> {
+    return await db.select().from(pharmacies);
+  }
+
+  async getAllDeliveryPersonnelForAdmin(): Promise<any[]> {
+    const deliveryPersonnel = await db.select().from(users).where(eq(users.role, 'livreur'));
+    
+    return deliveryPersonnel.map(person => ({
+      ...person,
+      totalDeliveries: 0, // Would need proper counting
+      activeDeliveries: 0, // Would need proper counting
+      pharmacyName: null, // Would need joins
+      rating: 5.0,
+      isActive: person.isActive !== false
+    }));
+  }
+
+  // Order management methods
+  async getOrderById(orderId: string): Promise<Order | undefined> {
+    return this.getOrder(orderId);
+  }
+
+  async updateOrderStatus(id: string, status: string, totalAmount?: number): Promise<Order | undefined> {
+    const updates: any = { 
+      status, 
+      updatedAt: new Date() 
+    };
+    
+    if (totalAmount !== undefined) {
+      updates.totalAmount = totalAmount.toString();
+    }
+    
+    if (status === 'delivered') {
+      updates.deliveredAt = new Date();
+    }
+    
+    const result = await db.update(orders).set(updates).where(eq(orders.id, id)).returning();
+    return result[0];
+  }
 }
