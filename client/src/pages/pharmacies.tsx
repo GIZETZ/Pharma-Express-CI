@@ -274,7 +274,7 @@ export default function Pharmacies() {
                               disabled={
                                 applyToPharmacyMutation.isPending || 
                                 user?.deliveryApplicationStatus === 'pending' ||
-                                user?.deliveryApplicationStatus === 'approved' ||
+                                (user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId !== pharmacy.id) ||
                                 pharmacy.isOpen === false
                               }
                             >
@@ -283,13 +283,17 @@ export default function Pharmacies() {
                                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                                   Envoi...
                                 </div>
-                              ) : user?.deliveryApplicationStatus === 'approved' ? (
+                              ) : user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId === pharmacy.id ? (
                                 <div className="flex items-center gap-1">
                                   <UserCheck className="h-4 w-4" />
                                   Embauché
                                 </div>
-                              ) : user?.deliveryApplicationStatus === 'pending' ? (
+                              ) : user?.deliveryApplicationStatus === 'pending' && user?.appliedPharmacyId === pharmacy.id ? (
                                 'Candidature en cours'
+                              ) : user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId !== pharmacy.id ? (
+                                'Déjà embauché ailleurs'
+                              ) : user?.deliveryApplicationStatus === 'pending' && user?.appliedPharmacyId !== pharmacy.id ? (
+                                'Candidature en cours ailleurs'
                               ) : pharmacy.isOpen === false ? (
                                 'Fermée'
                               ) : (
