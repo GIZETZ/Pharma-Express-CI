@@ -276,7 +276,7 @@ export default function Pharmacies() {
                               }}
                               disabled={
                                 user?.deliveryApplicationStatus === 'pending' ||
-                                (user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId !== pharmacy.id) ||
+                                (user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId && user?.pharmacyId !== pharmacy.id) ||
                                 pharmacy.isOpen === false
                               }
                             >
@@ -287,9 +287,9 @@ export default function Pharmacies() {
                                 </div>
                               ) : user?.deliveryApplicationStatus === 'pending' && user?.appliedPharmacyId === pharmacy.id ? (
                                 'Candidature en cours'
-                              ) : user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId !== pharmacy.id ? (
+                              ) : user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId && user?.pharmacyId !== pharmacy.id ? (
                                 'Déjà embauché ailleurs'
-                              ) : user?.deliveryApplicationStatus === 'pending' && user?.appliedPharmacyId !== pharmacy.id ? (
+                              ) : user?.deliveryApplicationStatus === 'pending' && user?.appliedPharmacyId && user?.appliedPharmacyId !== pharmacy.id ? (
                                 'Candidature en cours ailleurs'
                               ) : pharmacy.isOpen === false ? (
                                 'Fermée'
