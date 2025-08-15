@@ -1455,15 +1455,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cvDocument: files?.cvDocument?.[0] ? `uploaded_${Date.now()}_cv.${files.cvDocument[0].originalname.split('.').pop()}` : null,
       };
 
-      // Mettre à jour le profil du livreur avec toutes les informations
-      const updatedUser = await storage.updateUser(req.session.userId, {
+      // Préparer les données à mettre à jour
+      const updateData: any = {
         appliedPharmacyId: pharmacyId,
         deliveryApplicationStatus: 'pending',
-        phone: phone,
         idDocumentUrl: documents.idDocument,
         drivingLicenseUrl: documents.drivingLicense,
-        // Stocker également les données de candidature dans des champs personnalisés si nécessaire
-      });
+      };
+
+      // Ne mettre à jour le téléphone que s'il est différent de l'existant
+      if (phone && phone !== user.phone) {
+        updateData.phone = phone;
+      }
+
+      // Mettre à jour le profil du livreur avec toutes les informations
+      const updatedUser = await storage.updateUser(req.session.userId, updateData);
 
       // Créer une notification pour la pharmacie
       try {
