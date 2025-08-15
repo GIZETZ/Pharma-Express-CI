@@ -82,6 +82,11 @@ Repository: https://github.com/GIZETZ/Pharma-Express-CI.git
 
 ### Recent Changes (January 2025)
 - ✅ Migration from Replit Agent to standard Replit environment completed (August 13, 2025)
+- ✅ **DELIVERY PERSONNEL APPROVAL WORKFLOW FIXED** (August 15, 2025)
+  - Resolved critical issue with livreur account approval process
+  - Fixed missing admin validation API route usage
+  - Confirmed delivery personnel can now access dashboard after approval
+  - Created comprehensive test accounts for validation workflow
 - ✅ **PHARMACIST MEDICATION MANAGEMENT**: Complete medication workflow enhancement (August 13, 2025)
   - Pharmacists can add new medications directly from prescription photos
   - Ability to edit/modify medication names entered by patients
