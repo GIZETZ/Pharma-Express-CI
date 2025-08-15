@@ -1,18 +1,22 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import BottomNavigation from "@/components/bottom-navigation";
-import { MapPin, Clock, Star, Phone } from "lucide-react";
+import { MapPin, Clock, Star, Phone, UserCheck, Briefcase } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Pharmacies() {
   const { user } = useAuth();
   const [location, navigate] = useLocation();
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [currentAddress, setCurrentAddress] = useState<string>("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   // Géolocalisation automatique
   useEffect(() => {
     if (navigator.geolocation) {
@@ -108,6 +112,30 @@ export default function Pharmacies() {
     return R * c; // Distance in kilometers
   };
 
+  // Mutation pour postuler à une pharmacie (livreurs uniquement)
+  const applyToPharmacyMutation = useMutation({
+    mutationFn: async (pharmacyId: string) => {
+      return apiRequest('/api/livreur/apply-to-pharmacy', {
+        method: 'POST',
+        body: { pharmacyId }
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Candidature envoyée !",
+        description: "Votre candidature a été envoyée à la pharmacie. Vous recevrez une notification dès qu'elle sera traitée.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible d'envoyer la candidature",
+        variant: "destructive",
+      });
+    }
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 pb-20">
       <div className="max-w-6xl mx-auto">
@@ -115,10 +143,13 @@ export default function Pharmacies() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold text-blue-600 mb-2">
-                🏥 Pharmacies & Commandes
+                {user?.role === 'livreur' ? '🚚 Postuler dans une Pharmacie' : '🏥 Pharmacies & Commandes'}
               </h1>
               <p className="text-gray-600">
-                Bienvenue {user?.firstName} ! Localisez une pharmacie et passez commande
+                {user?.role === 'livreur' 
+                  ? `Bienvenue ${user?.firstName} ! Choisissez une pharmacie pour postuler comme livreur`
+                  : `Bienvenue ${user?.firstName} ! Localisez une pharmacie et passez commande`
+                }
               </p>
             </div>
             <Button 
@@ -146,13 +177,20 @@ export default function Pharmacies() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              Localiser une Pharmacie
+              {user?.role === 'livreur' ? <Briefcase className="h-5 w-5" /> : <MapPin className="h-5 w-5" />}
+              {user?.role === 'livreur' ? 'Pharmacies Disponibles' : 'Localiser une Pharmacie'}
             </CardTitle>
             <CardDescription>
-              {userLocation 
-                ? "Pharmacies triées par proximité selon votre position" 
-                : "Trouvez les pharmacies disponibles"}
+              {user?.role === 'livreur' 
+                ? (userLocation 
+                    ? "Choisissez une pharmacie pour postuler comme livreur (triées par proximité)"
+                    : "Choisissez une pharmacie pour postuler comme livreur"
+                  )
+                : (userLocation 
+                    ? "Pharmacies triées par proximité selon votre position" 
+                    : "Trouvez les pharmacies disponibles"
+                  )
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -206,6 +244,16 @@ export default function Pharmacies() {
                                   Plus proche
                                 </Badge>
                               )}
+                              {user?.role === 'livreur' && user?.deliveryApplicationStatus === 'approved' && user?.pharmacyId === pharmacy.id && (
+                                <Badge variant="default" className="text-xs bg-green-600">
+                                  Mon employeur
+                                </Badge>
+                              )}
+                              {user?.role === 'livreur' && user?.appliedPharmacyId === pharmacy.id && user?.deliveryApplicationStatus === 'pending' && (
+                                <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+                                  Candidature en attente
+                                </Badge>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center justify-between text-sm mb-3">
@@ -218,17 +266,52 @@ export default function Pharmacies() {
                               {pharmacy.deliveryTime || '30'} min
                             </span>
                           </div>
-                          <Button 
-                            className="w-full" 
-                            size="sm" 
-                            onClick={() => {
-                              localStorage.setItem('selectedPharmacy', JSON.stringify(pharmacy));
-                              navigate('/order');
-                            }}
-                            disabled={pharmacy.isOpen === false}
-                          >
-                            {pharmacy.isOpen !== false ? 'Sélectionner' : 'Fermée'}
-                          </Button>
+                          {user?.role === 'livreur' ? (
+                            <Button 
+                              className="w-full" 
+                              size="sm" 
+                              onClick={() => applyToPharmacyMutation.mutate(pharmacy.id)}
+                              disabled={
+                                applyToPharmacyMutation.isPending || 
+                                user?.deliveryApplicationStatus === 'pending' ||
+                                user?.deliveryApplicationStatus === 'approved' ||
+                                pharmacy.isOpen === false
+                              }
+                            >
+                              {applyToPharmacyMutation.isPending ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  Envoi...
+                                </div>
+                              ) : user?.deliveryApplicationStatus === 'approved' ? (
+                                <div className="flex items-center gap-1">
+                                  <UserCheck className="h-4 w-4" />
+                                  Embauché
+                                </div>
+                              ) : user?.deliveryApplicationStatus === 'pending' ? (
+                                'Candidature en cours'
+                              ) : pharmacy.isOpen === false ? (
+                                'Fermée'
+                              ) : (
+                                <div className="flex items-center gap-1">
+                                  <Briefcase className="h-4 w-4" />
+                                  Postuler
+                                </div>
+                              )}
+                            </Button>
+                          ) : (
+                            <Button 
+                              className="w-full" 
+                              size="sm" 
+                              onClick={() => {
+                                localStorage.setItem('selectedPharmacy', JSON.stringify(pharmacy));
+                                navigate('/order');
+                              }}
+                              disabled={pharmacy.isOpen === false}
+                            >
+                              {pharmacy.isOpen !== false ? 'Sélectionner' : 'Fermée'}
+                            </Button>
+                          )}
                         </CardContent>
                       </Card>
                     );
@@ -236,8 +319,17 @@ export default function Pharmacies() {
                 ) : (
                   <div className="col-span-full text-center py-8">
                     <div className="text-gray-500 mb-4">
-                      <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>Aucune pharmacie trouvée</p>
+                      {user?.role === 'livreur' ? (
+                        <Briefcase className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      ) : (
+                        <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      )}
+                      <p>
+                        {user?.role === 'livreur' 
+                          ? 'Aucune pharmacie disponible pour postuler'
+                          : 'Aucune pharmacie trouvée'
+                        }
+                      </p>
                       <p className="text-sm">Veuillez réessayer plus tard</p>
                     </div>
                     <Button 
