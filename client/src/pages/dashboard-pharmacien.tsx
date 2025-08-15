@@ -653,6 +653,14 @@ export default function DashboardPharmacien() {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => setActiveTab('applications')}
+                className="bg-orange-50 hover:bg-orange-100 border-orange-200"
+              >
+                👥 Candidatures Livreurs
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => window.location.href = '/create-pharmacy'}
                 className="bg-green-50 hover:bg-green-100 border-green-200"
               >
@@ -663,7 +671,7 @@ export default function DashboardPharmacien() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="orders">
               Nouvelles Commandes
               {orders?.filter((o: any) => o.status === 'pending')?.length > 0 && (
@@ -679,9 +687,6 @@ export default function DashboardPharmacien() {
                   {orders.filter((o: any) => o.status === 'confirmed' || o.status === 'ready_for_delivery').length}
                 </Badge>
               )}
-            </TabsTrigger>
-            <TabsTrigger value="applications">
-              Candidatures Livreurs
             </TabsTrigger>
           </TabsList>
 

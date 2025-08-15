@@ -852,6 +852,43 @@ export class MemStorage implements IStorage {
     }));
   }
 
+  // New method to get pharmacist orders
+  async getPharmacistOrders(pharmacyId: string): Promise<any[]> {
+    const orders = Array.from(this.orders.values()).filter(order => 
+      order.pharmacyId === pharmacyId
+    );
+
+    // Enrich with user and pharmacy data
+    return orders.map(order => ({
+      ...order,
+      user: this.users.get(order.userId),
+      pharmacy: this.pharmacies.get(order.pharmacyId)
+    }));
+  }
+
+  // New method to get all pharmacist orders (fallback)
+  async getAllPharmacistOrders(): Promise<any[]> {
+    const orders = Array.from(this.orders.values());
+
+    // Enrich with user and pharmacy data
+    return orders.map(order => ({
+      ...order,
+      user: this.users.get(order.userId),
+      pharmacy: this.pharmacies.get(order.pharmacyId)
+    }));
+  }
+
+  // New method to get all prescriptions
+  async getAllPrescriptions(): Promise<any[]> {
+    const prescriptions = Array.from(this.prescriptions.values());
+
+    // Enrich with user data
+    return prescriptions.map(prescription => ({
+      ...prescription,
+      user: this.users.get(prescription.userId)
+    }));
+  }
+
   // New method to respond to a delivery application (approve or reject)
   async respondToDeliveryApplication(applicationId: string, action: string, pharmacyId: string | undefined): Promise<any | null> {
     const user = this.users.get(applicationId);

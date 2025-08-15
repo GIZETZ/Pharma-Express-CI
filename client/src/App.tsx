@@ -32,6 +32,7 @@ import DashboardAdmin from "@/pages/dashboard-admin";
 import PharmacyProfile from "@/pages/pharmacy-profile";
 import CreatePharmacy from "@/pages/create-pharmacy";
 import DeliveryApplication from "@/pages/delivery-application";
+import ApplicationStatus from "@/pages/application-status";
 import { lazy } from 'react';
 
 
