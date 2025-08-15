@@ -35,9 +35,9 @@ export default function DeliveryTracking() {
   const pharmacyMarkerRef = useRef<L.Marker | null>(null);
   const routePolylineRef = useRef<L.Polyline | null>(null);
 
-  // Mapbox configuration
-  const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_KEY || 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
-  const MAPBOX_STYLE = 'mapbox://styles/mapbox/streets-v11';
+  // OpenStreetMap configuration (free alternative)
+  const OSM_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const OSM_ATTRIBUTION = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
   // Get current order being tracked
   const { data: currentOrder, isLoading: orderLoading } = useQuery<Order>({
@@ -60,11 +60,10 @@ export default function DeliveryTracking() {
       zoomControl: true,
     });
 
-    // Add Mapbox tile layer
-    L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=${MAPBOX_ACCESS_TOKEN}`, {
-      attribution: '© <a href="https://www.mapbox.com/">Mapbox</a> © <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
-      tileSize: 512,
-      zoomOffset: -1,
+    // Add OpenStreetMap tile layer
+    L.tileLayer(OSM_TILE_URL, {
+      attribution: OSM_ATTRIBUTION,
+      maxZoom: 19,
     }).addTo(initialMap);
 
     setMap(initialMap);
@@ -72,7 +71,7 @@ export default function DeliveryTracking() {
     return () => {
       initialMap.remove();
     };
-  }, [mapRef, MAPBOX_ACCESS_TOKEN]);
+  }, [mapRef]);
 
   // Add user marker when location is available
   useEffect(() => {
