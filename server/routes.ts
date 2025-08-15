@@ -33,6 +33,29 @@ const upload = multer({
   },
 });
 
+// Multer configuration for delivery applications (allows documents)
+const uploadDeliveryDocs = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'image/jpeg', 
+      'image/png', 
+      'image/webp',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPEG, PNG, WebP, PDF and Word documents are allowed.'));
+    }
+  },
+});
+
 // Interface pour les sessions
 declare module 'express-session' {
   interface SessionData {
@@ -1400,7 +1423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Nouvelle API : Candidature complète avec documents
-  app.post('/api/delivery/apply', requireAuth, upload.fields([
+  app.post('/api/delivery/apply', requireAuth, uploadDeliveryDocs.fields([
     { name: 'idDocument', maxCount: 1 },
     { name: 'drivingLicense', maxCount: 1 },
     { name: 'cvDocument', maxCount: 1 }

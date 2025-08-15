@@ -302,7 +302,7 @@ export default function DeliveryApplication() {
                         <FormControl>
                           <Input
                             type="file"
-                            accept="image/*,.pdf,.doc,.docx"
+                            accept="image/*,.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                             onChange={(e) => field.onChange(e.target.files)}
                             data-testid="input-cv"
                           />
