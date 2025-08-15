@@ -66,10 +66,18 @@ export default function DeliveryApplication() {
         formData.append('cvDocument', data.cvDocument[0]);
       }
 
-      return await apiRequest('/api/delivery/apply', {
+      const response = await fetch('/api/delivery/apply', {
         method: 'POST',
         body: formData,
+        credentials: 'include',
       });
+
+      if (!response.ok) {
+        const text = (await response.text()) || response.statusText;
+        throw new Error(`${response.status}: ${text}`);
+      }
+
+      return await response.json();
     },
     onSuccess: () => {
       toast({
