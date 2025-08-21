@@ -1,0 +1,51 @@
+2025-08-09T14:19:12.734807036Z #12 DONE 0.0s
+2025-08-09T14:19:12.734810716Z 
+2025-08-09T14:19:12.734814547Z #13 [base 5/9] COPY tsconfig.json ./
+2025-08-09T14:19:12.734818336Z #13 DONE 0.0s
+2025-08-09T14:19:12.734821877Z 
+2025-08-09T14:19:12.734825657Z #14 [base 6/9] COPY vite.config.ts ./
+2025-08-09T14:19:12.734829517Z #14 DONE 0.0s
+2025-08-09T14:19:12.885311581Z 
+2025-08-09T14:19:12.885337341Z #15 [base 7/9] COPY tailwind.config.ts ./
+2025-08-09T14:19:12.885341101Z #15 DONE 0.0s
+2025-08-09T14:19:12.885344001Z 
+2025-08-09T14:19:12.885347251Z #16 [base 8/9] COPY postcss.config.js ./
+2025-08-09T14:19:12.885350131Z #16 DONE 0.0s
+2025-08-09T14:19:12.885352921Z 
+2025-08-09T14:19:12.885355951Z #17 [base 9/9] COPY drizzle.config.ts ./
+2025-08-09T14:19:12.885358781Z #17 DONE 0.0s
+2025-08-09T14:19:12.885361451Z 
+2025-08-09T14:19:12.885364642Z #18 [deps 1/1] RUN npm ci --only=production && npm ci --only=development
+2025-08-09T14:19:13.01057705Z #18 0.181 npm warn config only Use `--omit=dev` to omit dev dependencies from the install.
+2025-08-09T14:19:13.913150167Z #18 0.978 npm warn EBADENGINE Unsupported engine {
+2025-08-09T14:19:13.913166557Z #18 0.978 npm warn EBADENGINE   package: 'cross-env@10.0.0',
+2025-08-09T14:19:13.913169997Z #18 0.978 npm warn EBADENGINE   required: { node: '>=20' },
+2025-08-09T14:19:13.913173457Z #18 0.978 npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+2025-08-09T14:19:13.913177027Z #18 0.978 npm warn EBADENGINE }
+2025-08-09T14:19:24.599246455Z #18 11.65 
+2025-08-09T14:19:24.599270705Z #18 11.65 added 421 packages, and audited 422 packages in 12s
+2025-08-09T14:19:24.599275155Z #18 11.65 
+2025-08-09T14:19:24.599279355Z #18 11.65 56 packages are looking for funding
+2025-08-09T14:19:24.599282845Z #18 11.65   run `npm fund` for details
+2025-08-09T14:19:24.599286375Z #18 11.66 
+2025-08-09T14:19:24.599289885Z #18 11.66 1 low severity vulnerability
+2025-08-09T14:19:24.599293705Z #18 11.66 
+2025-08-09T14:19:24.599297195Z #18 11.66 To address all issues, run:
+2025-08-09T14:19:24.599301105Z #18 11.66   npm audit fix
+2025-08-09T14:19:24.599304625Z #18 11.66 
+2025-08-09T14:19:24.599308056Z #18 11.66 Run `npm audit` for details.
+2025-08-09T14:19:24.599312086Z #18 11.66 npm notice
+2025-08-09T14:19:24.599315886Z #18 11.66 npm notice New major version of npm available! 10.8.2 -> 11.5.2
+2025-08-09T14:19:24.599319326Z #18 11.66 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.5.2
+2025-08-09T14:19:24.599322806Z #18 11.66 npm notice To update run: npm install -g npm@11.5.2
+2025-08-09T14:19:24.599326306Z #18 11.66 npm notice
+2025-08-09T14:19:24.749883561Z #18 11.83 npm warn invalid config only="development" set in command line options
+2025-08-09T14:19:24.749903391Z #18 11.83 npm warn invalid config Must be one of: null, prod, production
+2025-08-09T14:19:25.353344553Z #18 12.45 npm warn EBADENGINE Unsupported engine {
+2025-08-09T14:19:25.353444564Z #18 12.45 npm warn EBADENGINE   package: 'cross-env@10.0.0',
+2025-08-09T14:19:25.353448204Z #18 12.45 npm warn EBADENGINE   required: { node: '>=20' },
+2025-08-09T14:19:25.353451395Z #18 12.45 npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+2025-08-09T14:19:25.353454855Z #18 12.45 npm warn EBADENGINE }
+2025-08-09T14:19:30.001179095Z #18 17.17 npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+2025-08-09T14:19:30.151642608Z #18 17.23 npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+2025-08-09T14:19:39.402038581Z error: exit status 1

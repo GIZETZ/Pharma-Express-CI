@@ -1,0 +1,28 @@
+
+⚠️ ⚠️ ⚠️ ALERTE CONFIGURATION BASE DE DONNÉES ⚠️ ⚠️ ⚠️
+
+DATE: 17/08/2025 23:33:04
+
+PROBLÈME DÉTECTÉ:
+L'application utilise actuellement le STOCKAGE EN MÉMOIRE au lieu de PostgreSQL.
+
+CAUSE:
+La variable DATABASE_URL n'est pas configurée ou est vide.
+
+CONSÉQUENCES:
+❌ Toutes les données seront perdues au redémarrage
+❌ Les pharmacies et livreurs ne seront pas visibles
+❌ Aucune persistance des commandes
+
+SOLUTION:
+1. Allez dans les secrets Replit
+2. Configurez la variable DATABASE_URL avec votre base Neon
+3. Redémarrez l'application
+
+FORMAT DATABASE_URL:
+postgresql://username:password@host:port/database
+
+Pour supprimer cette alerte:
+rm DATABASE_ALERT.txt
+
+⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️

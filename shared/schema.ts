@@ -1,0 +1,217 @@
+import { sql } from "drizzle-orm";
+import { pgTable, text, varchar, timestamp, decimal, boolean, jsonb } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  phone: varchar("phone").notNull().unique(),
+  address: varchar("address").notNull(),
+  password: varchar("password").notNull(), // Mot de passe haché
+  role: varchar("role").notNull().default("patient"), // patient, pharmacien, livreur, admin
+  language: varchar("language").default("fr"),
+  profileImageUrl: text("profile_image_url"),
+  pharmacyId: varchar("pharmacy_id").references(() => pharmacies.id), // Pour les pharmaciens et livreurs
+  isActive: boolean("is_active").default(true),
+  // Champs pour validation d'identité (Pharmaciens et Livreurs)
+  idDocumentUrl: text("id_document_url"), // Carte d'identité
+  professionalDocumentUrl: text("professional_document_url"), // Diplôme pharmacien
+  drivingLicenseUrl: text("driving_license_url"), // Permis de conduire
+  verificationStatus: varchar("verification_status").default("pending"), // pending, approved, rejected
+  deliveryApplicationStatus: varchar("delivery_application_status").default("none"), // none, pending, approved, rejected (pour livreurs)
+  appliedPharmacyId: varchar("applied_pharmacy_id").references(() => pharmacies.id), // Pharmacie à laquelle le livreur a postulé
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const pharmacies = pgTable("pharmacies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  address: text("address").notNull(),
+  latitude: decimal("latitude", { precision: 10, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  phone: varchar("phone"),
+  rating: decimal("rating", { precision: 2, scale: 1 }).default("0.0"),
+  reviewCount: varchar("review_count").default("0"),
+  deliveryTime: varchar("delivery_time", { length: 10 }),
+  isOpen: boolean("is_open").default(true),
+  isEmergency24h: boolean("is_emergency_24h").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const prescriptions = pgTable("prescriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  imageUrl: text("image_url").notNull(),
+  status: varchar("status").default("pending"), // pending, processed, fulfilled
+  medications: jsonb("medications"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const orders = pgTable("orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  pharmacyId: varchar("pharmacy_id").references(() => pharmacies.id).notNull(),
+  prescriptionId: varchar("prescription_id").references(() => prescriptions.id),
+  status: varchar("status").default("pending"), // pending, confirmed, preparing, assigned_pending_acceptance, in_transit, arrived_pending_confirmation, delivered, cancelled
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }),
+  deliveryAddress: text("delivery_address").notNull(),
+  deliveryLatitude: decimal("delivery_latitude", { precision: 10, scale: 8 }),
+  deliveryLongitude: decimal("delivery_longitude", { precision: 11, scale: 8 }),
+  deliveryNotes: text("delivery_notes"),
+  medications: jsonb("medications"), // Array of {name: string, surBon: boolean}
+  bonDocuments: text("bon_documents"), // Reference to uploaded documents
+  estimatedDelivery: timestamp("estimated_delivery"),
+  deliveredAt: timestamp("delivered_at"),
+  deliveryPersonId: varchar("delivery_person_id"),
+  assignedAt: timestamp("assigned_at"), // Timestamp pour l'assignation et calcul du timeout
+  // Double confirmation system
+  deliveryPersonConfirmedAt: timestamp("delivery_person_confirmed_at"), // Quand le livreur confirme être arrivé
+  patientConfirmedAt: timestamp("patient_confirmed_at"), // Quand le patient confirme avoir reçu
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Table pour les véhicules des livreurs
+export const deliveryVehicles = pgTable("delivery_vehicles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  deliveryPersonId: varchar("delivery_person_id").references(() => users.id).notNull(),
+  vehicleType: varchar("vehicle_type").notNull(), // moto, scooter, voiture, vélo, tricycle
+  brand: varchar("brand"), // Yamaha, Honda, Toyota, etc.
+  model: varchar("model"), // Modèle du véhicule
+  color: varchar("color").notNull(), // Couleur du véhicule
+  licensePlate: varchar("license_plate").notNull(), // Plaque d'immatriculation (TRÈS VISIBLE)
+  insuranceNumber: varchar("insurance_number"), // Numéro d'assurance
+  registrationDocumentUrl: text("registration_document_url"), // Carte grise
+  insuranceDocumentUrl: text("insurance_document_url"), // Attestation d'assurance
+  isActive: boolean("is_active").default(true), // Si le véhicule est actif
+  verificationStatus: varchar("verification_status").default("pending"), // pending, approved, rejected
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Table pour les profils de livreurs avec photos
+export const deliveryProfiles = pgTable("delivery_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  profilePhotoUrl: text("profile_photo_url"), // Photo de profil du livreur
+  emergencyContactName: varchar("emergency_contact_name"), // Contact d'urgence
+  emergencyContactPhone: varchar("emergency_contact_phone"), // Téléphone d'urgence
+  bankAccountNumber: varchar("bank_account_number"), // Compte bancaire pour paiements
+  rating: decimal("rating", { precision: 2, scale: 1 }).default("5.0"), // Note du livreur
+  totalDeliveries: varchar("total_deliveries").default("0"), // Nombre de livraisons effectuées
+  isAvailable: boolean("is_available").default(true), // Disponibilité actuelle
+  currentOrderId: varchar("current_order_id").references(() => orders.id), // Commande en cours
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  type: varchar("type").notNull(), // order_update, delivery, promotion, etc.
+  orderId: varchar("order_id").references(() => orders.id),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Insert schemas
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  idDocumentUrl: z.string().optional(),
+  professionalDocumentUrl: z.string().optional(),
+  drivingLicenseUrl: z.string().optional(),
+  deliveryApplicationStatus: z.enum(["none", "pending", "approved", "rejected"]).optional(),
+  appliedPharmacyId: z.string().optional(),
+});
+
+// Auth schemas
+export const registerSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  idDocumentUrl: true,
+  professionalDocumentUrl: true,
+  drivingLicenseUrl: true,
+  verificationStatus: true,
+}).extend({
+  confirmPassword: z.string().min(6),
+  role: z.enum(["patient", "pharmacien", "livreur", "admin"]).default("patient"),
+  // Files pour validation d'identité (optionnels mais requis selon le rôle)
+  idDocument: z.any().optional(),
+  professionalDocument: z.any().optional(),
+  drivingLicense: z.any().optional(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
+});
+
+export const loginSchema = z.object({
+  phone: z.string().min(1, "Le numéro de téléphone est requis"),
+  password: z.string().min(1, "Le mot de passe est requis"),
+});
+
+export const insertPharmacySchema = createInsertSchema(pharmacies).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPrescriptionSchema = createInsertSchema(prescriptions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDeliveryVehicleSchema = createInsertSchema(deliveryVehicles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDeliveryProfileSchema = createInsertSchema(deliveryProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type Pharmacy = typeof pharmacies.$inferSelect;
+export type InsertPharmacy = z.infer<typeof insertPharmacySchema>;
+
+export type Prescription = typeof prescriptions.$inferSelect;
+export type InsertPrescription = z.infer<typeof insertPrescriptionSchema>;
+
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+
+// Removed DeliveryPerson type - using User type with role='livreur' instead
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export type DeliveryVehicle = typeof deliveryVehicles.$inferSelect;
+export type InsertDeliveryVehicle = z.infer<typeof insertDeliveryVehicleSchema>;
+
+export type DeliveryProfile = typeof deliveryProfiles.$inferSelect;
+export type InsertDeliveryProfile = z.infer<typeof insertDeliveryProfileSchema>;

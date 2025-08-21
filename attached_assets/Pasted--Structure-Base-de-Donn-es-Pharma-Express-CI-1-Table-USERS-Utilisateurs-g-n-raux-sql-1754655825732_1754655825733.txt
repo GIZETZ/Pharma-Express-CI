@@ -1,0 +1,287 @@
+# Structure Base de Données - Pharma Express CI
+
+## 1. Table USERS (Utilisateurs généraux)
+```sql
+CREATE TABLE users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    user_type ENUM('patient', 'pharmacy_admin', 'pharmacy_manager', 'deliverer') NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+## 2. Table PATIENTS
+```sql
+CREATE TABLE patients (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    address TEXT,
+    commune VARCHAR(100),
+    quartier VARCHAR(100),
+    latitude DECIMAL(10, 8),
+    longitude DECIMAL(11, 8),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+## 3. Table PHARMACIES
+```sql
+CREATE TABLE pharmacies (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    address TEXT NOT NULL,
+    commune VARCHAR(100) NOT NULL,
+    quartier VARCHAR(100) NOT NULL,
+    latitude DECIMAL(10, 8) NOT NULL,
+    longitude DECIMAL(11, 8) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    wave_number VARCHAR(20),
+    orange_money_number VARCHAR(20),
+    moov_money_number VARCHAR(20),
+    momo_number VARCHAR(20),
+    is_premium BOOLEAN DEFAULT FALSE,
+    max_managers INT DEFAULT 10,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## 4. Table PHARMACY_MANAGERS (Gérants de pharmacie)
+```sql
+CREATE TABLE pharmacy_managers (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    pharmacy_id INT NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    service_name VARCHAR(100) NOT NULL,
+    manager_type ENUM('order_receiver', 'order_validator') NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (pharmacy_id) REFERENCES pharmacies(id) ON DELETE CASCADE
+);
+```
+
+## 5. Table DELIVERERS (Livreurs)
+```sql
+CREATE TABLE deliverers (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    status ENUM('available', 'delivering', 'inactive') DEFAULT 'available',
+    current_orders_count INT DEFAULT 0,
+    max_orders INT DEFAULT 3,
+    total_earnings DECIMAL(10, 2) DEFAULT 0.00,
+    latitude DECIMAL(10, 8),
+    longitude DECIMAL(11, 8),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+## 6. Table ORDERS (Commandes)
+```sql
+CREATE TABLE orders (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    patient_id INT NOT NULL,
+    pharmacy_id INT NOT NULL,
+    deliverer_id INT NULL,
+    order_status ENUM(
+        'pending_response', 
+        'pending_validation', 
+        'pending_payment', 
+        'paid', 
+        'in_delivery', 
+        'delivered', 
+        'cancelled'
+    ) DEFAULT 'pending_response',
+    prescription_image VARCHAR(500),
+    prescription_text TEXT,
+    delivery_address TEXT NOT NULL,
+    delivery_latitude DECIMAL(10, 8),
+    delivery_longitude DECIMAL(11, 8),
+    payment_method ENUM('wave', 'orange_money', 'moov_money', 'momo') NULL,
+    subtotal DECIMAL(10, 2) DEFAULT 0.00,
+    delivery_fee DECIMAL(10, 2) DEFAULT 1000.00,
+    total_amount DECIMAL(10, 2) DEFAULT 0.00,
+    payment_status ENUM('pending', 'paid', 'failed') DEFAULT 'pending',
+    delivery_deadline TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(id),
+    FOREIGN KEY (pharmacy_id) REFERENCES pharmacies(id),
+    FOREIGN KEY (deliverer_id) REFERENCES deliverers(id)
+);
+```
+
+## 7. Table ORDER_MEDICINES (Médicaments par commande)
+```sql
+CREATE TABLE order_medicines (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    order_id INT NOT NULL,
+    medicine_name VARCHAR(255) NOT NULL,
+    requested_quantity INT DEFAULT 1,
+    available_quantity INT DEFAULT 0,
+    unit_price DECIMAL(10, 2) DEFAULT 0.00,
+    total_price DECIMAL(10, 2) DEFAULT 0.00,
+    patient_wants_bon BOOLEAN DEFAULT FALSE,
+    pharmacy_accepts_bon BOOLEAN DEFAULT FALSE,
+    medicine_status ENUM('requested', 'available', 'unavailable', 'validated', 'cancelled') DEFAULT 'requested',
+    notes TEXT,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+```
+
+## 8. Table ORDER_TRACKING (Suivi des commandes)
+```sql
+CREATE TABLE order_tracking (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    order_id INT NOT NULL,
+    status ENUM(
+        'order_placed',
+        'pharmacy_received',
+        'pharmacy_responded',
+        'payment_completed',
+        'assigned_to_deliverer',
+        'out_for_delivery',
+        'delivered',
+        'cancelled'
+    ) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+```
+
+## 9. Table DELIVERER_LOCATIONS (Positions des livreurs)
+```sql
+CREATE TABLE deliverer_locations (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    deliverer_id INT NOT NULL,
+    order_id INT NULL,
+    latitude DECIMAL(10, 8) NOT NULL,
+    longitude DECIMAL(11, 8) NOT NULL,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (deliverer_id) REFERENCES deliverers(id),
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+```
+
+## 10. Table NOTIFICATIONS
+```sql
+CREATE TABLE notifications (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    order_id INT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    notification_type ENUM('order_update', 'payment', 'delivery', 'system') NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+```
+
+## 11. Table PAYMENTS
+```sql
+CREATE TABLE payments (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    order_id INT NOT NULL,
+    payment_method ENUM('wave', 'orange_money', 'moov_money', 'momo') NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    payment_status ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'pending',
+    transaction_id VARCHAR(255),
+    payment_date TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+```
+
+## 12. Table DELIVERY_PENALTIES (Pénalités de livraison)
+```sql
+CREATE TABLE delivery_penalties (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    deliverer_id INT NOT NULL,
+    order_id INT NOT NULL,
+    delay_minutes INT NOT NULL,
+    penalty_amount DECIMAL(10, 2) NOT NULL,
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (deliverer_id) REFERENCES deliverers(id),
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+```
+
+---
+
+# Explication de la Structure
+
+## Flux de Données Principal
+
+### 1. **Gestion des Utilisateurs**
+- Table `users` centralisée pour l'authentification
+- Tables spécialisées (`patients`, `pharmacy_managers`, `deliverers`) pour les données métier
+
+### 2. **Processus de Commande**
+
+**Étape 1 : Création de commande**
+- Le patient crée une commande dans `orders` avec statut `pending_response`
+- Les médicaments sont listés dans `order_medicines`
+- Géolocalisation automatique stockée dans `patients`
+
+**Étape 2 : Réponse pharmacie**
+- Le gérant réceptionnaire consulte via `pharmacy_managers` (type `order_receiver`)
+- Met à jour `order_medicines` avec disponibilité et prix
+- Statut passe à `pending_validation`
+
+**Étape 3 : Validation patient**
+- Patient valide/annule des médicaments
+- Précise les médicaments pour "BON"
+- Statut passe à `pending_payment`
+
+**Étape 4 : Paiement**
+- Enregistrement dans `payments`
+- Statut passe à `paid`
+
+**Étape 5 : Validation pharmacie**
+- Gérant validateur (type `order_validator`) traite
+- Attribution automatique du livreur via algorithme
+- Statut passe à `in_delivery`
+
+**Étape 6 : Livraison**
+- Suivi en temps réel via `deliverer_locations`
+- Gestion des pénalités via `delivery_penalties`
+- Statut final `delivered`
+
+### 3. **Fonctionnalités Spéciales**
+
+**Géolocalisation**
+- Stockage des coordonnées patients, pharmacies, livreurs
+- Calcul de distance pour attribution automatique
+
+**Système de BON**
+- Double validation : patient demande, pharmacie accepte
+- Champs `patient_wants_bon` et `pharmacy_accepts_bon`
+
+**Gestion des Pénalités**
+- Décompte automatique pour retards > 10min
+- Historique dans `delivery_penalties`
+
+**Notifications Temps Réel**
+- Table `notifications` pour tous les événements
+- Notifications push pour tous les acteurs
+
+### 4. **Contraintes Métier Implémentées**
+
+- **Livreurs** : Maximum 3 commandes simultanées
+- **Pharmacies** : Jusqu'à 10 gérants (100 en premium)
+- **Délais** : 10 minutes maximum par livraison
+- **Frais** : 1000 FCFA (500 pour Pharma Express, 500 pour livreur)
+
+Cette structure permet une gestion complète du workflow décrit dans votre cahier des charges, avec une traçabilité totale et une scalabilité pour l'évolution future.
