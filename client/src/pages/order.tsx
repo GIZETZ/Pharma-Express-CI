@@ -412,11 +412,7 @@ export default function OrderPage() {
                             type="button" 
                             className="bg-green-600 hover:bg-green-700 w-full"
                             onClick={() => {
-                              // Add logic to associate BON
-                              toast({
-                                title: "BON associé",
-                                description: "Votre BON a été associé à cette ordonnance",
-                              });
+                              document.getElementById('prescription-bon-input')?.click();
                             }}
                           >
                             <FileText className="h-4 w-4 mr-2" />
