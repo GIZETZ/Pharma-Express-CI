@@ -420,27 +420,43 @@ export default function OrderPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="border border-green-200 rounded-lg p-4 bg-green-50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                          <Camera className="h-6 w-6 text-green-600" />
+                  <div className="space-y-3">
+                    <div className="border border-green-200 rounded-lg p-4 bg-green-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <Camera className="h-6 w-6 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-green-900">Photo ajoutée</p>
+                            <p className="text-sm text-green-700 truncate max-w-48">{orderData.prescriptionPhoto.name}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-green-900">Photo ajoutée</p>
-                          <p className="text-sm text-green-700 truncate max-w-48">{orderData.prescriptionPhoto.name}</p>
-                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={removePrescriptionPhoto}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={removePrescriptionPhoto}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
                     </div>
+                    <Button 
+                      type="button" 
+                      className="bg-green-600 hover:bg-green-700 w-full"
+                      onClick={() => {
+                        // Add logic to associate BON
+                        toast({
+                          title: "BON associé",
+                          description: "Votre BON a été associé à cette ordonnance",
+                        });
+                      }}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Associer un BON
+                    </Button>
                   </div>
                 )}
               </div>
