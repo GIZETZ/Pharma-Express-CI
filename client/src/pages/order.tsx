@@ -577,22 +577,22 @@ export default function OrderPage() {
               </div>
             </div>
 
-            {/* Documents pour BON - Affiché seulement si des médicaments sont sur BON */}
-            {orderData.medications.some(med => med.name.trim() && med.surBon) && (
+            {/* Documents pour BON - Affiché dès qu'une photo d'ordonnance est prise */}
+            {orderData.prescriptionPhoto && (
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Documents pour validation BON
-                  <span className="text-orange-600 text-xs ml-2">
-                    (Requis car vous avez des médicaments sur BON)
+                  Documents BON (si nécessaire)
+                  <span className="text-blue-600 text-xs ml-2">
+                    (Carte d'assurance, attestation de prise en charge, etc.)
                   </span>
                 </label>
-                <div className="border-2 border-dashed rounded-lg p-4 border-orange-300 bg-orange-50">
+                <div className="border-2 border-dashed rounded-lg p-4 border-blue-300 bg-blue-50">
                   <div className="text-center">
-                    <FileText className="mx-auto h-8 w-8 mb-2 text-orange-500" />
-                    <p className="text-sm mb-2 font-medium text-orange-800">
-                      Documents obligatoires pour validation BON
+                    <FileText className="mx-auto h-8 w-8 mb-2 text-blue-500" />
+                    <p className="text-sm mb-2 font-medium text-blue-800">
+                      Documents BON (si nécessaire)
                     </p>
-                    <p className="text-xs mb-3 text-orange-700">
+                    <p className="text-xs mb-3 text-blue-700">
                       Carte d'assurance, attestation de prise en charge, etc.
                     </p>
                     <input
@@ -605,7 +605,7 @@ export default function OrderPage() {
                     />
                     <Button 
                       type="button" 
-                      className="text-white bg-orange-600 hover:bg-orange-700"
+                      className="text-white bg-blue-600 hover:bg-blue-700"
                       size="sm"
                       onClick={() => {
                         document.getElementById('bon-documents-input')?.click();
@@ -622,9 +622,9 @@ export default function OrderPage() {
                   {orderData.bonDocuments.length > 0 && (
                     <div className="mt-4 space-y-2">
                       {orderData.bonDocuments.map((doc, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-white rounded border border-orange-200">
+                        <div key={index} className="flex items-center justify-between p-2 bg-white rounded border border-blue-200">
                           <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-orange-600" />
+                            <FileText className="h-4 w-4 text-blue-600" />
                             <span className="text-sm text-gray-700">{doc.name}</span>
                           </div>
                           <Button
