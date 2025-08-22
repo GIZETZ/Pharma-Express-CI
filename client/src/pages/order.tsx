@@ -569,102 +569,72 @@ export default function OrderPage() {
               </div>
             </div>
 
-            {/* Documents pour BON */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Documents pour validation BON
-                {(() => {
-                  const hasBonMedications = orderData.medications.some(med => med.name.trim() && med.surBon);
-                  return hasBonMedications ? (
-                    <span className="text-orange-600 text-xs ml-2">
-                      (Requis car vous avez des médicaments sur BON)
-                    </span>
-                  ) : (
-                    <span className="text-gray-500 text-xs ml-2">
-                      (Optionnel)
-                    </span>
-                  );
-                })()}
-              </label>
-              <div className={`border-2 border-dashed rounded-lg p-4 ${
-                orderData.medications.some(med => med.name.trim() && med.surBon) 
-                  ? 'border-orange-300 bg-orange-50' 
-                  : 'border-gray-300 bg-gray-50'
-              }`}>
-                <div className="text-center">
-                  <FileText className={`mx-auto h-8 w-8 mb-2 ${
-                    orderData.medications.some(med => med.name.trim() && med.surBon) 
-                      ? 'text-orange-500' 
-                      : 'text-gray-500'
-                  }`} />
-                  <p className={`text-sm mb-2 font-medium ${
-                    orderData.medications.some(med => med.name.trim() && med.surBon) 
-                      ? 'text-orange-800' 
-                      : 'text-gray-800'
-                  }`}>
-                    {orderData.medications.some(med => med.name.trim() && med.surBon) 
-                      ? 'Documents obligatoires pour validation BON'
-                      : 'Documents BON (si nécessaire)'
-                    }
-                  </p>
-                  <p className={`text-xs mb-3 ${
-                    orderData.medications.some(med => med.name.trim() && med.surBon) 
-                      ? 'text-orange-700' 
-                      : 'text-gray-600'
-                  }`}>
-                    Carte d'assurance, attestation de prise en charge, etc.
-                  </p>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*,.pdf"
-                    onChange={handleDocumentUpload}
-                    className="hidden"
-                    id="bon-documents-input"
-                  />
-                  <Button 
-                    type="button" 
-                    className={`text-white ${
-                      orderData.medications.some(med => med.name.trim() && med.surBon) 
-                        ? 'bg-orange-600 hover:bg-orange-700' 
-                        : 'bg-gray-600 hover:bg-gray-700'
-                    }`}
-                    size="sm"
-                    onClick={() => {
-                      document.getElementById('bon-documents-input')?.click();
-                      toast({
-                        title: "Sélection de fichiers BON",
-                        description: "Choisissez vos documents BON à associer",
-                      });
-                    }}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Choisir des fichiers
-                  </Button>
-                </div>
-                {orderData.bonDocuments.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    {orderData.bonDocuments.map((doc, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-white rounded border border-orange-200">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-orange-600" />
-                          <span className="text-sm text-gray-700">{doc.name}</span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeDocument(index)}
-                          className="text-red-600 hover:text-red-800 p-1"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+            {/* Documents pour BON - Affiché seulement si des médicaments sont sur BON */}
+            {orderData.medications.some(med => med.name.trim() && med.surBon) && (
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Documents pour validation BON
+                  <span className="text-orange-600 text-xs ml-2">
+                    (Requis car vous avez des médicaments sur BON)
+                  </span>
+                </label>
+                <div className="border-2 border-dashed rounded-lg p-4 border-orange-300 bg-orange-50">
+                  <div className="text-center">
+                    <FileText className="mx-auto h-8 w-8 mb-2 text-orange-500" />
+                    <p className="text-sm mb-2 font-medium text-orange-800">
+                      Documents obligatoires pour validation BON
+                    </p>
+                    <p className="text-xs mb-3 text-orange-700">
+                      Carte d'assurance, attestation de prise en charge, etc.
+                    </p>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*,.pdf"
+                      onChange={handleDocumentUpload}
+                      className="hidden"
+                      id="bon-documents-input"
+                    />
+                    <Button 
+                      type="button" 
+                      className="text-white bg-orange-600 hover:bg-orange-700"
+                      size="sm"
+                      onClick={() => {
+                        document.getElementById('bon-documents-input')?.click();
+                        toast({
+                          title: "Sélection de fichiers BON",
+                          description: "Choisissez vos documents BON à associer",
+                        });
+                      }}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Choisir des fichiers
+                    </Button>
                   </div>
-                )}
+                  {orderData.bonDocuments.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {orderData.bonDocuments.map((doc, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-white rounded border border-orange-200">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-orange-600" />
+                            <span className="text-sm text-gray-700">{doc.name}</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeDocument(index)}
+                            className="text-red-600 hover:text-red-800 p-1"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Message à la pharmacie */}
             <div>
