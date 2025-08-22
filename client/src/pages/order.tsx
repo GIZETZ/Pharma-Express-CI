@@ -577,8 +577,8 @@ export default function OrderPage() {
               </div>
             </div>
 
-            {/* Documents pour BON - Affiché dès qu'une photo d'ordonnance est prise */}
-            {orderData.prescriptionPhoto && (
+            {/* Documents pour BON - Affiché dès qu'une photo d'ordonnance est prise OU qu'un médicament est marqué "Sur BON" */}
+            {(orderData.prescriptionPhoto || orderData.medications.some(med => med.surBon)) && (
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Documents BON (si nécessaire)
