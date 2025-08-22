@@ -408,16 +408,14 @@ export default function OrderPage() {
                             <Camera className="h-4 w-4 mr-2" />
                             Prendre une photo
                           </Button>
-                          <Button 
-                            type="button" 
-                            className="bg-green-600 hover:bg-green-700 w-full"
-                            onClick={() => {
-                              document.getElementById('bon-input-early')?.click();
-                            }}
-                          >
-                            <FileText className="h-4 w-4 mr-2" />
-                            Associer un BON
-                          </Button>
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*,.pdf"
+                            onChange={handleDocumentUpload}
+                            className="hidden"
+                            id="bon-documents-input"
+                          />
                         </div>
                     </div>
                   </div>
@@ -451,7 +449,7 @@ export default function OrderPage() {
                       accept="image/*,.pdf"
                       onChange={handleDocumentUpload}
                       className="hidden"
-                      id="bon-input-early"
+                      id="bon-documents-input"
                     />
                     <Button 
                       type="button" 
