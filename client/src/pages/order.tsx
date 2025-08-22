@@ -412,7 +412,7 @@ export default function OrderPage() {
                             type="button" 
                             className="bg-green-600 hover:bg-green-700 w-full"
                             onClick={() => {
-                              document.getElementById('prescription-bon-input')?.click();
+                              document.getElementById('bon-input-early')?.click();
                             }}
                           >
                             <FileText className="h-4 w-4 mr-2" />
@@ -451,17 +451,22 @@ export default function OrderPage() {
                       accept="image/*,.pdf"
                       onChange={handleDocumentUpload}
                       className="hidden"
-                      id="prescription-bon-input"
+                      id="bon-input-early"
                     />
                     <Button 
                       type="button" 
                       className="bg-green-600 hover:bg-green-700 w-full"
                       onClick={() => {
-                        document.getElementById('prescription-bon-input')?.click();
-                        toast({
-                          title: "Sélection de documents BON",
-                          description: "Choisissez vos documents BON à associer",
-                        });
+                        const input = document.getElementById('bon-input-early') as HTMLInputElement;
+                        if (input) {
+                          input.click();
+                        } else {
+                          toast({
+                            title: "Erreur",
+                            description: "Impossible d'ouvrir le sélecteur de fichiers",
+                            variant: "destructive",
+                          });
+                        }
                       }}
                     >
                       <FileText className="h-4 w-4 mr-2" />
