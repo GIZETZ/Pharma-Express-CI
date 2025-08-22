@@ -775,10 +775,17 @@ const ReadyForDeliveryOrders = ({ orders }: { orders: any[] }) => {
                   <SelectContent>
                     {deliveryPersonnel?.map((person: any) => (
                       <SelectItem key={person.id} value={person.id}>
-                        <div className="flex items-center space-x-2">
-                          <span>🚴</span>
-                          <span>{person.firstName} {person.lastName}</span>
-                          <span className="text-gray-500">• {person.phone}</span>
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center space-x-2">
+                            <span>🚴</span>
+                            <span>{person.firstName} {person.lastName}</span>
+                            <span className="text-gray-500">• {person.phone}</span>
+                          </div>
+                          <div className="flex items-center space-x-1 ml-2">
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
+                              {person.dailyOrderCount || 0} cmd/jour
+                            </span>
+                          </div>
                         </div>
                       </SelectItem>
                     ))}

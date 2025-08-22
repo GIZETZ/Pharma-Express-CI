@@ -121,3 +121,12 @@ Repository: https://github.com/GIZETZ/Pharma-Express-CI.git
   - Fixed button click issues that caused blank pages in production environments
   - Improved data validation and fallback mechanisms for better user experience
   - Application now runs cleanly on Replit with full functionality restored
+
+### Daily Order Tracking Enhancement (August 22, 2025)
+- ✅ **Delivery Person Daily Order Counter Implementation**
+  - Added getDailyOrderCount method to both PostgreSQL and in-memory storage implementations
+  - Enhanced /api/pharmacien/delivery-personnel endpoint to include daily order counts
+  - Modified pharmacy dashboard delivery person selection dropdown to display daily order count
+  - Visual indicator shows "X cmd/jour" badge for each delivery person showing today's assigned orders
+  - Counts orders based on assignedAt timestamp for accurate daily tracking
+  - Helps pharmacists make informed decisions for balanced workload distribution

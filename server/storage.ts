@@ -988,7 +988,23 @@ export class MemStorage implements IStorage {
 
   // Delivery person operations (using User table instead)
 
-  // Get delivery personnel for a specific pharmacy
+  // Helper method to get daily order count for a delivery person
+  getDailyOrderCount(deliveryPersonId: string): number {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1); // Start of tomorrow
+    
+    return Array.from(this.orders.values()).filter(order => {
+      if (order.deliveryPersonId !== deliveryPersonId) return false;
+      if (!order.assignedAt) return false;
+      
+      const assignedDate = new Date(order.assignedAt);
+      return assignedDate >= today && assignedDate < tomorrow;
+    }).length;
+  }
+
+  // Get delivery personnel for a specific pharmacy with daily order counts
   async getAvailableDeliveryPersonnelForPharmacy(pharmacyId: string): Promise<User[]> {
     const filtered = Array.from(this.users.values()).filter(user => {
       const isLivreur = user.role === 'livreur';
@@ -1030,7 +1046,13 @@ export class MemStorage implements IStorage {
       active: u.isActive
     })));
 
-    return filtered;
+    // Add daily order count for each delivery person
+    const personnelWithDailyCount = filtered.map(person => ({
+      ...person,
+      dailyOrderCount: this.getDailyOrderCount(person.id)
+    }));
+
+    return personnelWithDailyCount;
   }
 
   // Modified method to filter approved delivery personnel who have been approved by a pharmacy

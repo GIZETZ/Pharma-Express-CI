@@ -469,10 +469,32 @@ export class PostgresStorage implements IStorage {
 
   // Delivery person operations (using User table instead)
 
-  // Get delivery personnel for a specific pharmacy
+  // Helper method to get daily order count for a delivery person
+  async getDailyOrderCount(deliveryPersonId: string): Promise<number> {
+    const db = await getDb();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1); // Start of tomorrow
+    
+    const result = await db
+      .select({ count: sql`count(*)` })
+      .from(orders)
+      .where(
+        and(
+          eq(orders.deliveryPersonId, deliveryPersonId),
+          sql`${orders.assignedAt} >= ${today.toISOString()}::timestamp`,
+          sql`${orders.assignedAt} < ${tomorrow.toISOString()}::timestamp`
+        )
+      );
+    
+    return parseInt(result[0]?.count as string) || 0;
+  }
+
+  // Get delivery personnel for a specific pharmacy with daily order counts
   async getAvailableDeliveryPersonnelForPharmacy(pharmacyId: string): Promise<User[]> {
     const db = await getDb();
-    return await db.select().from(users).where(
+    const personnel = await db.select().from(users).where(
       and(
         eq(users.role, 'livreur'),
         eq(users.verificationStatus, 'approved'),
@@ -480,6 +502,19 @@ export class PostgresStorage implements IStorage {
         eq(users.pharmacyId, pharmacyId)
       )
     );
+
+    // Add daily order count for each delivery person
+    const personnelWithDailyCount = await Promise.all(
+      personnel.map(async (person) => {
+        const dailyOrderCount = await this.getDailyOrderCount(person.id);
+        return {
+          ...person,
+          dailyOrderCount
+        };
+      })
+    );
+
+    return personnelWithDailyCount;
   }
 
   async getAvailableDeliveryPersonnel(): Promise<User[]> {
