@@ -162,7 +162,13 @@ export default function OrderPage() {
 
   const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setOrderData(prev => ({ ...prev, bonDocuments: [...prev.bonDocuments, ...files] }));
+    if (files.length > 0) {
+      setOrderData(prev => ({ ...prev, bonDocuments: [...prev.bonDocuments, ...files] }));
+      toast({
+        title: "Documents BON ajoutés",
+        description: `${files.length} document(s) BON ajouté(s) avec succès`,
+      });
+    }
   };
 
   const removeDocument = (index: number) => {
@@ -446,13 +452,7 @@ export default function OrderPage() {
                     <Button 
                       type="button" 
                       className="bg-green-600 hover:bg-green-700 w-full"
-                      onClick={() => {
-                        // Add logic to associate BON
-                        toast({
-                          title: "BON associé",
-                          description: "Votre BON a été associé à cette ordonnance",
-                        });
-                      }}
+                      onClick={() => document.getElementById('bon-documents-input')?.click()}
                     >
                       <FileText className="h-4 w-4 mr-2" />
                       Associer un BON
@@ -569,71 +569,102 @@ export default function OrderPage() {
               </div>
             </div>
 
-            {/* Documents pour BON - conditionnel */}
-            {(() => {
-              const hasBonMedications = orderData.medications.some(med => med.name.trim() && med.surBon);
-              if (!hasBonMedications) return null;
-
-              return (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Documents pour validation BON
+            {/* Documents pour BON */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Documents pour validation BON
+                {(() => {
+                  const hasBonMedications = orderData.medications.some(med => med.name.trim() && med.surBon);
+                  return hasBonMedications ? (
                     <span className="text-orange-600 text-xs ml-2">
                       (Requis car vous avez des médicaments sur BON)
                     </span>
-                  </label>
-                  <div className="border-2 border-dashed border-orange-300 rounded-lg p-4 bg-orange-50">
-                    <div className="text-center">
-                      <FileText className="mx-auto h-8 w-8 text-orange-500 mb-2" />
-                      <p className="text-sm text-orange-800 mb-2 font-medium">
-                        Documents obligatoires pour validation BON
-                      </p>
-                      <p className="text-xs text-orange-700 mb-3">
-                        Carte d'assurance, attestation de prise en charge, etc.
-                      </p>
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*,.pdf"
-                        onChange={handleDocumentUpload}
-                        className="hidden"
-                        id="bon-documents-input"
-                      />
-                      <Button 
-                        type="button" 
-                        className="bg-orange-600 hover:bg-orange-700 text-white"
-                        size="sm"
-                        onClick={() => document.getElementById('bon-documents-input')?.click()}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Choisir des fichiers
-                      </Button>
-                    </div>
-                    {orderData.bonDocuments.length > 0 && (
-                      <div className="mt-4 space-y-2">
-                        {orderData.bonDocuments.map((doc, index) => (
-                          <div key={index} className="flex items-center justify-between p-2 bg-white rounded border border-orange-200">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-orange-600" />
-                              <span className="text-sm text-gray-700">{doc.name}</span>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument(index)}
-                              className="text-red-600 hover:text-red-800 p-1"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  ) : (
+                    <span className="text-gray-500 text-xs ml-2">
+                      (Optionnel)
+                    </span>
+                  );
+                })()}
+              </label>
+              <div className={`border-2 border-dashed rounded-lg p-4 ${
+                orderData.medications.some(med => med.name.trim() && med.surBon) 
+                  ? 'border-orange-300 bg-orange-50' 
+                  : 'border-gray-300 bg-gray-50'
+              }`}>
+                <div className="text-center">
+                  <FileText className={`mx-auto h-8 w-8 mb-2 ${
+                    orderData.medications.some(med => med.name.trim() && med.surBon) 
+                      ? 'text-orange-500' 
+                      : 'text-gray-500'
+                  }`} />
+                  <p className={`text-sm mb-2 font-medium ${
+                    orderData.medications.some(med => med.name.trim() && med.surBon) 
+                      ? 'text-orange-800' 
+                      : 'text-gray-800'
+                  }`}>
+                    {orderData.medications.some(med => med.name.trim() && med.surBon) 
+                      ? 'Documents obligatoires pour validation BON'
+                      : 'Documents BON (si nécessaire)'
+                    }
+                  </p>
+                  <p className={`text-xs mb-3 ${
+                    orderData.medications.some(med => med.name.trim() && med.surBon) 
+                      ? 'text-orange-700' 
+                      : 'text-gray-600'
+                  }`}>
+                    Carte d'assurance, attestation de prise en charge, etc.
+                  </p>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf"
+                    onChange={handleDocumentUpload}
+                    className="hidden"
+                    id="bon-documents-input"
+                  />
+                  <Button 
+                    type="button" 
+                    className={`text-white ${
+                      orderData.medications.some(med => med.name.trim() && med.surBon) 
+                        ? 'bg-orange-600 hover:bg-orange-700' 
+                        : 'bg-gray-600 hover:bg-gray-700'
+                    }`}
+                    size="sm"
+                    onClick={() => {
+                      document.getElementById('bon-documents-input')?.click();
+                      toast({
+                        title: "Sélection de fichiers BON",
+                        description: "Choisissez vos documents BON à associer",
+                      });
+                    }}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Choisir des fichiers
+                  </Button>
                 </div>
-              );
-            })()}
+                {orderData.bonDocuments.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    {orderData.bonDocuments.map((doc, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-white rounded border border-orange-200">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-orange-600" />
+                          <span className="text-sm text-gray-700">{doc.name}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeDocument(index)}
+                          className="text-red-600 hover:text-red-800 p-1"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Message à la pharmacie */}
             <div>
