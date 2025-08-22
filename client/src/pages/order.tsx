@@ -449,10 +449,24 @@ export default function OrderPage() {
                         </Button>
                       </div>
                     </div>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*,.pdf"
+                      onChange={handleDocumentUpload}
+                      className="hidden"
+                      id="prescription-bon-input"
+                    />
                     <Button 
                       type="button" 
                       className="bg-green-600 hover:bg-green-700 w-full"
-                      onClick={() => document.getElementById('bon-documents-input')?.click()}
+                      onClick={() => {
+                        document.getElementById('prescription-bon-input')?.click();
+                        toast({
+                          title: "Sélection de documents BON",
+                          description: "Choisissez vos documents BON à associer",
+                        });
+                      }}
                     >
                       <FileText className="h-4 w-4 mr-2" />
                       Associer un BON
