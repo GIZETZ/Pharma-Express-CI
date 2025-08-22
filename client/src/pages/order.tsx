@@ -57,7 +57,7 @@ export default function OrderPage() {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude, accuracy } = position.coords;
-          
+
           // Stocker les coordonnées GPS précises
           setUserLocation({ lat: latitude, lng: longitude });
           setOrderData(prev => ({
@@ -381,31 +381,42 @@ export default function OrderPage() {
                     <div className="text-center">
                       <Camera className="mx-auto h-16 w-16 text-blue-500 mb-3" />
                       <div className="text-lg font-medium text-blue-900 mb-2">
-                        Envoyer la photo de l'ordonnance
-                      </div>
-                      <div className="text-sm text-blue-700 mb-4">
-                        Prenez une photo claire de votre ordonnance en format portrait
-                      </div>
-                      <div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePrescriptionPhoto}
-                          className="hidden"
-                          id="camera-input"
-                        />
-                        <Button 
-                          type="button" 
-                          className="bg-blue-600 hover:bg-blue-700 w-full"
-                          onClick={(e) => triggerCameraInput(e)}
-                        >
-                          <Camera className="h-4 w-4 mr-2" />
-                          Prendre une photo
-                        </Button>
-                      </div>
-                      <div className="text-xs text-blue-600 mt-2">
-                        Formats acceptés: PNG, JPEG, JPG
-                      </div>
+                          Envoyer la photo de l'ordonnance
+                        </div>
+                        <div className="text-sm text-blue-700 mb-4">
+                          Prenez une photo claire de votre ordonnance en format portrait
+                        </div>
+                        <div className="space-y-3">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePrescriptionPhoto}
+                            className="hidden"
+                            id="camera-input"
+                          />
+                          <Button 
+                            type="button" 
+                            className="bg-blue-600 hover:bg-blue-700 w-full"
+                            onClick={(e) => triggerCameraInput(e)}
+                          >
+                            <Camera className="h-4 w-4 mr-2" />
+                            Prendre une photo
+                          </Button>
+                          <Button 
+                            type="button" 
+                            className="bg-green-600 hover:bg-green-700 w-full"
+                            onClick={() => {
+                              // Add logic to associate BON
+                              toast({
+                                title: "BON associé",
+                                description: "Votre BON a été associé à cette ordonnance",
+                              });
+                            }}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Associer un BON
+                          </Button>
+                        </div>
                     </div>
                   </div>
                 ) : (
