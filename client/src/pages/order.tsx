@@ -457,16 +457,11 @@ export default function OrderPage() {
                       type="button" 
                       className="bg-green-600 hover:bg-green-700 w-full"
                       onClick={() => {
-                        const input = document.getElementById('bon-input-early') as HTMLInputElement;
-                        if (input) {
-                          input.click();
-                        } else {
-                          toast({
-                            title: "Erreur",
-                            description: "Impossible d'ouvrir le sélecteur de fichiers",
-                            variant: "destructive",
-                          });
-                        }
+                        document.getElementById('bon-documents-input')?.click();
+                        toast({
+                          title: "Sélection de documents BON",
+                          description: "Choisissez vos documents BON à associer",
+                        });
                       }}
                     >
                       <FileText className="h-4 w-4 mr-2" />
