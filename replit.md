@@ -130,3 +130,12 @@ Repository: https://github.com/GIZETZ/Pharma-Express-CI.git
   - Visual indicator shows "X cmd/jour" badge for each delivery person showing today's assigned orders
   - Counts orders based on assignedAt timestamp for accurate daily tracking
   - Helps pharmacists make informed decisions for balanced workload distribution
+
+### Delivery Dashboard Bug Fix (August 22, 2025)
+- ✅ **Fixed Missing Orders in Delivery Person Dashboard**
+  - Root cause: Dashboard was calling `/api/livreur/deliveries` but server only had `/api/orders/my-assigned`
+  - Added missing API routes: `/api/livreur/orders`, `/api/livreur/deliveries`, `/api/livreur/deliveries/{id}/accept`, `/api/livreur/deliveries/{id}/reject`
+  - All routes properly validate livreur role and session authentication
+  - Orders assigned to delivery personnel now correctly appear in their dashboard
+  - Fixed the complete flow: pharmacist assigns → delivery person sees order → can accept/reject
+  - Ensures proper error handling with clear French error messages

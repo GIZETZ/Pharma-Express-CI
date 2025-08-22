@@ -685,6 +685,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Alternative endpoint for livreur dashboard (same functionality)
+  app.get('/api/livreur/deliveries', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'livreur') {
+        return res.status(403).json({ message: 'Accès non autorisé - Rôle livreur requis' });
+      }
+
+      const assignedOrders = await storage.getMyAssignedOrders(req.session.userId);
+      res.json(assignedOrders);
+    } catch (error) {
+      console.error('Error fetching assigned orders:', error);
+      res.status(500).json({ message: 'Failed to fetch assigned orders' });
+    }
+  });
+
+  // Alternative route for orders endpoint
+  app.get('/api/livreur/orders', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'livreur') {
+        return res.status(403).json({ message: 'Accès non autorisé - Rôle livreur requis' });
+      }
+
+      const assignedOrders = await storage.getMyAssignedOrders(req.session.userId);
+      res.json(assignedOrders);
+    } catch (error) {
+      console.error('Error fetching assigned orders:', error);
+      res.status(500).json({ message: 'Failed to fetch assigned orders' });
+    }
+  });
+
   // Accept a delivery assignment
   app.post('/api/orders/:orderId/accept', requireAuth, async (req: any, res) => {
     try {
@@ -705,8 +737,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Alternative route for accepting deliveries from livreur dashboard
+  app.post('/api/livreur/deliveries/:orderId/accept', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'livreur') {
+        return res.status(403).json({ message: 'Accès non autorisé - Rôle livreur requis' });
+      }
+
+      const order = await storage.acceptDeliveryAssignment(req.params.orderId, req.session.userId);
+      if (!order) {
+        return res.status(404).json({ message: 'Commande non trouvée ou assignation expirée' });
+      }
+
+      res.json({ message: 'Livraison acceptée avec succès', order });
+    } catch (error) {
+      console.error('Error accepting delivery assignment:', error);
+      res.status(500).json({ message: 'Failed to accept delivery assignment' });
+    }
+  });
+
   // Reject a delivery assignment
   app.post('/api/orders/:orderId/reject', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'livreur') {
+        return res.status(403).json({ message: 'Accès non autorisé - Rôle livreur requis' });
+      }
+
+      const success = await storage.rejectDeliveryAssignment(req.params.orderId, req.session.userId, false);
+      if (!success) {
+        return res.status(404).json({ message: 'Commande non trouvée ou assignation déjà traitée' });
+      }
+
+      res.json({ message: 'Livraison refusée avec succès' });
+    } catch (error) {
+      console.error('Error rejecting delivery assignment:', error);
+      res.status(500).json({ message: 'Failed to reject delivery assignment' });
+    }
+  });
+
+  // Alternative route for rejecting deliveries from livreur dashboard
+  app.post('/api/livreur/deliveries/:orderId/reject', requireAuth, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.session.userId);
       if (!user || user.role !== 'livreur') {
