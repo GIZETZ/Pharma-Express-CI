@@ -2287,6 +2287,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update delivery person GPS location (real-time tracking)
+  app.post('/api/livreur/update-location', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'livreur') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { latitude, longitude } = req.body;
+
+      if (!latitude || !longitude) {
+        return res.status(400).json({ message: 'Latitude and longitude are required' });
+      }
+
+      // Validate coordinates are numbers
+      const lat = parseFloat(latitude);
+      const lng = parseFloat(longitude);
+
+      if (isNaN(lat) || isNaN(lng)) {
+        return res.status(400).json({ message: 'Invalid coordinates' });
+      }
+
+      // Update delivery person location in database
+      const updatedUser = await storage.updateUser(req.session.userId, {
+        lat: lat.toString(),
+        lng: lng.toString(),
+        lastLocationUpdate: new Date().toISOString()
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      if (import.meta.env.DEV) {
+        console.log('📍 Position GPS livreur mise à jour:', {
+          userId: req.session.userId,
+          lat: lat,
+          lng: lng,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      res.json({ 
+        message: 'Location updated successfully',
+        location: { lat, lng },
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error updating delivery person location:', error);
+      res.status(500).json({ message: 'Failed to update location' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

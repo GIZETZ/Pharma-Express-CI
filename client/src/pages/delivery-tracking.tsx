@@ -256,138 +256,117 @@ export default function DeliveryTracking() {
     }
 
     if (import.meta.env.DEV) {
-      console.log('✅ Début du traçage d\'itinéraire patient-livreur');
+      console.log('✅ Début du traçage d\'itinéraire avec position GPS réelle du livreur');
     }
 
-    // Calculer la position du livreur (simulée basée sur l'ID)
-    const pharmacyLat = currentOrder.pharmacy?.latitude ? parseFloat(currentOrder.pharmacy.latitude) : DEFAULT_PHARMACY_COORDS.lat;
-    const pharmacyLng = currentOrder.pharmacy?.longitude ? parseFloat(currentOrder.pharmacy.longitude) : DEFAULT_PHARMACY_COORDS.lng;
-
-    // Position unique du livreur basée sur son ID
-    const deliveryPersonOffsetLat = (currentOrder.deliveryPersonId.charCodeAt(0) % 10 - 5) * 0.02;
-    const deliveryPersonOffsetLng = (currentOrder.deliveryPersonId.charCodeAt(2) % 10 - 5) * 0.02;
-
-    let deliveryPersonStartLat = deliveryPerson?.lat || (pharmacyLat + deliveryPersonOffsetLat);
-    let deliveryPersonStartLng = deliveryPerson?.lng || (pharmacyLng + deliveryPersonOffsetLng);
-
-    let progress = 0;
     let routeCoordinates: number[][] = [];
-    let hasCalculatedRoute = false;
 
     const updateDeliveryTracking = async () => {
       try {
-        // Calculer l'itinéraire initial une seule fois
-        if (!hasCalculatedRoute) {
-          if (import.meta.env.DEV) {
-            console.log('🗺️ Calcul de l\'itinéraire initial livreur → patient');
-          }
-
-          const routeData = await calculateRealRoute(
-            deliveryPersonStartLat, 
-            deliveryPersonStartLng, 
-            userLat, 
-            userLng
-          );
-
-          if (routeData) {
-            routeCoordinates = routeData.coordinates;
-            hasCalculatedRoute = true;
-            setRouteDistance(routeData.distance);
-            setEstimatedTime(routeData.duration);
-
-            // Nettoyer l'ancien itinéraire
-            if (routePolylineRef.current) {
-              map.removeLayer(routePolylineRef.current);
-            }
-            if (routeLabelMarkerRef.current) {
-              map.removeLayer(routeLabelMarkerRef.current);
-            }
-
-            // Dessiner le nouvel itinéraire
-            routePolylineRef.current = L.polyline(routeCoordinates, {
-              color: '#10b981',
-              weight: 6,
-              opacity: 0.9,
-              dashArray: '15, 8'
-            }).addTo(map);
-
-            // Ajouter le label de route
-            if (routeCoordinates.length > 1) {
-              const midPointIndex = Math.floor(routeCoordinates.length / 2);
-              const midPoint = routeCoordinates[midPointIndex];
-
-              routeLabelMarkerRef.current = L.marker(midPoint, {
-                icon: L.divIcon({
-                  html: `<div style="background: linear-gradient(45deg, #10b981, #059669); color: white; padding: 4px 8px; border-radius: 16px; font-size: 11px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid white;">🚚→👤 ${routeData.distance}km</div>`,
-                  className: 'delivery-route-label',
-                  iconSize: [80, 24],
-                  iconAnchor: [40, 12]
-                })
-              }).addTo(map);
-            }
-
-            // Ajuster la vue pour montrer l'itinéraire complet
-            const group = new L.FeatureGroup([routePolylineRef.current]);
-            map.fitBounds(group.getBounds().pad(0.15));
-
-            if (import.meta.env.DEV) {
-              console.log('✅ Itinéraire tracé:', {
-                distance: routeData.distance + 'km',
-                duration: routeData.duration + 'min',
-                points: routeCoordinates.length
-              });
-            }
-          }
+        // Récupérer la position GPS réelle et actuelle du livreur
+        if (import.meta.env.DEV) {
+          console.log('🔄 Récupération position GPS réelle du livreur:', currentOrder.deliveryPersonId);
         }
 
-        // Simuler le mouvement du livreur le long de l'itinéraire
-        if (currentOrder.status === 'in_transit' && routeCoordinates.length > 1) {
-          progress += 0.02; // 2% par mise à jour
-          progress = Math.min(progress, 0.98);
-
-          // Calculer la position actuelle du livreur le long de l'itinéraire
-          const totalPoints = routeCoordinates.length - 1;
-          const currentIndex = Math.floor(progress * totalPoints);
-          const nextIndex = Math.min(currentIndex + 1, totalPoints);
-
-          const currentPoint = routeCoordinates[currentIndex];
-          const nextPoint = routeCoordinates[nextIndex];
-
-          if (currentPoint && nextPoint) {
-            const localProgress = (progress * totalPoints) - currentIndex;
-            const currentLat = currentPoint[0] + (nextPoint[0] - currentPoint[0]) * localProgress;
-            const currentLng = currentPoint[1] + (nextPoint[1] - currentPoint[1]) * localProgress;
-
-            setDeliveryPersonLocation({ lat: currentLat, lng: currentLng });
-
-            // Calculer la distance restante
-            const remainingDistance = calculateDistance(currentLat, currentLng, userLat, userLng);
-            setRouteDistance(Math.round(remainingDistance * 10) / 10);
-            setEstimatedTime(Math.round(remainingDistance * 2.5));
-
-            if (import.meta.env.DEV) {
-              console.log('🚚 Position livreur mise à jour:', {
-                progress: Math.round(progress * 100) + '%',
-                remainingKm: remainingDistance.toFixed(1)
-              });
-            }
+        // Fetch real delivery person location from API
+        const deliveryPersonResponse = await fetch(`/api/delivery-persons/${currentOrder.deliveryPersonId}`);
+        if (!deliveryPersonResponse.ok) {
+          throw new Error('Failed to fetch delivery person location');
+        }
+        
+        const currentDeliveryPerson = await deliveryPersonResponse.json();
+        
+        // Vérifier que le livreur a des coordonnées GPS valides
+        if (!currentDeliveryPerson.lat || !currentDeliveryPerson.lng) {
+          if (import.meta.env.DEV) {
+            console.log('❌ Livreur sans coordonnées GPS:', currentDeliveryPerson);
           }
-        } else {
-          // Position fixe du livreur quand pas en transit
-          setDeliveryPersonLocation({ 
-            lat: deliveryPersonStartLat, 
-            lng: deliveryPersonStartLng 
+          return;
+        }
+
+        const deliveryPersonLat = parseFloat(currentDeliveryPerson.lat);
+        const deliveryPersonLng = parseFloat(currentDeliveryPerson.lng);
+
+        if (import.meta.env.DEV) {
+          console.log('📍 Position GPS réelle du livreur:', {
+            lat: deliveryPersonLat,
+            lng: deliveryPersonLng,
+            timestamp: new Date().toISOString()
           });
         }
 
+        // Mettre à jour la position du livreur avec les coordonnées réelles
+        setDeliveryPersonLocation({ 
+          lat: deliveryPersonLat, 
+          lng: deliveryPersonLng 
+        });
+
+        // Calculer l'itinéraire réel en temps réel
+        const routeData = await calculateRealRoute(
+          deliveryPersonLat, 
+          deliveryPersonLng, 
+          userLat, 
+          userLng
+        );
+
+        if (routeData) {
+          routeCoordinates = routeData.coordinates;
+          setRouteDistance(routeData.distance);
+          setEstimatedTime(routeData.duration);
+
+          // Nettoyer l'ancien itinéraire
+          if (routePolylineRef.current) {
+            map.removeLayer(routePolylineRef.current);
+          }
+          if (routeLabelMarkerRef.current) {
+            map.removeLayer(routeLabelMarkerRef.current);
+          }
+
+          // Dessiner le nouvel itinéraire
+          routePolylineRef.current = L.polyline(routeCoordinates, {
+            color: '#10b981',
+            weight: 6,
+            opacity: 0.9,
+            dashArray: '15, 8'
+          }).addTo(map);
+
+          // Ajouter le label de route avec distance réelle
+          if (routeCoordinates.length > 1) {
+            const midPointIndex = Math.floor(routeCoordinates.length / 2);
+            const midPoint = routeCoordinates[midPointIndex];
+
+            routeLabelMarkerRef.current = L.marker(midPoint, {
+              icon: L.divIcon({
+                html: `<div style="background: linear-gradient(45deg, #10b981, #059669); color: white; padding: 4px 8px; border-radius: 16px; font-size: 11px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid white;">🚚→👤 ${routeData.distance}km</div>`,
+                className: 'delivery-route-label',
+                iconSize: [80, 24],
+                iconAnchor: [40, 12]
+              })
+            }).addTo(map);
+          }
+
+          // Ajuster la vue pour montrer l'itinéraire complet
+          const group = new L.FeatureGroup([routePolylineRef.current]);
+          map.fitBounds(group.getBounds().pad(0.15));
+
+          if (import.meta.env.DEV) {
+            console.log('✅ Itinéraire GPS réel tracé:', {
+              distance: routeData.distance + 'km',
+              duration: routeData.duration + 'min',
+              deliveryPersonPosition: { lat: deliveryPersonLat, lng: deliveryPersonLng },
+              patientPosition: { lat: userLat, lng: userLng }
+            });
+          }
+        }
+
       } catch (error) {
-        console.error('Erreur lors de la mise à jour du tracking:', error);
+        console.error('Erreur lors de la récupération de la position GPS du livreur:', error);
       }
     };
 
-    // Lancer la mise à jour immédiatement puis toutes les 4 secondes
+    // Lancer la mise à jour immédiatement puis toutes les 5 secondes pour récupérer la position GPS réelle
     updateDeliveryTracking();
-    const interval = setInterval(updateDeliveryTracking, 4000);
+    const interval = setInterval(updateDeliveryTracking, 5000);
 
     return () => {
       clearInterval(interval);
@@ -401,7 +380,7 @@ export default function DeliveryTracking() {
         routeLabelMarkerRef.current = null;
       }
     };
-  }, [currentOrder?.id, currentOrder?.deliveryPersonId, currentOrder?.status, userLat, userLng, map, deliveryPerson]);
+  }, [currentOrder?.id, currentOrder?.deliveryPersonId, currentOrder?.status, userLat, userLng, map]);
 
   // Update delivery person marker
   useEffect(() => {

@@ -67,6 +67,9 @@ export default function DashboardLivreur() {
   const [isAvailable, setIsAvailable] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [expiredAssignments, setExpiredAssignments] = useState<Set<string>>(new Set());
+  const [isLocationSharing, setIsLocationSharing] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
+
 
   // Système de notifications sonores pour le livreur
   const {
@@ -210,6 +213,87 @@ export default function DashboardLivreur() {
     },
   });
 
+  // Mutation pour mettre à jour la position GPS
+  const updateLocationMutation = useMutation({
+    mutationFn: async ({ latitude, longitude }: { latitude: number, longitude: number }) => {
+      const response = await apiRequest('POST', '/api/livreur/update-location', {
+        latitude,
+        longitude
+      });
+      return response.json();
+    },
+    onError: (error: any) => {
+      console.error('Erreur de mise à jour GPS:', error);
+    }
+  });
+
+  // Géolocalisation automatique pour les livreurs
+  useEffect(() => {
+    let watchId: number | null = null;
+
+    const startLocationSharing = () => {
+      if (navigator.geolocation) {
+        setIsLocationSharing(true);
+
+        // Configuration des options de géolocalisation
+        const options = {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        };
+
+        // Suivi en temps réel de la position
+        watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+
+            setCurrentLocation({ lat: latitude, lng: longitude });
+
+            // Mettre à jour la position en base de données
+            updateLocationMutation.mutate({ latitude, longitude });
+
+            if (import.meta.env.DEV) {
+              console.log('📍 Position GPS livreur mise à jour:', {
+                lat: latitude,
+                lng: longitude,
+                accuracy: position.coords.accuracy
+              });
+            }
+          },
+          (error) => {
+            console.error('Erreur de géolocalisation:', error);
+            setIsLocationSharing(false);
+            toast({
+              title: "Erreur GPS",
+              description: "Impossible d'obtenir votre position. Vérifiez les autorisations.",
+              variant: "destructive",
+            });
+          },
+          options
+        );
+      } else {
+        toast({
+          title: "GPS non supporté",
+          description: "Votre appareil ne supporte pas la géolocalisation.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    // Démarrer automatiquement le partage de localisation pour les livreurs
+    if (user?.role === 'livreur') {
+      startLocationSharing();
+    }
+
+    // Nettoyage
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [user?.role, updateLocationMutation]);
+
+
   const handleAcceptDelivery = (orderId: string) => {
     acceptDeliveryMutation.mutate(orderId);
   };
@@ -224,19 +308,19 @@ export default function DashboardLivreur() {
       myDeliveries.forEach((delivery: any) => {
         const currentStatus = delivery.status;
         const previousStatus = previousDeliveryStatuses[delivery.id];
-        
+
         // Si le statut a changé et qu'on a les notifications activées
         if (previousStatus && previousStatus !== currentStatus) {
           console.log(`🔄 Changement de statut livraison détecté: ${previousStatus} → ${currentStatus} pour ${delivery.id.slice(0, 8)}`);
-          
+
           // Jouer le son directement dans l'application
           playNotificationSound(currentStatus).catch(error => {
             console.error('Erreur lecture son dans l\'app:', error);
           });
-          
+
           // Déclencher notification système (sans son personnalisé)
           notifyOrderStatusChange(delivery.id, currentStatus, false);
-          
+
           // Notifications toast spécifiques aux livreurs
           const deliveryStatusMessages: Record<string, string> = {
             assigned_pending_acceptance: "📦 Nouvelle livraison assignée - Veuillez accepter",
@@ -245,7 +329,7 @@ export default function DashboardLivreur() {
             delivered: "✅ Livraison terminée avec succès !",
             cancelled: "❌ Livraison annulée"
           };
-          
+
           if (deliveryStatusMessages[currentStatus]) {
             toast({
               title: "Mise à jour de livraison",
@@ -254,7 +338,7 @@ export default function DashboardLivreur() {
             });
           }
         }
-        
+
         // Mettre à jour le statut précédent
         setPreviousDeliveryStatuses(prev => ({
           ...prev,
@@ -279,7 +363,7 @@ export default function DashboardLivreur() {
           duration: 10000,
         });
       }, 3000);
-      
+
       return () => clearTimeout(timer);
     }
   }, [isNotificationsEnabled, permissionStatus, requestNotificationPermission, toast]);
@@ -658,7 +742,7 @@ export default function DashboardLivreur() {
             </Card>
           </TabsContent>
 
-          
+
         </Tabs>
       </div>
 
