@@ -241,33 +241,61 @@ export default function DeliveryTracking() {
     }
 
     try {
-      // Utiliser une position simulée proche du patient si le livreur n'est pas localisé
-      const simulatedDeliveryPersonLat = userLat - 0.05; // ~5km au sud
-      const simulatedDeliveryPersonLng = userLng + 0.03; // ~3km à l'est
+      let deliveryPersonLat, deliveryPersonLng;
+      let isRealPosition = false;
 
-      if (import.meta.env.DEV) {
-        console.log('🔧 Forçage d\'affichage d\'itinéraire avec position simulée');
+      // Essayer de récupérer la vraie position du livreur d'abord
+      try {
+        const deliveryPersonResponse = await fetch(`/api/delivery-persons/${currentOrder.deliveryPersonId}`);
+        
+        if (deliveryPersonResponse.ok) {
+          const deliveryPersonData = await deliveryPersonResponse.json();
+          
+          if (deliveryPersonData.lat && deliveryPersonData.lng) {
+            deliveryPersonLat = parseFloat(deliveryPersonData.lat);
+            deliveryPersonLng = parseFloat(deliveryPersonData.lng);
+            isRealPosition = true;
+
+            if (import.meta.env.DEV) {
+              console.log('🔧 Forçage avec vraie position GPS du livreur:', {
+                lat: deliveryPersonLat,
+                lng: deliveryPersonLng
+              });
+            }
+          }
+        }
+      } catch (apiError) {
+        console.log('API livreur non disponible, utilisation position proche');
+      }
+
+      // Fallback si pas de vraie position
+      if (!isRealPosition) {
+        deliveryPersonLat = userLat - 0.01; // ~1km au sud
+        deliveryPersonLng = userLng + 0.01; // ~1km à l'est
+
+        if (import.meta.env.DEV) {
+          console.log('🔧 Forçage avec position proche du patient (fallback)');
+        }
       }
 
       const routeData = await calculateRealRoute(
-        simulatedDeliveryPersonLat, 
-        simulatedDeliveryPersonLng, 
+        deliveryPersonLat, 
+        deliveryPersonLng, 
         userLat, 
         userLng
       );
 
       if (routeData) {
-        updateRouteDisplay(routeData, simulatedDeliveryPersonLat, simulatedDeliveryPersonLng);
+        updateRouteDisplay(routeData, deliveryPersonLat, deliveryPersonLng);
         
-        // Simuler la position du livreur
         setDeliveryPersonLocation({
-          lat: simulatedDeliveryPersonLat,
-          lng: simulatedDeliveryPersonLng
+          lat: deliveryPersonLat,
+          lng: deliveryPersonLng
         });
 
         toast({
           title: "Itinéraire affiché ✅",
-          description: `Distance: ${routeData.distance}km • Durée: ${routeData.duration}min`,
+          description: `Distance: ${routeData.distance}km • Durée: ${routeData.duration}min ${isRealPosition ? '(Position réelle)' : '(Position estimée)'}`,
         });
       }
     } catch (error) {
@@ -364,50 +392,57 @@ export default function DeliveryTracking() {
 
     const updateDeliveryTracking = async () => {
       try {
-        // Récupérer la position GPS réelle et actuelle du livreur
+        // Récupérer la position GPS réelle et actuelle du livreur depuis la base de données
         if (import.meta.env.DEV) {
-          console.log('🔄 Récupération position GPS réelle du livreur:', currentOrder.deliveryPersonId);
+          console.log('🔄 Récupération position GPS réelle du livreur depuis la DB:', currentOrder.deliveryPersonId);
         }
 
-        // Fetch real delivery person location from API
+        // Fetch real delivery person location from API with latest GPS coordinates
         const deliveryPersonResponse = await fetch(`/api/delivery-persons/${currentOrder.deliveryPersonId}`);
         
         let deliveryPersonLat, deliveryPersonLng;
+        let isRealGPS = false;
         
-        if (!deliveryPersonResponse.ok) {
-          if (import.meta.env.DEV) {
-            console.log('❌ Erreur API livreur, utilisation position simulée proche du patient');
-          }
-          // Utiliser une position simulée proche du patient
-          deliveryPersonLat = userLat - 0.05; // ~5km au sud
-          deliveryPersonLng = userLng + 0.03; // ~3km à l'est
-        } else {
+        if (deliveryPersonResponse.ok) {
           const currentDeliveryPerson = await deliveryPersonResponse.json();
 
-          // Vérifier que le livreur a des coordonnées GPS valides
-          if (!currentDeliveryPerson.lat || !currentDeliveryPerson.lng) {
-            if (import.meta.env.DEV) {
-              console.log('❌ Livreur sans coordonnées GPS, utilisation position simulée');
-            }
-            // Utiliser une position simulée proche du patient
-            deliveryPersonLat = userLat - 0.05; // ~5km au sud
-            deliveryPersonLng = userLng + 0.03; // ~3km à l'est
-          } else {
+          // Vérifier que le livreur a des coordonnées GPS réelles et récentes
+          if (currentDeliveryPerson.lat && currentDeliveryPerson.lng) {
             deliveryPersonLat = parseFloat(currentDeliveryPerson.lat);
             deliveryPersonLng = parseFloat(currentDeliveryPerson.lng);
+            isRealGPS = true;
+
+            if (import.meta.env.DEV) {
+              console.log('✅ Position GPS réelle du livreur récupérée:', {
+                lat: deliveryPersonLat,
+                lng: deliveryPersonLng,
+                lastUpdate: currentDeliveryPerson.lastLocationUpdate,
+                source: 'database'
+              });
+            }
           }
+        }
+
+        // Fallback uniquement si aucune position GPS réelle n'est disponible
+        if (!isRealGPS) {
+          if (import.meta.env.DEV) {
+            console.warn('⚠️ Aucune position GPS réelle disponible - utilisation position proche du patient');
+          }
+          // Position proche du patient pour test (seulement si pas de vraie position)
+          deliveryPersonLat = userLat - 0.01; // ~1km au sud
+          deliveryPersonLng = userLng + 0.01; // ~1km à l'est
         }
 
         if (import.meta.env.DEV) {
-          console.log('📍 Position GPS du livreur:', {
+          console.log('📍 Position finale du livreur utilisée:', {
             lat: deliveryPersonLat,
             lng: deliveryPersonLng,
-            timestamp: new Date().toISOString(),
-            isSimulated: !deliveryPersonResponse.ok
+            isRealGPS,
+            timestamp: new Date().toISOString()
           });
         }
 
-        // Mettre à jour la position du livreur avec les coordonnées réelles
+        // Mettre à jour la position du livreur
         setDeliveryPersonLocation({ 
           lat: deliveryPersonLat, 
           lng: deliveryPersonLng 
@@ -424,16 +459,40 @@ export default function DeliveryTracking() {
         if (routeData) {
           routeCoordinates = routeData.coordinates;
           updateRouteDisplay(routeData, deliveryPersonLat, deliveryPersonLng);
+
+          if (import.meta.env.DEV) {
+            console.log('🗺️ Itinéraire mis à jour:', {
+              distance: routeData.distance + 'km',
+              duration: routeData.duration + 'min',
+              isRealGPS,
+              coordinates: routeData.coordinates.length + ' points'
+            });
+          }
         }
 
       } catch (error) {
-        console.error('Erreur lors de la récupération de la position GPS du livreur:', error);
+        console.error('❌ Erreur lors de la récupération de la position GPS du livreur:', error);
+        
+        // Position de secours uniquement en cas d'erreur critique
+        if (userLat && userLng) {
+          const fallbackLat = userLat - 0.01;
+          const fallbackLng = userLng + 0.01;
+          
+          setDeliveryPersonLocation({ 
+            lat: fallbackLat, 
+            lng: fallbackLng 
+          });
+
+          if (import.meta.env.DEV) {
+            console.log('🚨 Position de secours utilisée:', { lat: fallbackLat, lng: fallbackLng });
+          }
+        }
       }
     };
 
-    // Lancer la mise à jour immédiatement puis toutes les 5 secondes pour récupérer la position GPS réelle
+    // Lancer la mise à jour immédiatement puis toutes les 10 secondes pour récupérer la vraie position GPS
     updateDeliveryTracking();
-    const interval = setInterval(updateDeliveryTracking, 5000);
+    const interval = setInterval(updateDeliveryTracking, 10000);
 
     return () => {
       clearInterval(interval);

@@ -2296,13 +2296,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      const { latitude, longitude } = req.body;
+      const { latitude, longitude, accuracy, heading, speed } = req.body;
 
       if (!latitude || !longitude) {
         return res.status(400).json({ message: 'Latitude and longitude are required' });
       }
 
-      // Validate coordinates are numbers
+      // Validate coordinates are valid numbers
       const lat = parseFloat(latitude);
       const lng = parseFloat(longitude);
 
@@ -2310,30 +2310,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid coordinates' });
       }
 
-      // Update delivery person location in database
+      // Validate coordinate ranges (basic sanity check)
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        return res.status(400).json({ message: 'Coordinates out of valid range' });
+      }
+
+      const now = new Date();
+      
+      // Update delivery person location in database with additional GPS info
       const updatedUser = await storage.updateUser(req.session.userId, {
         lat: lat.toString(),
         lng: lng.toString(),
-        lastLocationUpdate: new Date().toISOString()
+        lastLocationUpdate: now.toISOString(),
+        gpsAccuracy: accuracy ? accuracy.toString() : undefined,
+        heading: heading ? heading.toString() : undefined,
+        speed: speed ? speed.toString() : undefined
       });
 
       if (!updatedUser) {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      if (import.meta.env.DEV) {
-        console.log('📍 Position GPS livreur mise à jour:', {
-          userId: req.session.userId,
-          lat: lat,
-          lng: lng,
-          timestamp: new Date().toISOString()
-        });
-      }
+      console.log('📍 Position GPS livreur mise à jour en temps réel:', {
+        userId: req.session.userId,
+        name: `${user.firstName} ${user.lastName}`,
+        lat: lat,
+        lng: lng,
+        accuracy: accuracy || 'N/A',
+        timestamp: now.toISOString()
+      });
 
       res.json({ 
         message: 'Location updated successfully',
         location: { lat, lng },
-        timestamp: new Date().toISOString()
+        accuracy: accuracy || null,
+        timestamp: now.toISOString(),
+        success: true
       });
     } catch (error) {
       console.error('Error updating delivery person location:', error);
