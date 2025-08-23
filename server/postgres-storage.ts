@@ -951,6 +951,57 @@ export class PostgresStorage implements IStorage {
     }
   }
 
+  async cleanupOldOrders(): Promise<number> {
+    const db = await getDb();
+    
+    try {
+      const now = new Date();
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const fiveDaysAgo = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+
+      // Supprimer les commandes non livrées de plus de 24h
+      const oldUndeliveredOrders = await db.delete(orders).where(
+        and(
+          ne(orders.status, 'delivered'),
+          sql`${orders.createdAt} < ${twentyFourHoursAgo.toISOString()}::timestamp`
+        )
+      ).returning({ id: orders.id });
+
+      // Supprimer les commandes livrées de plus de 5 jours
+      const oldDeliveredOrders = await db.delete(orders).where(
+        and(
+          eq(orders.status, 'delivered'),
+          sql`${orders.createdAt} < ${fiveDaysAgo.toISOString()}::timestamp`
+        )
+      ).returning({ id: orders.id });
+
+      const totalDeleted = oldUndeliveredOrders.length + oldDeliveredOrders.length;
+
+      if (totalDeleted > 0) {
+        console.log(`🗑️ Nettoyage automatique: ${totalDeleted} commandes supprimées (${oldUndeliveredOrders.length} non livrées + ${oldDeliveredOrders.length} livrées)`);
+        
+        // Supprimer aussi les notifications associées aux commandes supprimées
+        const deletedOrderIds = [
+          ...oldUndeliveredOrders.map(o => o.id),
+          ...oldDeliveredOrders.map(o => o.id)
+        ];
+        
+        if (deletedOrderIds.length > 0) {
+          const deletedNotifications = await db.delete(notifications).where(
+            sql`${notifications.orderId} = ANY(${deletedOrderIds})`
+          ).returning({ id: notifications.id });
+          
+          console.log(`🗑️ ${deletedNotifications.length} notifications associées supprimées`);
+        }
+      }
+
+      return totalDeleted;
+    } catch (error) {
+      console.error('Erreur lors du nettoyage automatique des commandes:', error);
+      return 0;
+    }
+  }
+
   // Méthodes pour la gestion des assignations et acceptation/rejet
   async acceptDeliveryAssignment(orderId: string, deliveryPersonId: string): Promise<Order | undefined> {
     const db = await getDb();

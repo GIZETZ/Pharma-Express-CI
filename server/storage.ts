@@ -101,6 +101,9 @@ export interface IStorage {
     profile?: DeliveryProfile;
     vehicle?: DeliveryVehicle;
   } | undefined>;
+
+  // Order cleanup operations  
+  cleanupOldOrders(): Promise<number>;
 }
 
 export class MemStorage implements IStorage {
@@ -1671,5 +1674,40 @@ export class MemStorage implements IStorage {
     const deleted = this.orders.delete(id);
     console.log(`Order ${id} ${deleted ? 'successfully deleted' : 'not found'} from memory storage`);
     return deleted;
+  }
+
+  async cleanupOldOrders(): Promise<number> {
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const fiveDaysAgo = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+
+    let deletedCount = 0;
+    const ordersToDelete: string[] = [];
+
+    // Parcourir toutes les commandes
+    for (const [orderId, order] of this.orders.entries()) {
+      const orderDate = new Date(order.createdAt);
+      
+      // Supprimer si:
+      // - Plus de 24h et statut != 'delivered' 
+      // - Plus de 5 jours et statut == 'delivered'
+      if (order.status !== 'delivered' && orderDate < twentyFourHoursAgo) {
+        ordersToDelete.push(orderId);
+      } else if (order.status === 'delivered' && orderDate < fiveDaysAgo) {
+        ordersToDelete.push(orderId);
+      }
+    }
+
+    // Supprimer les commandes identifiées
+    for (const orderId of ordersToDelete) {
+      this.orders.delete(orderId);
+      deletedCount++;
+    }
+
+    if (deletedCount > 0) {
+      console.log(`🗑️ Nettoyage automatique: ${deletedCount} commandes supprimées`);
+    }
+
+    return deletedCount;
   }
 }

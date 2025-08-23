@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupDatabase } from "./database-setup";
+import { cleanupService } from "./cleanup-service";
 
 // Définir NODE_ENV si non défini (pour Replit)
 if (!process.env.NODE_ENV) {
@@ -45,6 +46,9 @@ app.use((req, res, next) => {
 (async () => {
   // Configuration automatique de la base de données au démarrage
   await setupDatabase();
+  
+  // Démarrage du service de nettoyage automatique des commandes
+  cleanupService.start();
   
   const server = await registerRoutes(app);
 
