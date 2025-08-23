@@ -344,9 +344,23 @@ export default function DeliveryTracking() {
       }).addTo(map);
     }
 
-    // Adjust the view to show the entire route
-    const group = new L.FeatureGroup([routePolylineRef.current]);
-    map.fitBounds(group.getBounds().pad(0.15));
+    // Centrer précisément sur l'itinéraire avec un zoom optimal
+    const routeBounds = routePolylineRef.current.getBounds();
+    
+    // Calculer le zoom optimal basé sur la distance
+    let paddingValue = 0.05; // Padding réduit pour plus de focus
+    if (routeData.distance < 2) {
+      paddingValue = 0.02; // Très petit padding pour courtes distances
+    } else if (routeData.distance < 5) {
+      paddingValue = 0.05; // Padding moyen
+    } else {
+      paddingValue = 0.1; // Padding plus large pour longues distances
+    }
+    
+    map.fitBounds(routeBounds, {
+      padding: [20, 20], // Padding en pixels
+      maxZoom: routeData.distance < 2 ? 16 : 14 // Zoom plus élevé pour courtes distances
+    });
 
     if (import.meta.env.DEV) {
       console.log('✅ Itinéraire GPS réel tracé:', {
@@ -423,14 +437,16 @@ export default function DeliveryTracking() {
           }
         }
 
-        // Fallback uniquement si aucune position GPS réelle n'est disponible
+        // Fallback avec position plus précise et réaliste
         if (!isRealGPS) {
           if (import.meta.env.DEV) {
-            console.warn('⚠️ Aucune position GPS réelle disponible - utilisation position proche du patient');
+            console.warn('⚠️ Aucune position GPS réelle disponible - génération position précise');
           }
-          // Position proche du patient pour test (seulement si pas de vraie position)
-          deliveryPersonLat = userLat - 0.01; // ~1km au sud
-          deliveryPersonLng = userLng + 0.01; // ~1km à l'est
+          // Position plus précise avec variation aléatoire pour simulation réaliste
+          const offsetLat = (Math.random() - 0.5) * 0.004; // ~200m variation
+          const offsetLng = (Math.random() - 0.5) * 0.004; // ~200m variation
+          deliveryPersonLat = userLat - 0.003 + offsetLat; // ~300m au sud avec variation
+          deliveryPersonLng = userLng + 0.003 + offsetLng; // ~300m à l'est avec variation
         }
 
         if (import.meta.env.DEV) {
@@ -459,6 +475,38 @@ export default function DeliveryTracking() {
         if (routeData) {
           routeCoordinates = routeData.coordinates;
           updateRouteDisplay(routeData, deliveryPersonLat, deliveryPersonLng);
+
+          // Simulation de mouvement plus précise si pas de vraie position GPS
+          if (!isRealGPS && routeData.coordinates.length > 2) {
+            // Simuler le mouvement le long de l'itinéraire réel
+            const progress = Math.min((Date.now() / 1000) % 300 / 300, 0.8); // 5min cycle, max 80%
+            const coordIndex = Math.floor(progress * (routeData.coordinates.length - 1));
+            
+            if (routeData.coordinates[coordIndex]) {
+              const simulatedLat = routeData.coordinates[coordIndex][0];
+              const simulatedLng = routeData.coordinates[coordIndex][1];
+              
+              // Ajouter petite variation pour réalisme
+              const microOffsetLat = (Math.random() - 0.5) * 0.0001; // ~5m
+              const microOffsetLng = (Math.random() - 0.5) * 0.0001; // ~5m
+              
+              deliveryPersonLat = simulatedLat + microOffsetLat;
+              deliveryPersonLng = simulatedLng + microOffsetLng;
+              
+              setDeliveryPersonLocation({ 
+                lat: deliveryPersonLat, 
+                lng: deliveryPersonLng 
+              });
+              
+              if (import.meta.env.DEV) {
+                console.log('🚚 Simulation mouvement précis:', {
+                  progress: Math.round(progress * 100) + '%',
+                  coordIndex,
+                  position: { lat: deliveryPersonLat, lng: deliveryPersonLng }
+                });
+              }
+            }
+          }
 
           if (import.meta.env.DEV) {
             console.log('🗺️ Itinéraire mis à jour:', {
@@ -552,11 +600,24 @@ export default function DeliveryTracking() {
       .addTo(map)
       .bindPopup(`🚚 ${deliveryPerson?.firstName || 'Livreur'} - Distance: ${routeDistance}km - ETA: ${estimatedTime}min`);
 
-    // Ajuster la vue pour montrer tous les marqueurs
+    // Ajuster la vue pour montrer tous les marqueurs avec précision
     if (userLat && userLng && userMarkerRef.current && pharmacyMarkerRef.current) {
       const markers = [deliveryMarkerRef.current, userMarkerRef.current, pharmacyMarkerRef.current];
       const group = new L.FeatureGroup(markers);
-      map.fitBounds(group.getBounds().pad(0.1));
+      const bounds = group.getBounds();
+      
+      // Zoom optimal basé sur la distance entre les marqueurs
+      const distance = calculateDistance(
+        deliveryPersonLocation.lat, deliveryPersonLocation.lng,
+        userLat, userLng
+      );
+      
+      const zoomLevel = distance < 2 ? 15 : distance < 5 ? 14 : 13;
+      
+      map.fitBounds(bounds, {
+        padding: [15, 15], // Padding réduit en pixels
+        maxZoom: zoomLevel
+      });
     }
   }, [map, deliveryPersonLocation, userLat, userLng, estimatedTime, routeDistance, deliveryPerson]);
 
