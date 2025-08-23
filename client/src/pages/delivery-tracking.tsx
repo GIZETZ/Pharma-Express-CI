@@ -229,6 +229,56 @@ export default function DeliveryTracking() {
       .bindPopup(`🏥 ${currentOrder.pharmacy?.name || 'Pharmacie'}`);
   }, [map, currentOrder]);
 
+  // Helper function to update the route display on the map
+  const updateRouteDisplay = (routeData: { coordinates: number[][], distance: number, duration: number }, deliveryPersonLat: number, deliveryPersonLng: number) => {
+    setRouteDistance(routeData.distance);
+    setEstimatedTime(routeData.duration);
+
+    // Clean up previous route elements
+    if (routePolylineRef.current) {
+      map.removeLayer(routePolylineRef.current);
+    }
+    if (routeLabelMarkerRef.current) {
+      map.removeLayer(routeLabelMarkerRef.current);
+    }
+
+    // Draw the new route
+    routePolylineRef.current = L.polyline(routeData.coordinates, {
+      color: '#10b981',
+      weight: 6,
+      opacity: 0.9,
+      dashArray: '15, 8'
+    }).addTo(map);
+
+    // Add the route label with actual distance
+    if (routeData.coordinates.length > 1) {
+      const midPointIndex = Math.floor(routeData.coordinates.length / 2);
+      const midPoint = routeData.coordinates[midPointIndex];
+
+      routeLabelMarkerRef.current = L.marker(midPoint, {
+        icon: L.divIcon({
+          html: `<div style="background: linear-gradient(45deg, #10b981, #059669); color: white; padding: 4px 8px; border-radius: 16px; font-size: 11px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid white;">🚚→👤 ${routeData.distance}km</div>`,
+          className: 'delivery-route-label',
+          iconSize: [80, 24],
+          iconAnchor: [40, 12]
+        })
+      }).addTo(map);
+    }
+
+    // Adjust the view to show the entire route
+    const group = new L.FeatureGroup([routePolylineRef.current]);
+    map.fitBounds(group.getBounds().pad(0.15));
+
+    if (import.meta.env.DEV) {
+      console.log('✅ Itinéraire GPS réel tracé:', {
+        distance: routeData.distance + 'km',
+        duration: routeData.duration + 'min',
+        deliveryPersonPosition: { lat: deliveryPersonLat, lng: deliveryPersonLng },
+        patientPosition: { lat: userLat, lng: userLng }
+      });
+    }
+  };
+
   // Main effect for delivery tracking and route tracing
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -273,9 +323,9 @@ export default function DeliveryTracking() {
         if (!deliveryPersonResponse.ok) {
           throw new Error('Failed to fetch delivery person location');
         }
-        
+
         const currentDeliveryPerson = await deliveryPersonResponse.json();
-        
+
         // Vérifier que le livreur a des coordonnées GPS valides
         if (!currentDeliveryPerson.lat || !currentDeliveryPerson.lng) {
           if (import.meta.env.DEV) {
@@ -311,52 +361,7 @@ export default function DeliveryTracking() {
 
         if (routeData) {
           routeCoordinates = routeData.coordinates;
-          setRouteDistance(routeData.distance);
-          setEstimatedTime(routeData.duration);
-
-          // Nettoyer l'ancien itinéraire
-          if (routePolylineRef.current) {
-            map.removeLayer(routePolylineRef.current);
-          }
-          if (routeLabelMarkerRef.current) {
-            map.removeLayer(routeLabelMarkerRef.current);
-          }
-
-          // Dessiner le nouvel itinéraire
-          routePolylineRef.current = L.polyline(routeCoordinates, {
-            color: '#10b981',
-            weight: 6,
-            opacity: 0.9,
-            dashArray: '15, 8'
-          }).addTo(map);
-
-          // Ajouter le label de route avec distance réelle
-          if (routeCoordinates.length > 1) {
-            const midPointIndex = Math.floor(routeCoordinates.length / 2);
-            const midPoint = routeCoordinates[midPointIndex];
-
-            routeLabelMarkerRef.current = L.marker(midPoint, {
-              icon: L.divIcon({
-                html: `<div style="background: linear-gradient(45deg, #10b981, #059669); color: white; padding: 4px 8px; border-radius: 16px; font-size: 11px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid white;">🚚→👤 ${routeData.distance}km</div>`,
-                className: 'delivery-route-label',
-                iconSize: [80, 24],
-                iconAnchor: [40, 12]
-              })
-            }).addTo(map);
-          }
-
-          // Ajuster la vue pour montrer l'itinéraire complet
-          const group = new L.FeatureGroup([routePolylineRef.current]);
-          map.fitBounds(group.getBounds().pad(0.15));
-
-          if (import.meta.env.DEV) {
-            console.log('✅ Itinéraire GPS réel tracé:', {
-              distance: routeData.distance + 'km',
-              duration: routeData.duration + 'min',
-              deliveryPersonPosition: { lat: deliveryPersonLat, lng: deliveryPersonLng },
-              patientPosition: { lat: userLat, lng: userLng }
-            });
-          }
+          updateRouteDisplay(routeData, deliveryPersonLat, deliveryPersonLng);
         }
 
       } catch (error) {
