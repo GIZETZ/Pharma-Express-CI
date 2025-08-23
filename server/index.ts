@@ -1,4 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
+import { createServer } from "http";
+import { Server as SocketIOServer } from "socket.io";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupDatabase } from "./database-setup";
@@ -50,7 +52,19 @@ app.use((req, res, next) => {
   // Démarrage du service de nettoyage automatique des commandes
   cleanupService.start();
   
-  const server = await registerRoutes(app);
+  // Create HTTP server first
+  const httpServer = createServer(app);
+  
+  // Setup Socket.IO for real-time GPS tracking
+  const io = new SocketIOServer(httpServer, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
+  });
+
+  // Pass Socket.IO instance to routes
+  const server = await registerRoutes(app, io);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -85,8 +99,9 @@ app.use((req, res, next) => {
     log('✅ Production environment validated');
   }
   
-  server.listen(port, host, () => {
+  httpServer.listen(port, host, () => {
     log(`serving on ${host}:${port}`);
+    log(`🔌 WebSocket tracking GPS activé pour mises à jour en temps réel`);
     
     // Démarrer le service de nettoyage automatique
     cleanupService.start();

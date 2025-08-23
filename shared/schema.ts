@@ -22,6 +22,14 @@ export const users = pgTable("users", {
   verificationStatus: varchar("verification_status").default("pending"), // pending, approved, rejected
   deliveryApplicationStatus: varchar("delivery_application_status").default("none"), // none, pending, approved, rejected (pour livreurs)
   appliedPharmacyId: varchar("applied_pharmacy_id").references(() => pharmacies.id), // Pharmacie à laquelle le livreur a postulé
+  // Champs GPS avancés pour tracking haute précision (livreurs)
+  lat: decimal("lat", { precision: 10, scale: 8 }), // Latitude GPS actuelle
+  lng: decimal("lng", { precision: 11, scale: 8 }), // Longitude GPS actuelle
+  speed: decimal("speed", { precision: 5, scale: 2 }), // Vitesse en km/h
+  bearing: decimal("bearing", { precision: 5, scale: 2 }), // Direction/cap en degrés (0-360)
+  accuracy: decimal("accuracy", { precision: 6, scale: 2 }), // Précision GPS en mètres
+  lastLocationUpdate: timestamp("last_location_update"), // Dernière mise à jour GPS
+  isActiveTracking: boolean("is_active_tracking").default(false), // Si le livreur est en mode tracking actif
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

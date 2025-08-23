@@ -11,6 +11,7 @@ import { useState, useEffect, useRef } from "react";
 import type { Order, DeliveryPerson } from "@shared/schema";
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import io from 'socket.io-client';
 
 // Fix Leaflet default markers
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -26,8 +27,12 @@ export default function DeliveryTracking() {
   const { toast } = useToast();
   const { latitude: userLat, longitude: userLng } = useGeolocation();
   const [deliveryPersonLocation, setDeliveryPersonLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [deliverySpeed, setDeliverySpeed] = useState<number>(0);
+  const [deliveryBearing, setDeliveryBearing] = useState<number>(0);
+  const [deliveryProximity, setDeliveryProximity] = useState<'far' | 'nearby' | 'arrived'>('far');
   const [estimatedTime, setEstimatedTime] = useState<number>(0);
   const [routeDistance, setRouteDistance] = useState<number>(0);
+  const [lastLocationUpdate, setLastLocationUpdate] = useState<Date | null>(null);
   const [map, setMap] = useState<L.Map | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const deliveryMarkerRef = useRef<L.Marker | null>(null);
@@ -44,10 +49,21 @@ export default function DeliveryTracking() {
   const DEFAULT_PHARMACY_COORDS = { lat: 5.3456, lng: -4.0892 };
   const ABIDJAN_CENTER = { lat: 5.3364, lng: -4.0267 };
 
-  // Get current order being tracked
+  // 🚀 Configuration tracking GPS haute fréquence - Style Google Maps
+  const TRACKING_INTERVAL = 2000; // 2 secondes comme Google Maps
+  const HIGH_PRECISION_DISTANCE = 1; // 1km pour tracking haute fréquence
+  
+  // Zones de geofencing
+  const GEOFENCE_ZONES = {
+    ARRIVED: 100, // 100m = arrivé
+    NEARBY: 500,  // 500m = proche
+    EN_ROUTE: 2000 // 2km = en route
+  };
+
+  // Get current order being tracked (sans polling - WebSocket gère les mises à jour)
   const { data: currentOrder, isLoading: orderLoading } = useQuery<Order>({
     queryKey: ['/api/orders/current'],
-    refetchInterval: 3000, // Mise à jour toutes les 3 secondes
+    refetchInterval: false, // Désactivé - WebSocket gère les mises à jour temps réel
   });
 
   const { data: deliveryPerson } = useQuery<DeliveryPerson>({
@@ -110,6 +126,61 @@ export default function DeliveryTracking() {
               Math.sin(dLng/2) * Math.sin(dLng/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
+  };
+
+  // 🎯 Geofencing et Détection Automatique - Style Google Maps
+  const checkGeofencing = (deliveryLat: number, deliveryLng: number) => {
+    if (!userLat || !userLng) return;
+    
+    const distanceToCustomer = calculateDistance(deliveryLat, deliveryLng, userLat, userLng) * 1000; // en mètres
+    
+    if (distanceToCustomer <= GEOFENCE_ZONES.ARRIVED) {
+      // Auto-marquer comme "arrivé"
+      if (currentOrder?.status !== 'arrived_pending_confirmation' && deliveryProximity !== 'arrived') {
+        setDeliveryProximity('arrived');
+        // updateOrderStatus('arrived_pending_confirmation'); // À implémenter
+        toast({
+          title: "🚚 Livreur arrivé !",
+          description: "Votre livreur est à votre porte",
+        });
+      }
+    } else if (distanceToCustomer <= GEOFENCE_ZONES.NEARBY) {
+      if (deliveryProximity !== 'nearby') {
+        setDeliveryProximity('nearby');
+        toast({
+          title: "🔔 Livreur proche",
+          description: `Votre livreur arrive dans ${Math.round(distanceToCustomer)}m`,
+        });
+      }
+    } else {
+      setDeliveryProximity('far');
+    }
+  };
+
+  // 🎬 Animation Fluide Style Google Maps
+  const animateMarkerMovement = (oldPos: {lat: number, lng: number}, newPos: {lat: number, lng: number}) => {
+    if (!deliveryMarkerRef.current) return;
+    
+    const steps = 20;
+    const latStep = (newPos.lat - oldPos.lat) / steps;
+    const lngStep = (newPos.lng - oldPos.lng) / steps;
+    
+    let currentStep = 0;
+    
+    const animate = () => {
+      if (currentStep < steps) {
+        const interpolatedPos = {
+          lat: oldPos.lat + (latStep * currentStep),
+          lng: oldPos.lng + (lngStep * currentStep)
+        };
+        
+        deliveryMarkerRef.current?.setLatLng([interpolatedPos.lat, interpolatedPos.lng]);
+        currentStep++;
+        requestAnimationFrame(animate);
+      }
+    };
+    
+    animate();
   };
 
   // Helper function to get optimal zoom level based on distance
@@ -413,211 +484,137 @@ export default function DeliveryTracking() {
     }
   };
 
-  // Main effect for delivery tracking and route tracing
+  // 🚀 WebSocket Real-Time GPS Tracking - Style Google Maps
   useEffect(() => {
+    if (!currentOrder?.id) return;
+
     if (import.meta.env.DEV) {
-      console.log('📍 Vérification conditions traçage:', {
-        hasOrder: !!currentOrder,
-        hasDeliveryPerson: !!currentOrder?.deliveryPersonId,
-        hasUserLocation: !!(userLat && userLng),
-        hasMap: !!map,
-        status: currentOrder?.status
+      console.log('🔌 Initialisation WebSocket tracking pour commande:', currentOrder.id);
+    }
+
+    // Créer connexion WebSocket
+    const socket = io();
+
+    // Rejoindre la room de tracking pour cette commande
+    socket.emit('join', `order-${currentOrder.id}`);
+
+    // Écouter les mises à jour GPS en temps réel (2 secondes comme Google Maps)
+    socket.on('deliveryLocationUpdate', (locationData) => {
+      const { lat, lng, speed, bearing, timestamp } = locationData;
+      
+      if (import.meta.env.DEV) {
+        console.log('📍 Position GPS temps réel reçue:', {
+          lat, lng, speed, bearing, timestamp,
+          orderId: currentOrder.id
+        });
+      }
+
+      const newLocation = { lat: parseFloat(lat), lng: parseFloat(lng) };
+      
+      // Animation fluide du marqueur si position précédente existe
+      if (deliveryPersonLocation) {
+        animateMarkerMovement(deliveryPersonLocation, newLocation);
+      }
+
+      // Mise à jour des données
+      setDeliveryPersonLocation(newLocation);
+      setDeliverySpeed(speed || 0);
+      setDeliveryBearing(bearing || 0);
+      setLastLocationUpdate(new Date(timestamp));
+      
+      // 🎯 Vérification geofencing automatique
+      if (userLat && userLng) {
+        checkGeofencing(parseFloat(lat), parseFloat(lng));
+      }
+      
+      // 🕐 Calcul ETA dynamique basé sur vitesse réelle
+      if (speed > 0 && userLat && userLng) {
+        const remainingDistance = calculateDistance(parseFloat(lat), parseFloat(lng), userLat, userLng);
+        const estimatedMinutes = (remainingDistance / (speed / 60)) * 60; // Conversion km/h vers temps
+        setEstimatedTime(Math.round(estimatedMinutes));
+      }
+    });
+
+    // Gestion des erreurs WebSocket
+    socket.on('connect_error', (error) => {
+      console.error('❌ Erreur connexion WebSocket:', error);
+      toast({
+        title: "Connexion instable",
+        description: "Le suivi GPS peut être interrompu",
+        variant: "destructive",
+      });
+    });
+
+    socket.on('connect', () => {
+      if (import.meta.env.DEV) {
+        console.log('✅ WebSocket connecté pour tracking GPS temps réel');
+      }
+    });
+
+    // Nettoyage à la déconnexion
+    return () => {
+      socket.emit('leave', `order-${currentOrder.id}`);
+      socket.disconnect();
+      if (import.meta.env.DEV) {
+        console.log('🔌 WebSocket déconnecté pour commande:', currentOrder.id);
+      }
+    };
+  }, [currentOrder?.id, userLat, userLng, deliveryPersonLocation]);
+
+  // Traçage d'itinéraire initial et mise à jour du marqueur livreur
+  useEffect(() => {
+    if (!deliveryPersonLocation || !map) return;
+
+    // Créer ou mettre à jour le marqueur du livreur
+    if (deliveryMarkerRef.current) {
+      map.removeLayer(deliveryMarkerRef.current);
+    }
+
+    // Icône livreur avec direction (bearing) pour plus de réalisme
+    const deliveryIcon = L.divIcon({
+      html: `
+        <div style="
+          background: #F97316; 
+          width: 30px; 
+          height: 30px; 
+          border-radius: 50%; 
+          border: 3px solid white; 
+          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform: rotate(${deliveryBearing || 0}deg);
+        ">
+          <svg width="18" height="18" fill="white" viewBox="0 0 24 24">
+            <path d="M12 2L13.5 8.5L20 7L14 12L20 17L13.5 15.5L12 22L10.5 15.5L4 17L10 12L4 7L10.5 8.5Z"/>
+          </svg>
+        </div>
+      `,
+      className: 'delivery-marker-animated',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+    });
+
+    deliveryMarkerRef.current = L.marker([deliveryPersonLocation.lat, deliveryPersonLocation.lng], { 
+      icon: deliveryIcon 
+    })
+      .addTo(map)
+      .bindPopup(`🚚 Livreur ${deliverySpeed > 0 ? `(${Math.round(deliverySpeed)} km/h)` : ''}`);
+
+    // Tracer l'itinéraire si user location disponible
+    if (userLat && userLng) {
+      calculateRealRoute(
+        deliveryPersonLocation.lat,
+        deliveryPersonLocation.lng,
+        userLat,
+        userLng
+      ).then(routeData => {
+        if (routeData) {
+          updateRouteDisplay(routeData, deliveryPersonLocation.lat, deliveryPersonLocation.lng);
+        }
       });
     }
-
-    // Vérifier si on doit tracer l'itinéraire
-    const shouldTraceRoute = currentOrder && 
-      currentOrder.deliveryPersonId && 
-      userLat && userLng && 
-      map && 
-      ['preparing', 'ready_for_delivery', 'in_transit', 'in_delivery', 'assigned_pending_acceptance'].includes(currentOrder.status);
-
-    if (!shouldTraceRoute) {
-      if (import.meta.env.DEV) {
-        console.log('❌ Conditions non remplies pour tracer l\'itinéraire');
-      }
-      return;
-    }
-
-    if (import.meta.env.DEV) {
-      console.log('✅ Début du traçage d\'itinéraire avec position GPS réelle du livreur');
-    }
-
-    let routeCoordinates: number[][] = [];
-
-    const updateDeliveryTracking = async () => {
-      try {
-        // Récupérer la position GPS réelle et actuelle du livreur depuis la base de données
-        if (import.meta.env.DEV) {
-          console.log('🔄 Récupération position GPS réelle du livreur depuis la DB:', currentOrder.deliveryPersonId);
-        }
-
-        // 🔍 RÉCUPÉRATION GARANTIE DE LA VRAIE POSITION GPS DU LIVREUR
-        const deliveryPersonResponse = await fetch(`/api/delivery-persons/${currentOrder.deliveryPersonId}`);
-
-        let deliveryPersonLat, deliveryPersonLng;
-        let isRealGPS = false;
-        let gpsSource = 'simulation';
-        let lastUpdate = 'jamais';
-
-        if (deliveryPersonResponse.ok) {
-          const currentDeliveryPerson = await deliveryPersonResponse.json();
-
-          // Vérifier que le livreur a des coordonnées GPS réelles et récentes
-          if (currentDeliveryPerson.lat && currentDeliveryPerson.lng) {
-            deliveryPersonLat = parseFloat(currentDeliveryPerson.lat);
-            deliveryPersonLng = parseFloat(currentDeliveryPerson.lng);
-            isRealGPS = true;
-            gpsSource = 'GPS réel base de données';
-            lastUpdate = currentDeliveryPerson.lastLocationUpdate || 'non renseigné';
-
-            if (import.meta.env.DEV) {
-              console.log('🟢 POSITION GPS RÉELLE CONFIRMÉE du livreur:', {
-                livreurId: currentOrder.deliveryPersonId,
-                lat: deliveryPersonLat,
-                lng: deliveryPersonLng,
-                lastUpdate: lastUpdate,
-                source: gpsSource,
-                verified: '✅ VRAIE POSITION'
-              });
-            }
-          } else {
-            if (import.meta.env.DEV) {
-              console.log('🔴 AUCUNE POSITION GPS réelle disponible:', {
-                livreurId: currentOrder.deliveryPersonId,
-                hasLat: !!currentDeliveryPerson.lat,
-                hasLng: !!currentDeliveryPerson.lng,
-                deliveryPersonData: currentDeliveryPerson
-              });
-            }
-          }
-        } else {
-          if (import.meta.env.DEV) {
-            console.log('❌ Erreur API livreur:', {
-              status: deliveryPersonResponse.status,
-              statusText: deliveryPersonResponse.statusText
-            });
-          }
-        }
-
-        // Fallback avec position plus précise et réaliste
-        if (!isRealGPS) {
-          if (import.meta.env.DEV) {
-            console.warn('⚠️ Aucune position GPS réelle disponible - génération position précise');
-          }
-          // Position plus précise avec variation aléatoire pour simulation réaliste
-          const offsetLat = (Math.random() - 0.5) * 0.004; // ~200m variation
-          const offsetLng = (Math.random() - 0.5) * 0.004; // ~200m variation
-          deliveryPersonLat = userLat - 0.003 + offsetLat; // ~300m au sud avec variation
-          deliveryPersonLng = userLng + 0.003 + offsetLng; // ~300m à l'est avec variation
-        }
-
-        if (import.meta.env.DEV) {
-          console.log('📍 Position finale du livreur utilisée:', {
-            lat: deliveryPersonLat,
-            lng: deliveryPersonLng,
-            isRealGPS,
-            timestamp: new Date().toISOString()
-          });
-        }
-
-        // Mettre à jour la position du livreur
-        setDeliveryPersonLocation({ 
-          lat: deliveryPersonLat, 
-          lng: deliveryPersonLng 
-        });
-
-        // Calculer l'itinéraire réel en temps réel
-        const routeData = await calculateRealRoute(
-          deliveryPersonLat, 
-          deliveryPersonLng, 
-          userLat, 
-          userLng
-        );
-
-        if (routeData) {
-          routeCoordinates = routeData.coordinates;
-          updateRouteDisplay(routeData, deliveryPersonLat, deliveryPersonLng);
-
-          // Simulation de mouvement plus précise si pas de vraie position GPS
-          if (!isRealGPS && routeData.coordinates.length > 2) {
-            // Simuler le mouvement le long de l'itinéraire réel
-            const progress = Math.min((Date.now() / 1000) % 300 / 300, 0.8); // 5min cycle, max 80%
-            const coordIndex = Math.floor(progress * (routeData.coordinates.length - 1));
-
-            if (routeData.coordinates[coordIndex]) {
-              const simulatedLat = routeData.coordinates[coordIndex][0];
-              const simulatedLng = routeData.coordinates[coordIndex][1];
-
-              // Ajouter petite variation pour réalisme
-              const microOffsetLat = (Math.random() - 0.5) * 0.0001; // ~5m
-              const microOffsetLng = (Math.random() - 0.5) * 0.0001; // ~5m
-
-              deliveryPersonLat = simulatedLat + microOffsetLat;
-              deliveryPersonLng = simulatedLng + microOffsetLng;
-
-              setDeliveryPersonLocation({ 
-                lat: deliveryPersonLat, 
-                lng: deliveryPersonLng 
-              });
-
-              if (import.meta.env.DEV) {
-                console.log('🚚 Simulation mouvement précis:', {
-                  progress: Math.round(progress * 100) + '%',
-                  coordIndex,
-                  position: { lat: deliveryPersonLat, lng: deliveryPersonLng }
-                });
-              }
-            }
-          }
-
-          if (import.meta.env.DEV) {
-            console.log('🗺️ Itinéraire mis à jour:', {
-              distance: routeData.distance + 'km',
-              duration: routeData.duration + 'min',
-              isRealGPS,
-              coordinates: routeData.coordinates.length + ' points'
-            });
-          }
-        }
-
-      } catch (error) {
-        console.error('❌ Erreur lors de la récupération de la position GPS du livreur:', error);
-
-        // Position de secours uniquement en cas d'erreur critique
-        if (userLat && userLng) {
-          const fallbackLat = userLat - 0.01;
-          const fallbackLng = userLng + 0.01;
-
-          setDeliveryPersonLocation({ 
-            lat: fallbackLat, 
-            lng: fallbackLng 
-          });
-
-          if (import.meta.env.DEV) {
-            console.log('🚨 Position de secours utilisée:', { lat: fallbackLat, lng: fallbackLng });
-          }
-        }
-      }
-    };
-
-    // Lancer la mise à jour immédiatement puis toutes les 10 secondes pour récupérer la vraie position GPS
-    updateDeliveryTracking();
-    const interval = setInterval(updateDeliveryTracking, 10000);
-
-    return () => {
-      clearInterval(interval);
-      // Nettoyer les éléments de la carte
-      if (routePolylineRef.current) {
-        map.removeLayer(routePolylineRef.current);
-        routePolylineRef.current = null;
-      }
-      if (routeLabelMarkerRef.current) {
-        map.removeLayer(routeLabelMarkerRef.current);
-        routeLabelMarkerRef.current = null;
-      }
-    };
-  }, [currentOrder?.id, currentOrder?.deliveryPersonId, currentOrder?.status, userLat, userLng, map]);
+  }, [deliveryPersonLocation, map, deliveryBearing, deliverySpeed]);
 
   // Update delivery person marker
   useEffect(() => {

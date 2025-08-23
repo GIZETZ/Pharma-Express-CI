@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { Server as SocketIOServer } from "socket.io";
 import multer from "multer";
 import path from "path";
 import session from "express-session";
@@ -94,7 +95,7 @@ const requireRole = (role: string) => (req: any, res: any, next: any) => {
   });
 };
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express, io?: SocketIOServer): Promise<Server> {
   // Configuration CORS pour les cookies
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Credentials', 'true');
@@ -2288,68 +2289,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update delivery person GPS location (real-time tracking)
-  app.post('/api/livreur/update-location', requireAuth, async (req: any, res) => {
+  // 🚀 API GPS haute précision avec WebSocket en temps réel - Style Google Maps
+  app.post('/api/delivery-persons/:id/location', requireAuth, async (req: any, res) => {
     try {
+      const { id: deliveryPersonId } = req.params;
+      const { lat, lng, accuracy, speed, bearing, timestamp } = req.body;
+
+      // Validation des coordonnées GPS
+      if (!lat || !lng) {
+        return res.status(400).json({ message: 'Latitude et longitude sont requises' });
+      }
+
+      const latitude = parseFloat(lat);
+      const longitude = parseFloat(lng);
+
+      if (isNaN(latitude) || isNaN(longitude)) {
+        return res.status(400).json({ message: 'Coordonnées GPS invalides' });
+      }
+
+      if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+        return res.status(400).json({ message: 'Coordonnées hors limites valides' });
+      }
+
+      // Valider que l'utilisateur a le droit de mettre à jour cette position
       const user = await storage.getUser(req.session.userId);
-      if (!user || user.role !== 'livreur') {
-        return res.status(403).json({ message: 'Access denied' });
-      }
-
-      const { latitude, longitude, accuracy, heading, speed } = req.body;
-
-      if (!latitude || !longitude) {
-        return res.status(400).json({ message: 'Latitude and longitude are required' });
-      }
-
-      // Validate coordinates are valid numbers
-      const lat = parseFloat(latitude);
-      const lng = parseFloat(longitude);
-
-      if (isNaN(lat) || isNaN(lng)) {
-        return res.status(400).json({ message: 'Invalid coordinates' });
-      }
-
-      // Validate coordinate ranges (basic sanity check)
-      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-        return res.status(400).json({ message: 'Coordinates out of valid range' });
+      if (!user || user.role !== 'livreur' || req.session.userId !== deliveryPersonId) {
+        return res.status(403).json({ message: 'Accès refusé' });
       }
 
       const now = new Date();
       
-      // Update delivery person location in database with additional GPS info
-      const updatedUser = await storage.updateUser(req.session.userId, {
-        lat: lat.toString(),
-        lng: lng.toString(),
-        lastLocationUpdate: now.toISOString(),
-        gpsAccuracy: accuracy ? accuracy.toString() : undefined,
-        heading: heading ? heading.toString() : undefined,
-        speed: speed ? speed.toString() : undefined
+      // 📍 Mise à jour GPS haute précision avec nouveaux champs
+      const updatedUser = await storage.updateUser(deliveryPersonId, {
+        lat: latitude.toString(),
+        lng: longitude.toString(),
+        speed: speed ? speed.toString() : '0',
+        bearing: bearing ? bearing.toString() : '0',
+        accuracy: accuracy ? accuracy.toString() : '5',
+        lastLocationUpdate: timestamp ? new Date(timestamp).toISOString() : now.toISOString(),
+        isActiveTracking: true
       });
 
       if (!updatedUser) {
-        return res.status(404).json({ message: 'User not found' });
+        return res.status(404).json({ message: 'Livreur non trouvé' });
       }
 
-      console.log('📍 Position GPS livreur mise à jour en temps réel:', {
-        userId: req.session.userId,
+      // 🔌 WebSocket broadcast en temps réel vers tous les clients connectés
+      if (io) {
+        // Récupérer les commandes actives du livreur pour notifier les bons clients
+        const activeOrders = await storage.getMyAssignedOrders(deliveryPersonId);
+        
+        // Broadcast GPS position to each order's tracking room
+        activeOrders.forEach(order => {
+          if (['preparing', 'ready_for_delivery', 'in_transit', 'assigned_pending_acceptance'].includes(order.status)) {
+            io.to(`order-${order.id}`).emit('deliveryLocationUpdate', {
+              lat: latitude,
+              lng: longitude,
+              speed: speed || 0,
+              bearing: bearing || 0,
+              accuracy: accuracy || 5,
+              timestamp: timestamp || now.toISOString(),
+              deliveryPersonId,
+              orderId: order.id
+            });
+            
+            console.log(`🔌 GPS broadcast vers clients order-${order.id}:`, {
+              lat: latitude,
+              lng: longitude,
+              speed: speed || 0,
+              livreur: `${user.firstName} ${user.lastName}`
+            });
+          }
+        });
+      }
+
+      console.log('📍 Position GPS livreur haute précision mise à jour:', {
+        userId: deliveryPersonId,
         name: `${user.firstName} ${user.lastName}`,
-        lat: lat,
-        lng: lng,
-        accuracy: accuracy || 'N/A',
-        timestamp: now.toISOString()
+        lat: latitude,
+        lng: longitude,
+        speed: speed || 0,
+        bearing: bearing || 0,
+        accuracy: accuracy || 5,
+        timestamp: timestamp || now.toISOString(),
+        activeOrders: (await storage.getMyAssignedOrders(deliveryPersonId)).length
       });
 
       res.json({ 
-        message: 'Location updated successfully',
-        location: { lat, lng },
-        accuracy: accuracy || null,
-        timestamp: now.toISOString(),
-        success: true
+        success: true,
+        message: 'Position GPS mise à jour avec broadcasting temps réel',
+        location: { lat: latitude, lng: longitude },
+        speed: speed || 0,
+        bearing: bearing || 0,
+        accuracy: accuracy || 5,
+        timestamp: timestamp || now.toISOString()
       });
     } catch (error) {
-      console.error('Error updating delivery person location:', error);
-      res.status(500).json({ message: 'Failed to update location' });
+      console.error('❌ Erreur mise à jour GPS livreur:', error);
+      res.status(500).json({ message: 'Erreur lors de la mise à jour GPS' });
+    }
+  });
+
+  // Legacy route - maintenue pour compatibilité mais redirige vers la nouvelle API
+  app.post('/api/livreur/update-location', requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || user.role !== 'livreur') {
+        return res.status(403).json({ message: 'Accès refusé' });
+      }
+
+      // Rediriger vers la nouvelle API haute précision
+      req.params.id = req.session.userId;
+      return app._router.handle({ ...req, method: 'POST', url: `/api/delivery-persons/${req.session.userId}/location` }, res);
+    } catch (error) {
+      console.error('Erreur route legacy GPS:', error);
+      res.status(500).json({ message: 'Erreur lors de la mise à jour GPS' });
     }
   });
 

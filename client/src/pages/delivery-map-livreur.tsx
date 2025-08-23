@@ -40,11 +40,57 @@ export default function DeliveryMapLivreur() {
   const OSM_ATTRIBUTION = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
   const ABIDJAN_CENTER = { lat: 5.3364, lng: -4.0267 };
 
+  // 🚀 États GPS haute fréquence - Style Google Maps
+  const [isGPSActive, setIsGPSActive] = useState(false);
+  const [lastGPSUpdate, setLastGPSUpdate] = useState<Date | null>(null);
+  const [currentSpeed, setCurrentSpeed] = useState(0);
+  const [currentBearing, setBearing] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPositionRef = useRef<{lat: number, lng: number, timestamp: number} | null>(null);
+  
+  // Configuration tracking GPS professionnelle
+  const GPS_CONFIG = {
+    TRACKING_INTERVAL: 2000, // 2 secondes comme Google Maps
+    HIGH_ACCURACY: true,
+    TIMEOUT: 5000, // 5 secondes timeout
+    MAX_AGE: 1000, // Cache max 1 seconde
+    MINIMUM_DISTANCE: 5, // 5 mètres minimum pour mise à jour
+  };
+
   // Récupérer les livraisons du livreur
   const { data: myDeliveries } = useQuery({
     queryKey: ["/api/livreur/deliveries"],
     enabled: true,
     refetchInterval: 10000,
+  });
+
+  // 📡 Mutation GPS haute précision avec nouveaux champs
+  const updateGPSLocationMutation = useMutation({
+    mutationFn: async ({ lat, lng, speed, bearing, accuracy, timestamp }: {
+      lat: number;
+      lng: number;
+      speed?: number;
+      bearing?: number;
+      accuracy?: number;
+      timestamp?: string;
+    }) => {
+      if (!user?.id) throw new Error('Utilisateur non connecté');
+      
+      return apiRequest('POST', `/api/delivery-persons/${user.id}/location`, {
+        lat,
+        lng,
+        speed: speed || 0,
+        bearing: bearing || 0,
+        accuracy: accuracy || 5,
+        timestamp: timestamp || new Date().toISOString()
+      });
+    },
+    onSuccess: () => {
+      setLastGPSUpdate(new Date());
+    },
+    onError: (error) => {
+      console.error('❌ Erreur mise à jour GPS:', error);
+    }
   });
 
   // Fonction pour calculer la route réelle
@@ -85,6 +131,144 @@ export default function DeliveryMapLivreur() {
               Math.sin(dLng/2) * Math.sin(dLng/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
+  };
+
+  // 🧮 Calcul de la vitesse et direction en temps réel
+  const calculateMovementData = (newLat: number, newLng: number, currentTime: number) => {
+    if (!lastPositionRef.current) {
+      lastPositionRef.current = { lat: newLat, lng: newLng, timestamp: currentTime };
+      return { speed: 0, bearing: 0 };
+    }
+
+    const lastPos = lastPositionRef.current;
+    const timeDelta = (currentTime - lastPos.timestamp) / 1000; // secondes
+    const distance = calculateDistance(lastPos.lat, lastPos.lng, newLat, newLng) * 1000; // mètres
+
+    // Calculer vitesse (km/h)
+    const speed = timeDelta > 0 ? (distance / timeDelta) * 3.6 : 0;
+
+    // Calculer direction/bearing (degrés)
+    const dLng = (newLng - lastPos.lng) * Math.PI / 180;
+    const lat1 = lastPos.lat * Math.PI / 180;
+    const lat2 = newLat * Math.PI / 180;
+    
+    const y = Math.sin(dLng) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+    let bearing = Math.atan2(y, x) * 180 / Math.PI;
+    bearing = (bearing + 360) % 360; // Normaliser 0-360°
+
+    // Mettre à jour dernière position
+    lastPositionRef.current = { lat: newLat, lng: newLng, timestamp: currentTime };
+
+    return { speed: Math.max(0, speed), bearing };
+  };
+
+  // 🚀 Démarrage/Arrêt automatique du tracking GPS haute fréquence
+  useEffect(() => {
+    if (!user?.id) return;
+
+    // Démarrer tracking si livraisons actives
+    const hasActiveDeliveries = myDeliveries?.some((d: any) => 
+      ['assigned_pending_acceptance', 'in_transit', 'preparing', 'ready_for_delivery'].includes(d.status)
+    );
+
+    if (hasActiveDeliveries && !isGPSActive) {
+      console.log('🚀 Démarrage tracking GPS haute fréquence (2s)');
+      startHighFrequencyGPSTracking();
+    } else if (!hasActiveDeliveries && isGPSActive) {
+      console.log('⏹️ Arrêt tracking GPS - plus de livraisons actives');
+      stopGPSTracking();
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [myDeliveries, user?.id]);
+
+  // 📍 Fonction de tracking GPS haute précision
+  const startHighFrequencyGPSTracking = () => {
+    if (isGPSActive || !navigator.geolocation) return;
+
+    setIsGPSActive(true);
+
+    const sendGPSUpdate = () => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude, accuracy, speed: gpsSpeed } = position.coords;
+          const timestamp = Date.now();
+
+          // Calculer mouvement si position précédente disponible
+          const { speed: calculatedSpeed, bearing } = calculateMovementData(latitude, longitude, timestamp);
+          
+          // Utiliser vitesse GPS si disponible, sinon vitesse calculée
+          const finalSpeed = gpsSpeed !== null && gpsSpeed > 0 ? gpsSpeed * 3.6 : calculatedSpeed; // km/h
+
+          // Mettre à jour les états
+          setCurrentSpeed(finalSpeed);
+          setBearing(bearing);
+
+          // Envoyer via nouvelle API WebSocket
+          updateGPSLocationMutation.mutate({
+            lat: latitude,
+            lng: longitude,
+            speed: finalSpeed,
+            bearing,
+            accuracy: accuracy || 5,
+            timestamp: new Date(timestamp).toISOString()
+          });
+
+          if (import.meta.env.DEV) {
+            console.log('📍 GPS haute fréquence envoyé:', {
+              lat: latitude.toFixed(6),
+              lng: longitude.toFixed(6),
+              speed: finalSpeed.toFixed(1) + ' km/h',
+              bearing: bearing.toFixed(0) + '°',
+              accuracy: accuracy + 'm'
+            });
+          }
+        },
+        (error) => {
+          console.error('❌ Erreur GPS:', error);
+          // Continuer le tracking même en cas d'erreur ponctuelle
+        },
+        {
+          enableHighAccuracy: GPS_CONFIG.HIGH_ACCURACY,
+          timeout: GPS_CONFIG.TIMEOUT,
+          maximumAge: GPS_CONFIG.MAX_AGE
+        }
+      );
+    };
+
+    // Premier envoi immédiat
+    sendGPSUpdate();
+
+    // Puis toutes les 2 secondes
+    intervalRef.current = setInterval(sendGPSUpdate, GPS_CONFIG.TRACKING_INTERVAL);
+
+    toast({
+      title: "🚀 Tracking GPS activé",
+      description: "Position envoyée toutes les 2s en temps réel",
+    });
+  };
+
+  // ⏹️ Arrêt du tracking GPS
+  const stopGPSTracking = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setIsGPSActive(false);
+    setCurrentSpeed(0);
+    setBearing(0);
+    setLastGPSUpdate(null);
+    lastPositionRef.current = null;
+
+    toast({
+      title: "⏹️ Tracking GPS désactivé",
+      description: "Plus de livraisons actives",
+    });
   };
 
   // Initialize map
@@ -502,21 +686,44 @@ export default function DeliveryMapLivreur() {
       </header>
 
       <div className="p-4">
-        {/* Status */}
-        <div className="bg-gradient-to-r from-blue-100 to-blue-200 border-2 border-blue-300 rounded-2xl p-4 mb-4">
+        {/* Status GPS Temps Réel */}
+        <div className={`bg-gradient-to-r ${isGPSActive ? 'from-green-100 to-green-200 border-green-300' : 'from-blue-100 to-blue-200 border-blue-300'} border-2 rounded-2xl p-4 mb-4`}>
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-blue-800">
-                🚚 Navigation GPS Livreur
+                🚚 Navigation GPS Livreur {isGPSActive && <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse ml-2"></span>}
               </h2>
-              <p className="text-blue-700 text-sm">
-                Cliquez sur un marqueur pour voir l'itinéraire
+              <p className={`${isGPSActive ? 'text-green-700' : 'text-blue-700'} text-sm`}>
+                {isGPSActive ? `🚀 Tracking actif - ${currentSpeed.toFixed(1)} km/h` : 'Cliquez sur un marqueur pour voir l\'itinéraire'}
               </p>
+              {isGPSActive && lastGPSUpdate && (
+                <p className="text-xs text-green-600 mt-1">
+                  Dernière mise à jour: {lastGPSUpdate.toLocaleTimeString()}
+                </p>
+              )}
             </div>
-            <Badge variant="secondary" className="bg-blue-600 text-white">
-              {myDeliveries?.filter((d: any) => ['assigned_pending_acceptance', 'in_transit', 'arrived_pending_confirmation'].includes(d.status)).length || 0} livraisons
-            </Badge>
+            <div className="text-center">
+              <Badge variant="secondary" className={`${isGPSActive ? 'bg-green-600' : 'bg-blue-600'} text-white mb-2`}>
+                {myDeliveries?.filter((d: any) => ['assigned_pending_acceptance', 'in_transit', 'arrived_pending_confirmation'].includes(d.status)).length || 0} livraisons
+              </Badge>
+              {isGPSActive && (
+                <div className="text-xs text-green-700">
+                  <div>⚡ 2s temps réel</div>
+                  <div>🧭 {currentBearing.toFixed(0)}°</div>
+                </div>
+              )}
+            </div>
           </div>
+          
+          {/* Barre de statut GPS détaillée */}
+          {isGPSActive && (
+            <div className="mt-3 bg-white/70 rounded-lg p-2 text-xs text-gray-700">
+              <div className="flex justify-between items-center">
+                <span>📡 GPS haute précision actif</span>
+                <span className="text-green-600 font-medium">Diffusion WebSocket ✓</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Map */}
