@@ -580,20 +580,20 @@ export default function DeliveryTracking() {
           </div>
         </div>
 
-        {/* Interactive Leaflet Map with Real Routes */}
+        {/* Carte GPS Interactive - Suivi de livraison */}
         <Card className="shadow-sm mb-4">
           <CardContent className="p-4">
-            <h3 className="font-semibold text-gray-900 mb-3">🛣️ Itinéraire Patient ↔ Livreur</h3>
+            <h3 className="font-semibold text-gray-900 mb-3">🗺️ Suivi GPS en temps réel</h3>
             <div 
               ref={mapRef} 
-              className="h-96 w-full rounded-lg border-2 border-gray-200 relative"
+              className="h-96 w-full rounded-lg border-2 border-gray-200"
               style={{ minHeight: '384px' }}
             />
             
             <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-gray-600">
               <div className="flex items-center space-x-1">
                 <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span>Vous</span>
+                <span>Votre position</span>
               </div>
               <div className="flex items-center space-x-1">
                 <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
@@ -606,27 +606,34 @@ export default function DeliveryTracking() {
             </div>
             
             <div className="mt-2 flex justify-between items-center text-xs text-gray-500">
-              <span>🔄 Mise à jour temps réel (3s)</span>
-              <span>🛣️ Routes réelles OpenStreetMap</span>
+              <span>🔄 Mise à jour automatique</span>
+              <span>🛣️ Routes Côte d'Ivoire</span>
             </div>
             
-            {/* Status de simulation pour le debug - uniquement en développement */}
-            {import.meta.env.DEV && (
-              <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
-                <div className="text-blue-800 font-semibold mb-1">🔍 Mode Debug GPS</div>
-                <div className="text-blue-700">
-                  Statut: {currentOrder?.status || 'Aucune commande'} | 
-                  Livreur: {deliveryPersonLocation ? '🟢 Actif' : '🔴 Inactif'} |
-                  Position: {userLat ? `${userLat.toFixed(4)}, ${userLng?.toFixed(4)}` : 'Indisponible'}
+            {routeDistance > 0 && (
+              <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-medium text-green-800">🛣️ Distance restante</p>
+                    <p className="text-xs text-green-700">
+                      {routeDistance} km • ETA: {estimatedTime} min
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-green-800">{Math.round((1 - routeDistance/285.5) * 100)}%</p>
+                    <p className="text-xs text-green-700">Progression</p>
+                  </div>
                 </div>
               </div>
             )}
-            
-            {routeDistance > 0 && (
-              <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-blue-800">📍 Itinéraire calculé</span>
-                  <span className="font-semibold text-blue-900">{routeDistance} km • {estimatedTime} min</span>
+
+            {import.meta.env.DEV && (
+              <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                <div className="text-blue-800 font-semibold mb-1">🔍 Debug Mode</div>
+                <div className="text-blue-700">
+                  Statut: {currentOrder?.status || 'N/A'} | 
+                  GPS: {userLat ? '🟢' : '🔴'} | 
+                  Livreur: {deliveryPersonLocation ? '🟢' : '🔴'}
                 </div>
               </div>
             )}
