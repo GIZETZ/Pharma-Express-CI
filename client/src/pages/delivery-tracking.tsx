@@ -226,75 +226,125 @@ export default function DeliveryTracking() {
       .bindPopup(`🏥 ${currentOrder.pharmacy?.name || 'Pharmacie'}`);
   }, [map, currentOrder]);
 
-  // Simulate delivery person movement and tracking
+  // Traçage de l'itinéraire spécifique entre patient et livreur assigné à chaque commande
   useEffect(() => {
-    // Activer la simulation pour tous les statuts de livraison actifs (pour test et démo)
-    // Inclure aussi "preparing" et "ready_for_delivery" pour démontrer la fonctionnalité
-    const isDeliveryActive = currentOrder && userLat && userLng && map && (
-      currentOrder.status === 'in_delivery' || 
-      currentOrder.status === 'in_transit' || 
-      currentOrder.status === 'arrived_pending_confirmation' ||
-      currentOrder.status === 'preparing' || 
-      currentOrder.status === 'ready_for_delivery' ||
-      currentOrder.deliveryPersonId // Si un livreur est assigné, on simule
-    );
+    if (import.meta.env.DEV) {
+      console.log('📍 Vérification itinéraire patient-livreur:', {
+        hasOrder: !!currentOrder,
+        orderId: currentOrder?.id?.slice(0, 8),
+        status: currentOrder?.status,
+        hasDeliveryPerson: !!currentOrder?.deliveryPersonId,
+        deliveryPersonId: currentOrder?.deliveryPersonId?.slice(0, 8),
+        hasUserLocation: !!(userLat && userLng),
+        hasMap: !!map
+      });
+    }
+
+    // Tracer l'itinéraire seulement si une commande a un livreur assigné
+    const shouldTraceRoute = currentOrder && 
+      currentOrder.deliveryPersonId && 
+      userLat && userLng && 
+      map && 
+      ['preparing', 'ready_for_delivery', 'in_transit', 'in_delivery', 'assigned_pending_acceptance'].includes(currentOrder.status);
     
-    if (isDeliveryActive) {
+    if (shouldTraceRoute) {
       if (import.meta.env.DEV) {
-        console.log('🚛 Démarrage simulation livreur - Statut:', currentOrder.status);
+        console.log('🗺️ Calcul itinéraire patient-livreur pour commande:', currentOrder.id.slice(0, 8), 'avec livreur:', currentOrder.deliveryPersonId?.slice(0, 8));
       }
-      const pharmacyLat = currentOrder.pharmacy?.latitude ? parseFloat(currentOrder.pharmacy.latitude) : DEFAULT_PHARMACY_COORDS.lat;
-      const pharmacyLng = currentOrder.pharmacy?.longitude ? parseFloat(currentOrder.pharmacy.longitude) : DEFAULT_PHARMACY_COORDS.lng;
+
+      // Position du livreur (proche de la pharmacie ou position selon le livreur)
+      const deliveryPersonStartLat = deliveryPerson?.lat || 
+        (currentOrder.pharmacy?.latitude ? parseFloat(currentOrder.pharmacy.latitude) : DEFAULT_PHARMACY_COORDS.lat) + 
+        (Math.random() - 0.5) * 0.01;
+      const deliveryPersonStartLng = deliveryPerson?.lng || 
+        (currentOrder.pharmacy?.longitude ? parseFloat(currentOrder.pharmacy.longitude) : DEFAULT_PHARMACY_COORDS.lng) + 
+        (Math.random() - 0.5) * 0.01;
+      
+      // Position du patient (destination finale)
+      const patientLat = userLat;
+      const patientLng = userLng;
 
       let progress = 0;
+      let hasCalculatedRoute = false;
       
-      const interval = setInterval(async () => {
-        // Simulation du mouvement du livreur
-        progress += 0.02; // 2% de progression toutes les 3 secondes
-        progress = Math.min(progress, 0.95); // Limite à 95% pour garder du suspense
-        
-        // Position interpolée entre pharmacie et utilisateur
-        const newLat = pharmacyLat + (userLat - pharmacyLat) * progress;
-        const newLng = pharmacyLng + (userLng - pharmacyLng) * progress;
-        
-        setDeliveryPersonLocation({ lat: newLat, lng: newLng });
-        if (import.meta.env.DEV) {
-          console.log('🚛 Position livreur mise à jour:', { lat: newLat, lng: newLng, progress });
-        }
-
-        // Calculer la route réelle et la distance restante
+      const tracePatientDeliveryRoute = async () => {
         try {
-          const routeInfo = await calculateRealRoute(newLat, newLng, userLat, userLng);
-          setRouteDistance(routeInfo.distance);
-          setEstimatedTime(routeInfo.duration);
-          if (import.meta.env.DEV) {
-            console.log('🛣️ Route calculée:', { distance: routeInfo.distance, duration: routeInfo.duration });
+          // Calculer et afficher l'itinéraire patient-livreur au début
+          if (!hasCalculatedRoute) {
+            const routeData = await calculateRealRoute(deliveryPersonStartLat, deliveryPersonStartLng, patientLat, patientLng);
+            if (routeData) {
+              hasCalculatedRoute = true;
+              setRouteDistance(routeData.distance);
+              setEstimatedTime(routeData.duration);
+              
+              // Dessiner l'itinéraire patient-livreur sur la carte
+              if (routePolylineRef.current) {
+                map.removeLayer(routePolylineRef.current);
+              }
+              
+              routePolylineRef.current = L.polyline(routeData.coordinates, {
+                color: '#10b981', // Vert pour l'itinéraire patient-livreur spécifique
+                weight: 6,
+                opacity: 0.9,
+                dashArray: '15, 8' // Ligne pointillée distinctive
+              }).addTo(map);
+              
+              // Ajouter un label informatif sur l'itinéraire
+              const midPoint = routeData.coordinates[Math.floor(routeData.coordinates.length / 2)];
+              L.marker(midPoint, {
+                icon: L.divIcon({
+                  html: `<div style="background: linear-gradient(45deg, #10b981, #059669); color: white; padding: 4px 8px; border-radius: 16px; font-size: 11px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid white;">🚚➡️👤 ${routeData.distance}km</div>`,
+                  className: 'patient-delivery-route-label',
+                  iconSize: [80, 24],
+                  iconAnchor: [40, 12]
+                })
+              }).addTo(map);
+              
+              // Ajuster la vue pour montrer tout l'itinéraire patient-livreur
+              const group = new L.FeatureGroup([routePolylineRef.current]);
+              map.fitBounds(group.getBounds().pad(0.15));
+              
+              if (import.meta.env.DEV) {
+                console.log('✅ Itinéraire patient-livreur tracé:', routeData.distance + 'km', routeData.duration + 'min');
+              }
+            }
           }
-
-          // Mettre à jour la route sur la carte
-          if (routePolylineRef.current) {
-            routePolylineRef.current.remove();
+          
+          // Simuler le mouvement du livreur vers le patient (seulement en transit)
+          if (currentOrder.status === 'in_transit') {
+            progress += 0.025; // 2.5% par mise à jour
+            progress = Math.min(progress, 0.98); // Limite à 98%
+            
+            const currentLat = deliveryPersonStartLat + (patientLat - deliveryPersonStartLat) * progress;
+            const currentLng = deliveryPersonStartLng + (patientLng - deliveryPersonStartLng) * progress;
+            
+            setDeliveryPersonLocation({ lat: currentLat, lng: currentLng });
+            
+            // Calculer distance restante entre position actuelle du livreur et patient
+            const remainingDistance = calculateDistance(currentLat, currentLng, patientLat, patientLng);
+            setRouteDistance(Math.round(remainingDistance * 10) / 10);
+            setEstimatedTime(Math.round(remainingDistance * 2.5)); // 2.5 min par km
+            
+            if (import.meta.env.DEV) {
+              console.log('🚚 Livreur en mouvement vers patient:', { progress: Math.round(progress * 100) + '%', remainingKm: remainingDistance.toFixed(1) });
+            }
+          } else {
+            // Position fixe du livreur quand pas en transit
+            setDeliveryPersonLocation({ lat: deliveryPersonStartLat, lng: deliveryPersonStartLng });
           }
-
-          routePolylineRef.current = L.polyline(routeInfo.coordinates, {
-            color: '#F97316',
-            weight: 5,
-            opacity: 0.8,
-            dashArray: '10, 10'
-          }).addTo(map);
 
         } catch (error) {
-          console.error('Erreur route:', error);
-          // Fallback avec calcul simple
-          const distance = calculateDistance(newLat, newLng, userLat, userLng);
-          setRouteDistance(distance);
-          setEstimatedTime(Math.max(1, Math.round(distance * 3)));
+          console.error('Erreur calcul itinéraire patient-livreur:', error);
         }
-      }, 3000);
+      };
+
+      // Tracer l'itinéraire et mettre à jour toutes les 4 secondes
+      const interval = setInterval(tracePatientDeliveryRoute, 4000);
+      tracePatientDeliveryRoute(); // Exécuter immédiatement
 
       return () => clearInterval(interval);
     } else if (import.meta.env.DEV) {
-      console.log('🔍 Simulation livreur non active:', {
+      console.log('❌ Itinéraire patient-livreur non tracé:', {
         hasOrder: !!currentOrder,
         status: currentOrder?.status,
         hasDeliveryPerson: !!currentOrder?.deliveryPersonId,
@@ -302,7 +352,7 @@ export default function DeliveryTracking() {
         hasMap: !!map
       });
     }
-  }, [currentOrder?.status, userLat, userLng, map, currentOrder?.pharmacy, currentOrder?.deliveryPersonId]);
+  }, [currentOrder?.id, currentOrder?.deliveryPersonId, currentOrder?.status, userLat, userLng, map, deliveryPerson]);
 
   // Update delivery person marker with real-time animation
   useEffect(() => {
@@ -516,7 +566,7 @@ export default function DeliveryTracking() {
         {/* Interactive Leaflet Map with Real Routes */}
         <Card className="shadow-sm mb-4">
           <CardContent className="p-4">
-            <h3 className="font-semibold text-gray-900 mb-3">🛣️ Carte GPS avec vraies routes CI</h3>
+            <h3 className="font-semibold text-gray-900 mb-3">🛣️ Itinéraire Patient ↔ Livreur</h3>
             <div 
               ref={mapRef} 
               className="h-96 w-full rounded-lg border-2 border-gray-200 relative"

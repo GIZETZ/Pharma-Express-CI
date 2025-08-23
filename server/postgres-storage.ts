@@ -14,7 +14,7 @@ import {
   type DeliveryProfile,
   type InsertDeliveryProfile,
 } from "@shared/schema";
-import { eq, and, or, desc, asc, lt, sql } from "drizzle-orm";
+import { eq, and, or, desc, asc, lt, sql, ne } from "drizzle-orm";
 import { users, pharmacies, prescriptions, orders, notifications, deliveryVehicles, deliveryProfiles } from "@shared/schema";
 // Import db only when needed to avoid DATABASE_URL requirement in development
 let db: any = null;
