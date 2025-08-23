@@ -112,6 +112,53 @@ export default function DeliveryTracking() {
     return R * c;
   };
 
+  // Helper function to get optimal zoom level based on distance
+  const getOptimalZoom = (distance: number): number => {
+    if (distance < 0.5) return 17;      // < 500m - zoom très proche
+    if (distance < 1) return 16;        // < 1km - zoom proche  
+    if (distance < 2) return 15;        // < 2km - zoom moyen-proche
+    if (distance < 5) return 14;        // < 5km - zoom moyen
+    if (distance < 10) return 13;       // < 10km - zoom élargi
+    if (distance < 20) return 12;       // < 20km - zoom large
+    return 11;                          // > 20km - zoom très large
+  };
+
+  // Improved map centering function
+  const centerMapOnRoute = (deliveryLat: number, deliveryLng: number, userLat: number, userLng: number, distance: number) => {
+    if (!map) return;
+
+    try {
+      // Créer les bounds entre livreur et patient uniquement
+      const bounds = L.latLngBounds([
+        [deliveryLat, deliveryLng],
+        [userLat, userLng]
+      ]);
+
+      // Calculer le padding adaptatif basé sur la distance
+      const basePadding = Math.max(20, Math.min(80, distance * 10));
+      const padding: [number, number] = [basePadding, basePadding];
+
+      // Obtenir le niveau de zoom optimal
+      const optimalZoom = getOptimalZoom(distance);
+
+      // Appliquer le centrage avec les paramètres optimisés
+      map.fitBounds(bounds, {
+        padding,
+        maxZoom: optimalZoom,
+        animate: true,
+        duration: 0.8
+      });
+
+      if (import.meta.env.DEV) {
+        console.log('📍 Carte centrée - Distance:', distance + 'km', 'Zoom:', optimalZoom, 'Padding:', padding);
+      }
+    } catch (error) {
+      console.error('Erreur lors du centrage de la carte:', error);
+      // Fallback simple
+      map.setView([(deliveryLat + userLat) / 2, (deliveryLng + userLng) / 2], 14);
+    }
+  };
+
   // Initialize map
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -125,6 +172,8 @@ export default function DeliveryTracking() {
           center: [ABIDJAN_CENTER.lat, ABIDJAN_CENTER.lng],
           zoom: 12,
           zoomControl: true,
+          maxZoom: 19,
+          minZoom: 8, // Limiter le zoom minimum pour éviter de trop dézoomer
         });
 
         L.tileLayer(OSM_TILE_URL, {
@@ -185,7 +234,11 @@ export default function DeliveryTracking() {
       .addTo(map)
       .bindPopup('📍 Votre position');
 
-    map.setView([userLat, userLng], 14);
+    // Centrer uniquement si c'est la première fois qu'on a la position utilisateur
+    // et qu'il n'y a pas encore de livreur assigné
+    if (!deliveryPersonLocation) {
+      map.setView([userLat, userLng], 14);
+    }
   }, [map, userLat, userLng]);
 
   // Add pharmacy marker
@@ -247,10 +300,10 @@ export default function DeliveryTracking() {
       // Essayer de récupérer la vraie position du livreur d'abord
       try {
         const deliveryPersonResponse = await fetch(`/api/delivery-persons/${currentOrder.deliveryPersonId}`);
-        
+
         if (deliveryPersonResponse.ok) {
           const deliveryPersonData = await deliveryPersonResponse.json();
-          
+
           if (deliveryPersonData.lat && deliveryPersonData.lng) {
             deliveryPersonLat = parseFloat(deliveryPersonData.lat);
             deliveryPersonLng = parseFloat(deliveryPersonData.lng);
@@ -287,7 +340,7 @@ export default function DeliveryTracking() {
 
       if (routeData) {
         updateRouteDisplay(routeData, deliveryPersonLat, deliveryPersonLng);
-        
+
         setDeliveryPersonLocation({
           lat: deliveryPersonLat,
           lng: deliveryPersonLng
@@ -310,6 +363,8 @@ export default function DeliveryTracking() {
 
   // Helper function to update the route display on the map
   const updateRouteDisplay = (routeData: { coordinates: number[][], distance: number, duration: number }, deliveryPersonLat: number, deliveryPersonLng: number) => {
+    if (!map) return;
+
     setRouteDistance(routeData.distance);
     setEstimatedTime(routeData.duration);
 
@@ -344,31 +399,16 @@ export default function DeliveryTracking() {
       }).addTo(map);
     }
 
-    // 🎯 CENTRER UNIQUEMENT SUR L'ITINÉRAIRE LIVREUR ↔ PATIENT (sans pharmacie)
-    // Créer les bornes exactes entre livreur et patient seulement
-    const deliveryBounds = L.latLngBounds([
-      [deliveryPersonLat, deliveryPersonLng], // Position livreur
-      [userLat, userLng] // Position patient
-    ]);
-    
-    // Zoom optimal concentré sur l'itinéraire réel
-    const zoomLevel = routeData.distance < 1 ? 17 : 
-                     routeData.distance < 2 ? 16 : 
-                     routeData.distance < 5 ? 15 : 14;
-    
-    map.fitBounds(deliveryBounds, {
-      padding: [30, 30], // Padding minimal pour focus maximal
-      maxZoom: zoomLevel
-    });
+    // Utiliser la nouvelle fonction de centrage optimisée
+    if (userLat && userLng) {
+      centerMapOnRoute(deliveryPersonLat, deliveryPersonLng, userLat, userLng, routeData.distance);
+    }
 
     if (import.meta.env.DEV) {
-      console.log('✅ Carte centrée UNIQUEMENT sur l\'itinéraire livreur-patient:', {
+      console.log('✅ Itinéraire mis à jour avec centrage optimisé:', {
         distance: routeData.distance + 'km',
         duration: routeData.duration + 'min',
-        zoom: zoomLevel,
-        deliveryPersonPosition: { lat: deliveryPersonLat, lng: deliveryPersonLng },
-        patientPosition: { lat: userLat, lng: userLng },
-        pharmacyExcluded: '✅ (pharmacie exclue du zoom pour focus optimal)'
+        coordinates: routeData.coordinates.length + ' points'
       });
     }
   };
@@ -414,12 +454,12 @@ export default function DeliveryTracking() {
 
         // 🔍 RÉCUPÉRATION GARANTIE DE LA VRAIE POSITION GPS DU LIVREUR
         const deliveryPersonResponse = await fetch(`/api/delivery-persons/${currentOrder.deliveryPersonId}`);
-        
+
         let deliveryPersonLat, deliveryPersonLng;
         let isRealGPS = false;
         let gpsSource = 'simulation';
         let lastUpdate = 'jamais';
-        
+
         if (deliveryPersonResponse.ok) {
           const currentDeliveryPerson = await deliveryPersonResponse.json();
 
@@ -504,23 +544,23 @@ export default function DeliveryTracking() {
             // Simuler le mouvement le long de l'itinéraire réel
             const progress = Math.min((Date.now() / 1000) % 300 / 300, 0.8); // 5min cycle, max 80%
             const coordIndex = Math.floor(progress * (routeData.coordinates.length - 1));
-            
+
             if (routeData.coordinates[coordIndex]) {
               const simulatedLat = routeData.coordinates[coordIndex][0];
               const simulatedLng = routeData.coordinates[coordIndex][1];
-              
+
               // Ajouter petite variation pour réalisme
               const microOffsetLat = (Math.random() - 0.5) * 0.0001; // ~5m
               const microOffsetLng = (Math.random() - 0.5) * 0.0001; // ~5m
-              
+
               deliveryPersonLat = simulatedLat + microOffsetLat;
               deliveryPersonLng = simulatedLng + microOffsetLng;
-              
+
               setDeliveryPersonLocation({ 
                 lat: deliveryPersonLat, 
                 lng: deliveryPersonLng 
               });
-              
+
               if (import.meta.env.DEV) {
                 console.log('🚚 Simulation mouvement précis:', {
                   progress: Math.round(progress * 100) + '%',
@@ -543,12 +583,12 @@ export default function DeliveryTracking() {
 
       } catch (error) {
         console.error('❌ Erreur lors de la récupération de la position GPS du livreur:', error);
-        
+
         // Position de secours uniquement en cas d'erreur critique
         if (userLat && userLng) {
           const fallbackLat = userLat - 0.01;
           const fallbackLng = userLng + 0.01;
-          
+
           setDeliveryPersonLocation({ 
             lat: fallbackLat, 
             lng: fallbackLng 
@@ -631,24 +671,17 @@ export default function DeliveryTracking() {
         </div>
       `);
 
-    // Ajuster la vue pour montrer tous les marqueurs avec précision
-    if (userLat && userLng && userMarkerRef.current && pharmacyMarkerRef.current) {
-      const markers = [deliveryMarkerRef.current, userMarkerRef.current, pharmacyMarkerRef.current];
-      const group = new L.FeatureGroup(markers);
-      const bounds = group.getBounds();
-      
-      // Zoom optimal basé sur la distance entre les marqueurs
+    // Centrage optimisé avec la nouvelle fonction
+    if (userLat && userLng) {
       const distance = calculateDistance(
-        deliveryPersonLocation.lat, deliveryPersonLocation.lng,
-        userLat, userLng
+        deliveryPersonLocation.lat, 
+        deliveryPersonLocation.lng,
+        userLat, 
+        userLng
       );
-      
-      const zoomLevel = distance < 2 ? 15 : distance < 5 ? 14 : 13;
-      
-      map.fitBounds(bounds, {
-        padding: [15, 15], // Padding réduit en pixels
-        maxZoom: zoomLevel
-      });
+
+      // Utiliser la fonction de centrage optimisée
+      centerMapOnRoute(deliveryPersonLocation.lat, deliveryPersonLocation.lng, userLat, userLng, distance);
     }
   }, [map, deliveryPersonLocation, userLat, userLng, estimatedTime, routeDistance, deliveryPerson]);
 
@@ -794,19 +827,40 @@ export default function DeliveryTracking() {
           </div>
         </div>
 
-        {/* Carte GPS Interactive */}
+        {/* Carte GPS Interactive avec Zoom Optimisé */}
         <Card className="shadow-sm mb-4">
           <CardContent className="p-4">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-semibold text-gray-900">🗺️ Suivi GPS en temps réel</h3>
-              <Button
-                size="sm"
-                onClick={forceShowRoute}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1"
-                disabled={!userLat || !userLng || !currentOrder}
-              >
-                🗺️ Afficher l'itinéraire
-              </Button>
+              <h3 className="font-semibold text-gray-900">🗺️ Suivi GPS avec zoom adaptatif</h3>
+              <div className="flex space-x-2">
+                <Button
+                  size="sm"
+                  onClick={forceShowRoute}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1"
+                  disabled={!userLat || !userLng || !currentOrder}
+                >
+                  🗺️ Afficher l'itinéraire
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (map && deliveryPersonLocation && userLat && userLng) {
+                      const distance = calculateDistance(
+                        deliveryPersonLocation.lat, 
+                        deliveryPersonLocation.lng, 
+                        userLat, 
+                        userLng
+                      );
+                      centerMapOnRoute(deliveryPersonLocation.lat, deliveryPersonLocation.lng, userLat, userLng, distance);
+                    }
+                  }}
+                  variant="outline"
+                  className="text-xs px-2 py-1"
+                  disabled={!deliveryPersonLocation || !userLat || !userLng}
+                >
+                  🎯 Recentrer
+                </Button>
+              </div>
             </div>
             <div 
               ref={mapRef} 
@@ -820,8 +874,8 @@ export default function DeliveryTracking() {
                 <span>Votre position</span>
               </div>
               <div className="flex items-center space-x-1">
-                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                <span>Livreur</span>
+                <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
+                <span>Livreur GPS live</span>
               </div>
               <div className="flex items-center space-x-1">
                 <div className="w-3 h-3 bg-green-500 rounded"></div>
@@ -830,8 +884,8 @@ export default function DeliveryTracking() {
             </div>
 
             <div className="mt-2 flex justify-between items-center text-xs text-gray-500">
-              <span>🔄 Mise à jour automatique</span>
-              <span>🛣️ Routes Côte d'Ivoire</span>
+              <span>🔄 Zoom adaptatif automatique</span>
+              <span>🛣️ Routes optimisées CI</span>
             </div>
 
             {routeDistance > 0 && (
@@ -842,21 +896,31 @@ export default function DeliveryTracking() {
                     <p className="text-xs text-green-700">
                       {routeDistance} km • ETA: {estimatedTime} min
                     </p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Zoom: {getOptimalZoom(routeDistance)} (adaptatif selon distance)
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-green-800">{Math.round((1 - routeDistance/10) * 100)}%</p>
                     <p className="text-xs text-green-700">Progression</p>
                   </div>
                 </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                  <div 
+                    className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                    style={{ width: `${Math.min(100, Math.round((1 - routeDistance/10) * 100))}%` }}
+                  ></div>
+                </div>
               </div>
             )}
 
             {/* Indicateur de fiabilité GPS - TOUJOURS VISIBLE */}
             <div className="mt-2 p-2 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded text-xs">
-              <div className="text-green-800 font-semibold mb-1">📡 Statut GPS en Temps Réel</div>
+              <div className="text-green-800 font-semibold mb-1">📡 Statut GPS Temps Réel + Zoom Intelligent</div>
               <div className="text-green-700 space-y-1">
                 <div>📍 Patient: {userLat ? '🟢 GPS actif' : '🔴 GPS indisponible'}</div>
                 <div>🚚 Livreur: {deliveryPersonLocation ? '🟢 Position confirmée' : '🔴 Position inconnue'}</div>
+                <div>🎯 Zoom adaptatif: {routeDistance > 0 ? `${getOptimalZoom(routeDistance)} (${routeDistance}km)` : 'Standard'}</div>
                 {currentOrder?.deliveryPersonId && (
                   <div className="text-xs text-gray-600 mt-1">
                     ID Livreur: {currentOrder.deliveryPersonId.slice(0, 8)}...
@@ -871,7 +935,8 @@ export default function DeliveryTracking() {
                 <div className="text-blue-700">
                   Statut: {currentOrder?.status || 'N/A'} | 
                   GPS Patient: {userLat ? '🟢' : '🔴'} | 
-                  GPS Livreur: {deliveryPersonLocation ? '🟢' : '🔴'}
+                  GPS Livreur: {deliveryPersonLocation ? '🟢' : '🔴'} |
+                  Zoom Auto: {routeDistance > 0 ? getOptimalZoom(routeDistance) : 'N/A'}
                 </div>
               </div>
             )}
