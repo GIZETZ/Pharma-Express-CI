@@ -1,4 +1,3 @@
-
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -35,6 +34,7 @@ export default function DeliveryTracking() {
   const userMarkerRef = useRef<L.Marker | null>(null);
   const pharmacyMarkerRef = useRef<L.Marker | null>(null);
   const routePolylineRef = useRef<L.Polyline | null>(null);
+  const routeLabelMarkerRef = useRef<L.Marker | null>(null);
 
   // Configuration des tuiles OSM pour la Côte d'Ivoire
   const OSM_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -50,7 +50,12 @@ export default function DeliveryTracking() {
     refetchInterval: 3000, // Mise à jour toutes les 3 secondes
   });
 
-  // Mode debug activé uniquement en développement
+  const { data: deliveryPerson } = useQuery<DeliveryPerson>({
+    queryKey: ['/api/delivery-persons', currentOrder?.deliveryPersonId],
+    enabled: !!currentOrder?.deliveryPersonId,
+  });
+
+  // Debug logging
   useEffect(() => {
     if (currentOrder && import.meta.env.DEV) {
       console.log('🔍 Statut commande actuelle:', currentOrder.status);
@@ -59,31 +64,25 @@ export default function DeliveryTracking() {
     }
   }, [currentOrder?.status, currentOrder?.deliveryPersonId, userLat, userLng]);
 
-  const { data: deliveryPerson } = useQuery<DeliveryPerson>({
-    queryKey: ['/api/delivery-persons', currentOrder?.deliveryPersonId],
-    enabled: !!currentOrder?.deliveryPersonId,
-  });
-
-  // Fonction pour calculer la route réelle avec OpenRouteService (gratuit)
+  // Fonction pour calculer la route réelle avec OSRM
   const calculateRealRoute = async (startLat: number, startLng: number, endLat: number, endLng: number) => {
     try {
-      // Utiliser OSRM (Open Source Routing Machine) qui est gratuit
       const response = await fetch(
         `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`
       );
-      
+
       if (!response.ok) {
         throw new Error('Erreur de routage');
       }
-      
+
       const data = await response.json();
-      
+
       if (data.routes && data.routes.length > 0) {
         const route = data.routes[0];
         const coordinates = route.geometry.coordinates.map((coord: number[]) => [coord[1], coord[0]]);
         const distance = route.distance / 1000; // Convertir en km
         const duration = route.duration / 60; // Convertir en minutes
-        
+
         return {
           coordinates,
           distance: Math.round(distance * 10) / 10,
@@ -96,14 +95,25 @@ export default function DeliveryTracking() {
       return {
         coordinates: [[startLat, startLng], [endLat, endLng]],
         distance: calculateDistance(startLat, startLng, endLat, endLng),
-        duration: Math.round(calculateDistance(startLat, startLng, endLat, endLng) * 3) // 3 min par km approximativement
+        duration: Math.round(calculateDistance(startLat, startLng, endLat, endLng) * 3)
       };
     }
   };
 
-  // Initialize map with better error handling
+  // Calculate distance between two coordinates
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  // Initialize map
   useEffect(() => {
-    // Attendre que le DOM soit prêt
     const timer = setTimeout(() => {
       if (!mapRef.current || map) return;
 
@@ -117,7 +127,6 @@ export default function DeliveryTracking() {
           zoomControl: true,
         });
 
-        // Ajouter les tuiles OpenStreetMap
         L.tileLayer(OSM_TILE_URL, {
           attribution: OSM_ATTRIBUTION,
           maxZoom: 19,
@@ -128,21 +137,17 @@ export default function DeliveryTracking() {
           console.log('Carte Leaflet initialisée avec succès');
         }
 
-        return () => {
-          try {
-            if (initialMap) {
-              initialMap.remove();
-            }
-          } catch (error) {
-            console.error('Erreur lors de la suppression de la carte:', error);
-          }
-        };
       } catch (error) {
         console.error('Erreur lors de l\'initialisation de la carte:', error);
       }
-    }, 100); // Délai de 100ms pour s'assurer que le DOM est prêt
+    }, 100);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (map) {
+        map.remove();
+      }
+    };
   }, []);
 
   // Add user marker when location is available
@@ -150,7 +155,7 @@ export default function DeliveryTracking() {
     if (!map || !userLat || !userLng) return;
 
     if (userMarkerRef.current) {
-      userMarkerRef.current.remove();
+      map.removeLayer(userMarkerRef.current);
     }
 
     const userIcon = L.divIcon({
@@ -178,8 +183,7 @@ export default function DeliveryTracking() {
 
     userMarkerRef.current = L.marker([userLat, userLng], { icon: userIcon })
       .addTo(map)
-      .bindPopup('📍 Votre position')
-      .openPopup();
+      .bindPopup('📍 Votre position');
 
     map.setView([userLat, userLng], 14);
   }, [map, userLat, userLng]);
@@ -189,7 +193,7 @@ export default function DeliveryTracking() {
     if (!map || !currentOrder) return;
 
     if (pharmacyMarkerRef.current) {
-      pharmacyMarkerRef.current.remove();
+      map.removeLayer(pharmacyMarkerRef.current);
     }
 
     const pharmacyIcon = L.divIcon({
@@ -217,7 +221,6 @@ export default function DeliveryTracking() {
       iconAnchor: [14, 14],
     });
 
-    // Utiliser les coordonnées de la pharmacie de la commande ou par défaut
     const pharmacyLat = currentOrder.pharmacy?.latitude ? parseFloat(currentOrder.pharmacy.latitude) : DEFAULT_PHARMACY_COORDS.lat;
     const pharmacyLng = currentOrder.pharmacy?.longitude ? parseFloat(currentOrder.pharmacy.longitude) : DEFAULT_PHARMACY_COORDS.lng;
 
@@ -226,157 +229,186 @@ export default function DeliveryTracking() {
       .bindPopup(`🏥 ${currentOrder.pharmacy?.name || 'Pharmacie'}`);
   }, [map, currentOrder]);
 
-  // Traçage de l'itinéraire spécifique entre patient et livreur assigné à chaque commande
+  // Main effect for delivery tracking and route tracing
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.log('📍 Vérification itinéraire patient-livreur:', {
+      console.log('📍 Vérification conditions traçage:', {
         hasOrder: !!currentOrder,
-        orderId: currentOrder?.id?.slice(0, 8),
-        status: currentOrder?.status,
         hasDeliveryPerson: !!currentOrder?.deliveryPersonId,
-        deliveryPersonId: currentOrder?.deliveryPersonId?.slice(0, 8),
         hasUserLocation: !!(userLat && userLng),
-        hasMap: !!map
+        hasMap: !!map,
+        status: currentOrder?.status
       });
     }
 
-    // Tracer l'itinéraire seulement si une commande a un livreur assigné
+    // Vérifier si on doit tracer l'itinéraire
     const shouldTraceRoute = currentOrder && 
       currentOrder.deliveryPersonId && 
       userLat && userLng && 
       map && 
       ['preparing', 'ready_for_delivery', 'in_transit', 'in_delivery', 'assigned_pending_acceptance'].includes(currentOrder.status);
-    
-    if (shouldTraceRoute) {
+
+    if (!shouldTraceRoute) {
       if (import.meta.env.DEV) {
-        console.log('🗺️ Calcul itinéraire patient-livreur pour commande:', currentOrder.id.slice(0, 8), 'avec livreur:', currentOrder.deliveryPersonId?.slice(0, 8));
+        console.log('❌ Conditions non remplies pour tracer l\'itinéraire');
       }
+      return;
+    }
 
-      // Position distincte du livreur (pas à la pharmacie mais dans un rayon de 2-5km)
-      const pharmacyLat = currentOrder.pharmacy?.latitude ? parseFloat(currentOrder.pharmacy.latitude) : DEFAULT_PHARMACY_COORDS.lat;
-      const pharmacyLng = currentOrder.pharmacy?.longitude ? parseFloat(currentOrder.pharmacy.longitude) : DEFAULT_PHARMACY_COORDS.lng;
-      
-      // Créer une position spécifique pour ce livreur (dans un rayon de 2-5km de la pharmacie)
-      const deliveryPersonOffsetLat = (currentOrder.deliveryPersonId?.charCodeAt(0) % 10 - 5) * 0.02; // -0.1 à +0.1 degrés
-      const deliveryPersonOffsetLng = (currentOrder.deliveryPersonId?.charCodeAt(2) % 10 - 5) * 0.02;
-      
-      const deliveryPersonStartLat = deliveryPerson?.lat || (pharmacyLat + deliveryPersonOffsetLat);
-      const deliveryPersonStartLng = deliveryPerson?.lng || (pharmacyLng + deliveryPersonOffsetLng);
-      
-      // Position du patient (destination finale)
-      const patientLat = userLat;
-      const patientLng = userLng;
+    if (import.meta.env.DEV) {
+      console.log('✅ Début du traçage d\'itinéraire patient-livreur');
+    }
 
-      let progress = 0;
-      let hasCalculatedRoute = false;
-      let routeLabelMarker: L.Marker | null = null;
-      
-      const tracePatientDeliveryRoute = async () => {
-        try {
-          // Calculer et afficher l'itinéraire patient-livreur au début
-          if (!hasCalculatedRoute) {
-            const routeData = await calculateRealRoute(deliveryPersonStartLat, deliveryPersonStartLng, patientLat, patientLng);
-            if (routeData) {
-              hasCalculatedRoute = true;
-              setRouteDistance(routeData.distance);
-              setEstimatedTime(routeData.duration);
-              
-              // Dessiner l'itinéraire patient-livreur sur la carte
-              if (routePolylineRef.current) {
-                map.removeLayer(routePolylineRef.current);
-              }
-              
-              routePolylineRef.current = L.polyline(routeData.coordinates, {
-                color: '#10b981', // Vert pour l'itinéraire patient-livreur spécifique
-                weight: 6,
-                opacity: 0.9,
-                dashArray: '15, 8' // Ligne pointillée distinctive
-              }).addTo(map);
-              
-              // Nettoyer l'ancien label s'il existe
-              if (routeLabelMarker) {
-                map.removeLayer(routeLabelMarker);
-              }
-              
-              // Ajouter un label informatif sur l'itinéraire patient-livreur
-              const midPoint = routeData.coordinates[Math.floor(routeData.coordinates.length / 2)];
-              routeLabelMarker = L.marker(midPoint, {
+    // Calculer la position du livreur (simulée basée sur l'ID)
+    const pharmacyLat = currentOrder.pharmacy?.latitude ? parseFloat(currentOrder.pharmacy.latitude) : DEFAULT_PHARMACY_COORDS.lat;
+    const pharmacyLng = currentOrder.pharmacy?.longitude ? parseFloat(currentOrder.pharmacy.longitude) : DEFAULT_PHARMACY_COORDS.lng;
+
+    // Position unique du livreur basée sur son ID
+    const deliveryPersonOffsetLat = (currentOrder.deliveryPersonId.charCodeAt(0) % 10 - 5) * 0.02;
+    const deliveryPersonOffsetLng = (currentOrder.deliveryPersonId.charCodeAt(2) % 10 - 5) * 0.02;
+
+    let deliveryPersonStartLat = deliveryPerson?.lat || (pharmacyLat + deliveryPersonOffsetLat);
+    let deliveryPersonStartLng = deliveryPerson?.lng || (pharmacyLng + deliveryPersonOffsetLng);
+
+    let progress = 0;
+    let routeCoordinates: number[][] = [];
+    let hasCalculatedRoute = false;
+
+    const updateDeliveryTracking = async () => {
+      try {
+        // Calculer l'itinéraire initial une seule fois
+        if (!hasCalculatedRoute) {
+          if (import.meta.env.DEV) {
+            console.log('🗺️ Calcul de l\'itinéraire initial livreur → patient');
+          }
+
+          const routeData = await calculateRealRoute(
+            deliveryPersonStartLat, 
+            deliveryPersonStartLng, 
+            userLat, 
+            userLng
+          );
+
+          if (routeData) {
+            routeCoordinates = routeData.coordinates;
+            hasCalculatedRoute = true;
+            setRouteDistance(routeData.distance);
+            setEstimatedTime(routeData.duration);
+
+            // Nettoyer l'ancien itinéraire
+            if (routePolylineRef.current) {
+              map.removeLayer(routePolylineRef.current);
+            }
+            if (routeLabelMarkerRef.current) {
+              map.removeLayer(routeLabelMarkerRef.current);
+            }
+
+            // Dessiner le nouvel itinéraire
+            routePolylineRef.current = L.polyline(routeCoordinates, {
+              color: '#10b981',
+              weight: 6,
+              opacity: 0.9,
+              dashArray: '15, 8'
+            }).addTo(map);
+
+            // Ajouter le label de route
+            if (routeCoordinates.length > 1) {
+              const midPointIndex = Math.floor(routeCoordinates.length / 2);
+              const midPoint = routeCoordinates[midPointIndex];
+
+              routeLabelMarkerRef.current = L.marker(midPoint, {
                 icon: L.divIcon({
-                  html: `<div style="background: linear-gradient(45deg, #10b981, #059669); color: white; padding: 4px 8px; border-radius: 16px; font-size: 11px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid white;">👤↔🚚 ${routeData.distance}km</div>`,
-                  className: 'patient-delivery-route-label',
+                  html: `<div style="background: linear-gradient(45deg, #10b981, #059669); color: white; padding: 4px 8px; border-radius: 16px; font-size: 11px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid white;">🚚→👤 ${routeData.distance}km</div>`,
+                  className: 'delivery-route-label',
                   iconSize: [80, 24],
                   iconAnchor: [40, 12]
                 })
               }).addTo(map);
-              
-              // Ajuster la vue pour montrer tout l'itinéraire patient-livreur
-              const group = new L.FeatureGroup([routePolylineRef.current]);
-              map.fitBounds(group.getBounds().pad(0.15));
-              
-              if (import.meta.env.DEV) {
-                console.log('✅ Itinéraire patient-livreur tracé:', routeData.distance + 'km', routeData.duration + 'min');
-                console.log('📍 Position livreur:', { lat: deliveryPersonStartLat.toFixed(4), lng: deliveryPersonStartLng.toFixed(4) });
-                console.log('📍 Position patient:', { lat: patientLat.toFixed(4), lng: patientLng.toFixed(4) });
-              }
             }
-          }
-          
-          // Simuler le mouvement du livreur vers le patient (seulement en transit)
-          if (currentOrder.status === 'in_transit') {
-            progress += 0.025; // 2.5% par mise à jour
-            progress = Math.min(progress, 0.98); // Limite à 98%
-            
-            const currentLat = deliveryPersonStartLat + (patientLat - deliveryPersonStartLat) * progress;
-            const currentLng = deliveryPersonStartLng + (patientLng - deliveryPersonStartLng) * progress;
-            
-            setDeliveryPersonLocation({ lat: currentLat, lng: currentLng });
-            
-            // Calculer distance restante entre position actuelle du livreur et patient
-            const remainingDistance = calculateDistance(currentLat, currentLng, patientLat, patientLng);
-            setRouteDistance(Math.round(remainingDistance * 10) / 10);
-            setEstimatedTime(Math.round(remainingDistance * 2.5)); // 2.5 min par km
-            
+
+            // Ajuster la vue pour montrer l'itinéraire complet
+            const group = new L.FeatureGroup([routePolylineRef.current]);
+            map.fitBounds(group.getBounds().pad(0.15));
+
             if (import.meta.env.DEV) {
-              console.log('🚚 Livreur en mouvement vers patient:', { progress: Math.round(progress * 100) + '%', remainingKm: remainingDistance.toFixed(1) });
+              console.log('✅ Itinéraire tracé:', {
+                distance: routeData.distance + 'km',
+                duration: routeData.duration + 'min',
+                points: routeCoordinates.length
+              });
             }
-          } else {
-            // Position fixe du livreur quand pas en transit
-            setDeliveryPersonLocation({ lat: deliveryPersonStartLat, lng: deliveryPersonStartLng });
           }
-
-        } catch (error) {
-          console.error('Erreur calcul itinéraire patient-livreur:', error);
         }
-      };
 
-      // Tracer l'itinéraire et mettre à jour toutes les 4 secondes
-      const interval = setInterval(tracePatientDeliveryRoute, 4000);
-      tracePatientDeliveryRoute(); // Exécuter immédiatement
+        // Simuler le mouvement du livreur le long de l'itinéraire
+        if (currentOrder.status === 'in_transit' && routeCoordinates.length > 1) {
+          progress += 0.02; // 2% par mise à jour
+          progress = Math.min(progress, 0.98);
 
-      return () => {
-        clearInterval(interval);
-        // Nettoyer le label de route
-        if (routeLabelMarker) {
-          map.removeLayer(routeLabelMarker);
+          // Calculer la position actuelle du livreur le long de l'itinéraire
+          const totalPoints = routeCoordinates.length - 1;
+          const currentIndex = Math.floor(progress * totalPoints);
+          const nextIndex = Math.min(currentIndex + 1, totalPoints);
+
+          const currentPoint = routeCoordinates[currentIndex];
+          const nextPoint = routeCoordinates[nextIndex];
+
+          if (currentPoint && nextPoint) {
+            const localProgress = (progress * totalPoints) - currentIndex;
+            const currentLat = currentPoint[0] + (nextPoint[0] - currentPoint[0]) * localProgress;
+            const currentLng = currentPoint[1] + (nextPoint[1] - currentPoint[1]) * localProgress;
+
+            setDeliveryPersonLocation({ lat: currentLat, lng: currentLng });
+
+            // Calculer la distance restante
+            const remainingDistance = calculateDistance(currentLat, currentLng, userLat, userLng);
+            setRouteDistance(Math.round(remainingDistance * 10) / 10);
+            setEstimatedTime(Math.round(remainingDistance * 2.5));
+
+            if (import.meta.env.DEV) {
+              console.log('🚚 Position livreur mise à jour:', {
+                progress: Math.round(progress * 100) + '%',
+                remainingKm: remainingDistance.toFixed(1)
+              });
+            }
+          }
+        } else {
+          // Position fixe du livreur quand pas en transit
+          setDeliveryPersonLocation({ 
+            lat: deliveryPersonStartLat, 
+            lng: deliveryPersonStartLng 
+          });
         }
-      };
-    } else if (import.meta.env.DEV) {
-      console.log('❌ Itinéraire patient-livreur non tracé:', {
-        hasOrder: !!currentOrder,
-        status: currentOrder?.status,
-        hasDeliveryPerson: !!currentOrder?.deliveryPersonId,
-        hasUserLocation: !!(userLat && userLng),
-        hasMap: !!map
-      });
-    }
+
+      } catch (error) {
+        console.error('Erreur lors de la mise à jour du tracking:', error);
+      }
+    };
+
+    // Lancer la mise à jour immédiatement puis toutes les 4 secondes
+    updateDeliveryTracking();
+    const interval = setInterval(updateDeliveryTracking, 4000);
+
+    return () => {
+      clearInterval(interval);
+      // Nettoyer les éléments de la carte
+      if (routePolylineRef.current) {
+        map.removeLayer(routePolylineRef.current);
+        routePolylineRef.current = null;
+      }
+      if (routeLabelMarkerRef.current) {
+        map.removeLayer(routeLabelMarkerRef.current);
+        routeLabelMarkerRef.current = null;
+      }
+    };
   }, [currentOrder?.id, currentOrder?.deliveryPersonId, currentOrder?.status, userLat, userLng, map, deliveryPerson]);
 
-  // Update delivery person marker with real-time animation
+  // Update delivery person marker
   useEffect(() => {
     if (!map || !deliveryPersonLocation) return;
 
     if (deliveryMarkerRef.current) {
-      deliveryMarkerRef.current.remove();
+      map.removeLayer(deliveryMarkerRef.current);
     }
 
     const deliveryIcon = L.divIcon({
@@ -415,28 +447,13 @@ export default function DeliveryTracking() {
       .addTo(map)
       .bindPopup(`🚚 ${deliveryPerson?.firstName || 'Livreur'} - Distance: ${routeDistance}km - ETA: ${estimatedTime}min`);
 
-    // Centrer la carte pour afficher tous les marqueurs
-    if (userLat && userLng) {
-      const group = new L.FeatureGroup([
-        deliveryMarkerRef.current,
-        userMarkerRef.current!,
-        pharmacyMarkerRef.current!
-      ]);
+    // Ajuster la vue pour montrer tous les marqueurs
+    if (userLat && userLng && userMarkerRef.current && pharmacyMarkerRef.current) {
+      const markers = [deliveryMarkerRef.current, userMarkerRef.current, pharmacyMarkerRef.current];
+      const group = new L.FeatureGroup(markers);
       map.fitBounds(group.getBounds().pad(0.1));
     }
   }, [map, deliveryPersonLocation, userLat, userLng, estimatedTime, routeDistance, deliveryPerson]);
-
-  // Calculate distance between two coordinates (fallback)
-  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
-    const R = 6371; // Earth's radius in kilometers
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
 
   // Mutation to confirm delivery completion by patient
   const confirmDeliveryMutation = useMutation({
@@ -580,7 +597,7 @@ export default function DeliveryTracking() {
           </div>
         </div>
 
-        {/* Carte GPS Interactive - Suivi de livraison */}
+        {/* Carte GPS Interactive */}
         <Card className="shadow-sm mb-4">
           <CardContent className="p-4">
             <h3 className="font-semibold text-gray-900 mb-3">🗺️ Suivi GPS en temps réel</h3>
@@ -589,7 +606,7 @@ export default function DeliveryTracking() {
               className="h-96 w-full rounded-lg border-2 border-gray-200"
               style={{ minHeight: '384px' }}
             />
-            
+
             <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-gray-600">
               <div className="flex items-center space-x-1">
                 <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
@@ -604,12 +621,12 @@ export default function DeliveryTracking() {
                 <span>Pharmacie</span>
               </div>
             </div>
-            
+
             <div className="mt-2 flex justify-between items-center text-xs text-gray-500">
               <span>🔄 Mise à jour automatique</span>
               <span>🛣️ Routes Côte d'Ivoire</span>
             </div>
-            
+
             {routeDistance > 0 && (
               <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
                 <div className="flex justify-between items-center">
@@ -620,7 +637,7 @@ export default function DeliveryTracking() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-green-800">{Math.round((1 - routeDistance/285.5) * 100)}%</p>
+                    <p className="text-sm font-bold text-green-800">{Math.round((1 - routeDistance/10) * 100)}%</p>
                     <p className="text-xs text-green-700">Progression</p>
                   </div>
                 </div>
