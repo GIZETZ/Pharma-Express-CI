@@ -252,13 +252,16 @@ export default function DeliveryTracking() {
         console.log('🗺️ Calcul itinéraire patient-livreur pour commande:', currentOrder.id.slice(0, 8), 'avec livreur:', currentOrder.deliveryPersonId?.slice(0, 8));
       }
 
-      // Position du livreur (proche de la pharmacie ou position selon le livreur)
-      const deliveryPersonStartLat = deliveryPerson?.lat || 
-        (currentOrder.pharmacy?.latitude ? parseFloat(currentOrder.pharmacy.latitude) : DEFAULT_PHARMACY_COORDS.lat) + 
-        (Math.random() - 0.5) * 0.01;
-      const deliveryPersonStartLng = deliveryPerson?.lng || 
-        (currentOrder.pharmacy?.longitude ? parseFloat(currentOrder.pharmacy.longitude) : DEFAULT_PHARMACY_COORDS.lng) + 
-        (Math.random() - 0.5) * 0.01;
+      // Position distincte du livreur (pas à la pharmacie mais dans un rayon de 2-5km)
+      const pharmacyLat = currentOrder.pharmacy?.latitude ? parseFloat(currentOrder.pharmacy.latitude) : DEFAULT_PHARMACY_COORDS.lat;
+      const pharmacyLng = currentOrder.pharmacy?.longitude ? parseFloat(currentOrder.pharmacy.longitude) : DEFAULT_PHARMACY_COORDS.lng;
+      
+      // Créer une position spécifique pour ce livreur (dans un rayon de 2-5km de la pharmacie)
+      const deliveryPersonOffsetLat = (currentOrder.deliveryPersonId?.charCodeAt(0) % 10 - 5) * 0.02; // -0.1 à +0.1 degrés
+      const deliveryPersonOffsetLng = (currentOrder.deliveryPersonId?.charCodeAt(2) % 10 - 5) * 0.02;
+      
+      const deliveryPersonStartLat = deliveryPerson?.lat || (pharmacyLat + deliveryPersonOffsetLat);
+      const deliveryPersonStartLng = deliveryPerson?.lng || (pharmacyLng + deliveryPersonOffsetLng);
       
       // Position du patient (destination finale)
       const patientLat = userLat;
@@ -266,6 +269,7 @@ export default function DeliveryTracking() {
 
       let progress = 0;
       let hasCalculatedRoute = false;
+      let routeLabelMarker: L.Marker | null = null;
       
       const tracePatientDeliveryRoute = async () => {
         try {
@@ -289,11 +293,16 @@ export default function DeliveryTracking() {
                 dashArray: '15, 8' // Ligne pointillée distinctive
               }).addTo(map);
               
-              // Ajouter un label informatif sur l'itinéraire
+              // Nettoyer l'ancien label s'il existe
+              if (routeLabelMarker) {
+                map.removeLayer(routeLabelMarker);
+              }
+              
+              // Ajouter un label informatif sur l'itinéraire patient-livreur
               const midPoint = routeData.coordinates[Math.floor(routeData.coordinates.length / 2)];
-              L.marker(midPoint, {
+              routeLabelMarker = L.marker(midPoint, {
                 icon: L.divIcon({
-                  html: `<div style="background: linear-gradient(45deg, #10b981, #059669); color: white; padding: 4px 8px; border-radius: 16px; font-size: 11px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid white;">🚚➡️👤 ${routeData.distance}km</div>`,
+                  html: `<div style="background: linear-gradient(45deg, #10b981, #059669); color: white; padding: 4px 8px; border-radius: 16px; font-size: 11px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid white;">👤↔🚚 ${routeData.distance}km</div>`,
                   className: 'patient-delivery-route-label',
                   iconSize: [80, 24],
                   iconAnchor: [40, 12]
@@ -306,6 +315,8 @@ export default function DeliveryTracking() {
               
               if (import.meta.env.DEV) {
                 console.log('✅ Itinéraire patient-livreur tracé:', routeData.distance + 'km', routeData.duration + 'min');
+                console.log('📍 Position livreur:', { lat: deliveryPersonStartLat.toFixed(4), lng: deliveryPersonStartLng.toFixed(4) });
+                console.log('📍 Position patient:', { lat: patientLat.toFixed(4), lng: patientLng.toFixed(4) });
               }
             }
           }
@@ -342,7 +353,13 @@ export default function DeliveryTracking() {
       const interval = setInterval(tracePatientDeliveryRoute, 4000);
       tracePatientDeliveryRoute(); // Exécuter immédiatement
 
-      return () => clearInterval(interval);
+      return () => {
+        clearInterval(interval);
+        // Nettoyer le label de route
+        if (routeLabelMarker) {
+          map.removeLayer(routeLabelMarker);
+        }
+      };
     } else if (import.meta.env.DEV) {
       console.log('❌ Itinéraire patient-livreur non tracé:', {
         hasOrder: !!currentOrder,
