@@ -837,8 +837,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delivery persons endpoints
   app.get('/api/delivery-persons/:id', async (req, res) => {
     try {
-      const deliveryPerson = await storage.getDeliveryPerson(req.params.id);
-      if (!deliveryPerson) {
+      // Utiliser getUser au lieu de getDeliveryPerson qui n'existe pas
+      const deliveryPerson = await storage.getUser(req.params.id);
+      if (!deliveryPerson || deliveryPerson.role !== 'livreur') {
         return res.status(404).json({ message: 'Delivery person not found' });
       }
       res.json(deliveryPerson);
