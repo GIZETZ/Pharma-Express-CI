@@ -18,6 +18,14 @@ const updateProfileSchema = z.object({
   lastName: z.string().min(1, "Le nom est requis"),
   email: z.string().email("Email invalide").optional(),
   phone: z.string().min(8, "Le numéro de téléphone doit contenir au moins 8 chiffres"),
+  // Champs spécifiques aux livreurs
+  vehicleType: z.string().optional(),
+  vehicleBrand: z.string().optional(),
+  vehicleModel: z.string().optional(),
+  vehicleColor: z.string().optional(),
+  vehicleLicensePlate: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
 });
 
 type UpdateProfileData = z.infer<typeof updateProfileSchema>;
@@ -42,12 +50,26 @@ export default function EditProfile() {
       lastName: user?.lastName || '',
       email: user?.email || '',
       phone: user?.phone || '',
+      vehicleType: user?.vehicleType || '',
+      vehicleBrand: user?.vehicleBrand || '',
+      vehicleModel: user?.vehicleModel || '',
+      vehicleColor: user?.vehicleColor || '',
+      vehicleLicensePlate: user?.vehicleLicensePlate || '',
+      emergencyContactName: user?.emergencyContactName || '',
+      emergencyContactPhone: user?.emergencyContactPhone || '',
     },
     values: user ? {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email || '',
       phone: user.phone,
+      vehicleType: user.vehicleType || '',
+      vehicleBrand: user.vehicleBrand || '',
+      vehicleModel: user.vehicleModel || '',
+      vehicleColor: user.vehicleColor || '',
+      vehicleLicensePlate: user.vehicleLicensePlate || '',
+      emergencyContactName: user.emergencyContactName || '',
+      emergencyContactPhone: user.emergencyContactPhone || '',
     } : undefined,
   });
 
@@ -170,6 +192,93 @@ export default function EditProfile() {
                   <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
                 )}
               </div>
+
+              {/* Champs spécifiques aux livreurs */}
+              {user?.role === "livreur" && (
+                <>
+                  <div className="border-t pt-4 mt-4">
+                    <h3 className="text-lg font-semibold mb-4">🚗 Informations du véhicule</h3>
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <Label htmlFor="vehicleType">Type de véhicule</Label>
+                        <Input
+                          id="vehicleType"
+                          {...register("vehicleType")}
+                          placeholder="Moto, Scooter, Voiture..."
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="vehicleBrand">Marque</Label>
+                        <Input
+                          id="vehicleBrand"
+                          {...register("vehicleBrand")}
+                          placeholder="Yamaha, Honda, Toyota..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <Label htmlFor="vehicleModel">Modèle</Label>
+                        <Input
+                          id="vehicleModel"
+                          {...register("vehicleModel")}
+                          placeholder="DT 125, Wave 110..."
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="vehicleColor">Couleur</Label>
+                        <Input
+                          id="vehicleColor"
+                          {...register("vehicleColor")}
+                          placeholder="Rouge, Bleu, Noir..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <Label htmlFor="vehicleLicensePlate">Plaque d'immatriculation</Label>
+                      <Input
+                        id="vehicleLicensePlate"
+                        {...register("vehicleLicensePlate")}
+                        placeholder="CI-2578-AB"
+                        className="font-bold text-lg text-center"
+                        data-testid="input-license-plate"
+                      />
+                      {errors.vehicleLicensePlate && (
+                        <p className="text-red-500 text-sm mt-1">{errors.vehicleLicensePlate.message}</p>
+                      )}
+                      <p className="text-sm text-gray-600 mt-1">
+                        Cette plaque sera visible par les patients pour vous identifier
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-4 mt-4">
+                    <h3 className="text-lg font-semibold mb-4">📞 Contact d'urgence</h3>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="emergencyContactName">Nom du contact</Label>
+                        <Input
+                          id="emergencyContactName"
+                          {...register("emergencyContactName")}
+                          placeholder="Nom de la personne à contacter"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="emergencyContactPhone">Téléphone d'urgence</Label>
+                        <Input
+                          id="emergencyContactPhone"
+                          {...register("emergencyContactPhone")}
+                          placeholder="+225 07 00 00 00"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <Button

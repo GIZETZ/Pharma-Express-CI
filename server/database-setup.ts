@@ -1,5 +1,5 @@
 import { db } from './db';
-import { users, pharmacies, prescriptions, orders, deliveryProfiles, deliveryVehicles, notifications } from '@shared/schema';
+import { users, pharmacies, prescriptions, orders, notifications } from '@shared/schema';
 import { sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
@@ -180,39 +180,30 @@ async function verifyDataIntegrity() {
   console.log(`📊 ${userCount[0].count} utilisateurs trouvés`);
   console.log(`🏪 ${pharmacyCount[0].count} pharmacies trouvées`);
 
-  // Vérifier que le profil du livreur existe
-  const deliveryProfileCount = await db.select({ count: sql`count(*)` }).from(deliveryProfiles);
-  if (Number(deliveryProfileCount[0].count) === 0) {
-    console.log('⚠️ Aucun profil de livreur détecté - Création du profil de base...');
-    await createDeliveryProfileIfMissing();
-  }
+  // Vérifier et mettre à jour les données des livreurs consolidées
+  await updateDeliveryPersonData();
 }
 
-async function createDeliveryProfileIfMissing() {
-  // Trouver un livreur existant
-  const deliveryPerson = await db.select().from(users).where(sql`role = 'livreur'`).limit(1);
+async function updateDeliveryPersonData() {
+  // Trouver un livreur existant sans informations de véhicule
+  const deliveryPerson = await db.select().from(users).where(sql`role = 'livreur' AND vehicle_license_plate IS NULL`).limit(1);
   
   if (deliveryPerson.length > 0) {
-    await db.insert(deliveryProfiles).values({
-      userId: deliveryPerson[0].id,
-      profilePhotoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face',
+    await db.update(users).set({
+      profileImageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face',
       emergencyContactName: 'Contact d\'urgence',
       emergencyContactPhone: '+225 00 00 00 00',
       rating: '4.5',
       totalDeliveries: '50',
-      isAvailable: true
-    });
-
-    await db.insert(deliveryVehicles).values({
-      deliveryPersonId: deliveryPerson[0].id,
+      isAvailable: true,
       vehicleType: 'moto',
-      brand: 'Yamaha',
-      model: 'DT 125',
-      color: 'Rouge',
-      licensePlate: 'CI-2578-AB',
-      verificationStatus: 'approved'
-    });
+      vehicleBrand: 'Yamaha',
+      vehicleModel: 'DT 125',
+      vehicleColor: 'Rouge',
+      vehicleLicensePlate: 'CI-2578-AB',
+      vehicleVerificationStatus: 'approved'
+    }).where(sql`id = ${deliveryPerson[0].id}`);
 
-    console.log('✅ Profil de livreur créé pour:', deliveryPerson[0].firstName, deliveryPerson[0].lastName);
+    console.log('✅ Données livreur mises à jour pour:', deliveryPerson[0].firstName, deliveryPerson[0].lastName);
   }
 }

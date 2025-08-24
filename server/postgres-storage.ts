@@ -9,13 +9,9 @@ import {
   type InsertOrder,
   type Notification,
   type InsertNotification,
-  type DeliveryVehicle,
-  type InsertDeliveryVehicle,
-  type DeliveryProfile,
-  type InsertDeliveryProfile,
 } from "@shared/schema";
 import { eq, and, or, desc, asc, lt, sql, ne } from "drizzle-orm";
-import { users, pharmacies, prescriptions, orders, notifications, deliveryVehicles, deliveryProfiles } from "@shared/schema";
+import { users, pharmacies, prescriptions, orders, notifications } from "@shared/schema";
 // Import db only when needed to avoid DATABASE_URL requirement in development
 let db: any = null;
 
@@ -1110,73 +1106,7 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  // Delivery Profile operations
-  async getDeliveryProfile(userId: string): Promise<DeliveryProfile | undefined> {
-    const db = await getDb();
-    const result = await db.select().from(deliveryProfiles).where(eq(deliveryProfiles.userId, userId)).limit(1);
-    return result[0];
-  }
-
-  async createDeliveryProfile(profile: InsertDeliveryProfile): Promise<DeliveryProfile> {
-    const db = await getDb();
-    const result = await db.insert(deliveryProfiles).values(profile).returning();
-    return result[0];
-  }
-
-  async updateDeliveryProfile(userId: string, updates: Partial<InsertDeliveryProfile>): Promise<DeliveryProfile | undefined> {
-    const db = await getDb();
-    const result = await db.update(deliveryProfiles)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(users.id, userId))
-      .returning();
-    return result[0];
-  }
-
-  // Delivery Vehicle operations
-  async getDeliveryVehicle(deliveryPersonId: string): Promise<DeliveryVehicle | undefined> {
-    const db = await getDb();
-    const result = await db.select().from(deliveryVehicles).where(eq(deliveryVehicles.deliveryPersonId, deliveryPersonId)).limit(1);
-    return result[0];
-  }
-
-  async createDeliveryVehicle(vehicle: InsertDeliveryVehicle): Promise<DeliveryVehicle> {
-    const db = await getDb();
-    const result = await db.insert(deliveryVehicles).values(vehicle).returning();
-    return result[0];
-  }
-
-  async updateDeliveryVehicle(deliveryPersonId: string, updates: Partial<InsertDeliveryVehicle>): Promise<DeliveryVehicle | undefined> {
-    const db = await getDb();
-    const result = await db.update(deliveryVehicles)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(deliveryVehicles.deliveryPersonId, deliveryPersonId))
-      .returning();
-    return result[0];
-  }
-
-  async getDeliveryPersonWithVehicleAndProfile(deliveryPersonId: string): Promise<{
-    user: User;
-    profile?: DeliveryProfile;
-    vehicle?: DeliveryVehicle;
-  } | undefined> {
-    const db = await getDb();
-
-    // Get the user
-    const user = await db.select().from(users).where(eq(users.id, deliveryPersonId)).limit(1);
-    if (!user[0]) {
-      return undefined;
-    }
-
-    // Get profile and vehicle
-    const profile = await this.getDeliveryProfile(deliveryPersonId);
-    const vehicle = await this.getDeliveryVehicle(deliveryPersonId);
-
-    return {
-      user: user[0],
-      profile,
-      vehicle,
-    };
-  }
+  // Les méthodes delivery profile/vehicle ont été supprimées - informations consolidées dans users
 
   async confirmDeliveryArrival(orderId: string): Promise<Order | undefined> {
     const db = await getDb();

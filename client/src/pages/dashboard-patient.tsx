@@ -1049,12 +1049,12 @@ export default function DashboardPatient() {
                             </div>
                             <div className="flex-1">
                               <h4 className="font-semibold text-green-900">
-                                Jean-Claude Koffi
+                                KOUASSI KPATA
                               </h4>
                               <p className="text-sm text-green-700">Livreur agréé - En service</p>
                               <div className="flex items-center gap-1 mt-1">
                                 <span className="text-yellow-500">⭐⭐⭐⭐⭐</span>
-                                <span className="text-xs text-green-600">4.8/5 (127 livraisons)</span>
+                                <span className="text-xs text-green-600">4.5/5 (50 livraisons)</span>
                               </div>
                             </div>
                           </div>

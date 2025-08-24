@@ -30,6 +30,24 @@ export const users = pgTable("users", {
   accuracy: decimal("accuracy", { precision: 6, scale: 2 }), // Précision GPS en mètres
   lastLocationUpdate: timestamp("last_location_update"), // Dernière mise à jour GPS
   isActiveTracking: boolean("is_active_tracking").default(false), // Si le livreur est en mode tracking actif
+  // Champs livreur consolidés (anciennement dans delivery_profiles et delivery_vehicles)
+  emergencyContactName: varchar("emergency_contact_name"), // Contact d'urgence
+  emergencyContactPhone: varchar("emergency_contact_phone"), // Téléphone d'urgence
+  bankAccountNumber: varchar("bank_account_number"), // Compte bancaire pour paiements
+  rating: decimal("rating", { precision: 2, scale: 1 }).default("5.0"), // Note du livreur
+  totalDeliveries: varchar("total_deliveries").default("0"), // Nombre de livraisons effectuées
+  isAvailable: boolean("is_available").default(true), // Disponibilité actuelle
+  currentOrderId: varchar("current_order_id"), // Commande en cours (foreign key will be added later)
+  // Informations du véhicule (pour livreurs)
+  vehicleType: varchar("vehicle_type"), // moto, scooter, voiture, vélo, tricycle
+  vehicleBrand: varchar("vehicle_brand"), // Yamaha, Honda, Toyota, etc.
+  vehicleModel: varchar("vehicle_model"), // Modèle du véhicule
+  vehicleColor: varchar("vehicle_color"), // Couleur du véhicule
+  vehicleLicensePlate: varchar("vehicle_license_plate"), // Plaque d'immatriculation (TRÈS VISIBLE)
+  vehicleInsuranceNumber: varchar("vehicle_insurance_number"), // Numéro d'assurance
+  vehicleRegistrationDocumentUrl: text("vehicle_registration_document_url"), // Carte grise
+  vehicleInsuranceDocumentUrl: text("vehicle_insurance_document_url"), // Attestation d'assurance
+  vehicleVerificationStatus: varchar("vehicle_verification_status").default("pending"), // pending, approved, rejected
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -83,39 +101,7 @@ export const orders = pgTable("orders", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Table pour les véhicules des livreurs
-export const deliveryVehicles = pgTable("delivery_vehicles", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  deliveryPersonId: varchar("delivery_person_id").references(() => users.id).notNull(),
-  vehicleType: varchar("vehicle_type").notNull(), // moto, scooter, voiture, vélo, tricycle
-  brand: varchar("brand"), // Yamaha, Honda, Toyota, etc.
-  model: varchar("model"), // Modèle du véhicule
-  color: varchar("color").notNull(), // Couleur du véhicule
-  licensePlate: varchar("license_plate").notNull(), // Plaque d'immatriculation (TRÈS VISIBLE)
-  insuranceNumber: varchar("insurance_number"), // Numéro d'assurance
-  registrationDocumentUrl: text("registration_document_url"), // Carte grise
-  insuranceDocumentUrl: text("insurance_document_url"), // Attestation d'assurance
-  isActive: boolean("is_active").default(true), // Si le véhicule est actif
-  verificationStatus: varchar("verification_status").default("pending"), // pending, approved, rejected
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Table pour les profils de livreurs avec photos
-export const deliveryProfiles = pgTable("delivery_profiles", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id).notNull().unique(),
-  profilePhotoUrl: text("profile_photo_url"), // Photo de profil du livreur
-  emergencyContactName: varchar("emergency_contact_name"), // Contact d'urgence
-  emergencyContactPhone: varchar("emergency_contact_phone"), // Téléphone d'urgence
-  bankAccountNumber: varchar("bank_account_number"), // Compte bancaire pour paiements
-  rating: decimal("rating", { precision: 2, scale: 1 }).default("5.0"), // Note du livreur
-  totalDeliveries: varchar("total_deliveries").default("0"), // Nombre de livraisons effectuées
-  isAvailable: boolean("is_available").default(true), // Disponibilité actuelle
-  currentOrderId: varchar("current_order_id").references(() => orders.id), // Commande en cours
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+// Tables supprimées - informations consolidées dans users
 
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -188,17 +174,7 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
-export const insertDeliveryVehicleSchema = createInsertSchema(deliveryVehicles).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertDeliveryProfileSchema = createInsertSchema(deliveryProfiles).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// Schémas supprimés - informations consolidées dans users
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -218,8 +194,4 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
-export type DeliveryVehicle = typeof deliveryVehicles.$inferSelect;
-export type InsertDeliveryVehicle = z.infer<typeof insertDeliveryVehicleSchema>;
-
-export type DeliveryProfile = typeof deliveryProfiles.$inferSelect;
-export type InsertDeliveryProfile = z.infer<typeof insertDeliveryProfileSchema>;
+// Types supprimés - informations consolidées dans users
