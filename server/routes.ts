@@ -16,7 +16,7 @@ import {
   verifyResetCodeSchema,
   resetPasswordSchema
 } from "@shared/schema";
-import emailjs from '@emailjs/nodejs';
+// EmailJS removed - now handled client-side
 
 // Create storage instance
 const storage = createStorage();
@@ -299,29 +299,14 @@ export async function registerRoutes(app: Express, io?: SocketIOServer): Promise
         expiresAt,
       });
 
-      // Send email via EmailJS
-      try {
-        await emailjs.send(
-          'service_1',
-          'template_1',
-          {
-            passcode: code,
-            email: email,
-            to_email: email
-          },
-          {
-            publicKey: process.env.EMAILJS_PUBLIC_KEY,
-            privateKey: process.env.EMAILJS_PRIVATE_KEY,
-          }
-        );
-        
-        console.log('Code de récupération envoyé à:', email);
-      } catch (emailError) {
-        console.error('Erreur envoi email:', emailError);
-        return res.status(500).json({ message: 'Erreur lors de l\'envoi de l\'email' });
-      }
-
-      res.json({ message: 'Code de vérification envoyé par email' });
+      console.log('Code de récupération généré pour:', email, 'Code:', code);
+      
+      // Return the code to client for email sending
+      res.json({ 
+        message: 'Code de vérification généré',
+        code: code,
+        email: email
+      });
     } catch (error) {
       console.error('Erreur demande de réinitialisation:', error);
       if (error instanceof z.ZodError) {

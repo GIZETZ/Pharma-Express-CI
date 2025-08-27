@@ -8,6 +8,7 @@ import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import emailjs from '@emailjs/browser';
 
 export default function ForgotPassword() {
   const [, setLocation] = useLocation();
@@ -16,20 +17,39 @@ export default function ForgotPassword() {
 
   const requestResetMutation = useMutation({
     mutationFn: async (email: string) => {
-      console.log("🔄 Tentative d'envoi email:", email);
-      console.log("🌐 URL appelée:", "/api/auth/request-reset");
+      console.log("🔄 Génération du code pour:", email);
       
       try {
-        const result = await apiRequest("/api/auth/request-reset", "POST", { email });
-        console.log("✅ Succès API:", result);
-        return result;
+        // Step 1: Generate code on server
+        const data = await apiRequest("/api/auth/request-reset", "POST", { email });
+        console.log("✅ Code généré:", data);
+        
+        // Step 2: Initialize EmailJS and send email (client-side)
+        console.log("📧 Initialisation EmailJS...");
+        
+        // Initialize EmailJS with public key
+        emailjs.init(import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'your_public_key');
+        
+        console.log("📧 Envoi email via EmailJS...");
+        await emailjs.send(
+          import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_1',
+          import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_1',
+          {
+            passcode: data.code,
+            email: email,
+            to_email: email
+          }
+        );
+        
+        console.log("✅ Email envoyé avec succès");
+        return data;
       } catch (error) {
-        console.error("❌ Erreur API:", error);
+        console.error("❌ Erreur:", error);
         throw error;
       }
     },
     onSuccess: () => {
-      console.log("✅ Mutation réussie");
+      console.log("✅ Processus complet réussi");
       toast({
         title: "Code envoyé !",
         description: "Vérifiez votre boîte mail pour le code de récupération.",
@@ -37,7 +57,7 @@ export default function ForgotPassword() {
       setLocation(`/verify-reset-code?email=${encodeURIComponent(email)}`);
     },
     onError: (error: any) => {
-      console.error("❌ Erreur mutation:", error);
+      console.error("❌ Erreur complète:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
