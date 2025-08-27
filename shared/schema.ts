@@ -147,6 +147,7 @@ export const registerSchema = createInsertSchema(users).omit({
   drivingLicenseUrl: true,
   verificationStatus: true,
 }).extend({
+  email: z.string().email("Adresse email invalide"),
   confirmPassword: z.string().min(6),
   role: z.enum(["patient", "pharmacien", "livreur", "admin"]).default("patient"),
   // Files pour validation d'identité (optionnels mais requis selon le rôle)

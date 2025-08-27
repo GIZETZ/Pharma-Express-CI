@@ -28,6 +28,7 @@ export default function Register() {
       firstName: "",
       lastName: "",
       phone: "",
+      email: "", // Added email to defaultValues
       address: "",
       password: "",
       confirmPassword: "",
@@ -51,12 +52,12 @@ export default function Register() {
         body: data instanceof FormData ? data : JSON.stringify(data),
         headers: data instanceof FormData ? {} : { 'Content-Type': 'application/json' }
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Registration failed');
       }
-      
+
       return response.json();
     },
     onSuccess: (user) => {
@@ -65,7 +66,7 @@ export default function Register() {
         description: `Bienvenue ${user.firstName} ${user.lastName}!`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      
+
       // Redirection selon le rôle après inscription  
       switch (user.role) {
         case "admin":
@@ -104,10 +105,10 @@ export default function Register() {
 
   const onSubmit = (data: RegisterFormData) => {
     setIsLoading(true);
-    
+
     // Create FormData for file upload
     const formData = new FormData();
-    
+
     // Add all form fields including confirmPassword for validation
     Object.keys(data).forEach(key => {
       formData.append(key, (data as any)[key]);
@@ -151,7 +152,7 @@ export default function Register() {
             <div className="text-center mb-6">
               <p className="text-sm text-gray-600 mb-4">Sélectionnez votre type de compte :</p>
             </div>
-            
+
             {/* Role Selection Cards */}
             <div className="space-y-3">
               <Button
@@ -243,7 +244,7 @@ export default function Register() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               {/* Champ caché pour le rôle */}
               <input type="hidden" {...form.register("role")} value={selectedRole} />
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -303,12 +304,31 @@ export default function Register() {
 
               <FormField
                 control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Adresse email</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="votre.email@exemple.com"
+                        type="email"
+                        data-testid="input-email"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="address"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      {selectedRole === "pharmacien" ? "Adresse de la pharmacie" : 
-                       selectedRole === "livreur" ? "Adresse de résidence" : 
+                      {selectedRole === "pharmacien" ? "Adresse de la pharmacie" :
+                       selectedRole === "livreur" ? "Adresse de résidence" :
                        "Adresse de domicile"}
                     </FormLabel>
                     <FormControl>
@@ -341,12 +361,12 @@ export default function Register() {
                     </p>
                   </div>
                   <p className="text-xs text-yellow-700">
-                    {selectedRole === "pharmacien" 
+                    {selectedRole === "pharmacien"
                       ? "Joignez une copie de votre carte d'identité nationale et diplôme de pharmacien. Un admin validera votre compte."
                       : "Joignez une copie de votre carte d'identité nationale et permis de conduire. Un admin validera votre compte."
                     }
                   </p>
-                  
+
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Document d'identité *</label>
                     <Input
@@ -452,7 +472,7 @@ export default function Register() {
                 disabled={isLoading}
                 data-testid="button-register"
               >
-                {isLoading ? "Inscription..." : 
+                {isLoading ? "Inscription..." :
                  selectedRole === "patient" ? "Créer mon compte" :
                  `Soumettre pour validation`}
               </Button>
