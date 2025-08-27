@@ -504,6 +504,83 @@ function DeliveryApplicationsManager() {
   );
 }
 
+// Component to fetch and display patient information
+const PatientInfo = ({ order }: { order: any }) => {
+  const [patientData, setPatientData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPatientData = async () => {
+      if (order.user?.firstName) {
+        // Si les données utilisateur sont déjà présentes
+        setPatientData(order.user);
+        setLoading(false);
+        return;
+      }
+
+      if (!order.userId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/users/${order.userId}`, {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const userData = await response.json();
+          setPatientData(userData);
+        } else {
+          console.error('Failed to fetch patient data');
+        }
+      } catch (error) {
+        console.error('Error fetching patient data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPatientData();
+  }, [order.userId, order.user]);
+
+  if (loading) {
+    return (
+      <span className="flex items-center gap-2">
+        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
+        Chargement des informations patient...
+      </span>
+    );
+  }
+
+  if (patientData?.firstName) {
+    return (
+      <span>
+        Patient: {patientData.firstName} {patientData.lastName || ''} • {patientData.phone || 'Téléphone non disponible'}
+      </span>
+    );
+  }
+
+  // Essayer les champs directs de la commande
+  if (order.patientName || order.customerName) {
+    const patientName = order.patientName || order.customerName;
+    const phone = order.patientPhone || order.customerPhone || order.phone || 'Téléphone non disponible';
+    return <span>Patient: {patientName} • {phone}</span>;
+  }
+
+  // Si on a juste un téléphone
+  if (order.phone) {
+    return <span>Patient: Téléphone {order.phone}</span>;
+  }
+
+  // Fallback avec ID
+  if (order.userId) {
+    return <span>Patient: ID {order.userId.slice(0, 8)} • Informations non disponibles</span>;
+  }
+
+  return <span>Patient: Informations non disponibles</span>;
+};
+
 // Component to display prescription image
 const PrescriptionImage = ({ prescriptionId, className }: { prescriptionId: string, className?: string }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -1385,37 +1462,7 @@ export default function DashboardPharmacien() {
                       </Badge>
                     </div>
                     <CardDescription>
-                      Patient: {(() => {
-                        // Essayer d'obtenir les infos patient depuis plusieurs sources
-                        if (order.user?.firstName) {
-                          return `${order.user.firstName} ${order.user.lastName || ''} • ${order.user.phone || order.phone || 'Téléphone non disponible'}`;
-                        }
-
-                        // Essayer les champs directs de la commande
-                        if (order.patientName || order.customerName) {
-                          const patientName = order.patientName || order.customerName;
-                          const phone = order.patientPhone || order.customerPhone || order.phone || 'Téléphone non disponible';
-                          return `${patientName} • ${phone}`;
-                        }
-
-                        // Essayer d'extraire depuis les métadonnées de la commande
-                        if (order.metadata?.patientInfo) {
-                          const { firstName, lastName, phone } = order.metadata.patientInfo;
-                          return `${firstName} ${lastName || ''} • ${phone || 'Téléphone non disponible'}`;
-                        }
-
-                        // Si on a juste un téléphone
-                        if (order.phone) {
-                          return `Téléphone: ${order.phone}`;
-                        }
-
-                        // Fallback avec ID mais essayer de le rendre plus lisible
-                        if (order.userId) {
-                          return `Patient ID: ${order.userId.slice(0, 8)} • Informations en cours de chargement`;
-                        }
-
-                        return 'Informations patient non disponibles';
-                      })()}
+                      <PatientInfo order={order} />
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

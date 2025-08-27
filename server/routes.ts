@@ -1261,6 +1261,35 @@ export async function registerRoutes(app: Express, io?: SocketIOServer): Promise
     }
   });
 
+  // Get user information by ID (for pharmacists)
+  app.get('/api/users/:userId', requireAuth, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.session.userId);
+      if (!currentUser || currentUser.role !== 'pharmacien') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const { userId } = req.params;
+      const userData = await storage.getUser(userId);
+      
+      if (!userData) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Retourner seulement les informations nécessaires (pas le mot de passe)
+      res.json({
+        id: userData.id,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        phone: userData.phone,
+        role: userData.role
+      });
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      res.status(500).json({ message: 'Failed to fetch user data' });
+    }
+  });
+
   // Update order status (pharmacist)
   app.post('/api/pharmacien/orders/:orderId/status', requireAuth, async (req: any, res) => {
     try {
