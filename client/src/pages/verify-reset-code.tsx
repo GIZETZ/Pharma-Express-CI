@@ -106,7 +106,7 @@ export default function VerifyResetCode() {
                 Code valable pendant 15 minutes
               </p>
             </div>
-            
+
             <Button 
               type="submit" 
               className="w-full bg-green-600 hover:bg-green-700"
@@ -123,7 +123,7 @@ export default function VerifyResetCode() {
               )}
             </Button>
           </form>
-          
+
           <div className="mt-4 text-center space-y-2">
             <p className="text-sm text-gray-600">
               Vous n'avez pas reçu le code ?{" "}
