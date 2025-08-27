@@ -15,7 +15,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
 
   const requestResetMutation = useMutation({
-    mutationFn: (email: string) => apiRequest("/api/auth/request-password-reset", "POST", { email }),
+    mutationFn: (email: string) => apiRequest("/api/auth/request-reset", "POST", { email }),
     onSuccess: () => {
       toast({
         title: "Code envoyé !",
