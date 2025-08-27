@@ -625,11 +625,11 @@ const PrescriptionImage = ({ prescriptionId, className }: { prescriptionId: stri
   }
 
   return (
-    <div className="relative group">
+    <div className="relative group inline-block">
       <img
         src={imageUrl}
         alt="Photo de l'ordonnance"
-        className={`${className || 'w-full h-64 object-cover'} cursor-pointer rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 group-hover:brightness-95`}
+        className={`${className || 'max-w-full h-auto'} cursor-pointer rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 group-hover:brightness-95 block`}
         onClick={openImageModal}
       />
       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 rounded-lg flex items-center justify-center">
