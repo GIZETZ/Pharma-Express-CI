@@ -472,7 +472,7 @@ export default function DashboardPatient() {
     const confirmMessage = `⚠️ ATTENTION : SUPPRESSION DÉFINITIVE ⚠️\n\nVous êtes sur le point de supprimer DÉFINITIVEMENT la commande #${orderNumber}.\n\nCette action est IRRÉVERSIBLE et supprimera complètement la commande de la base de données comme si elle n'avait jamais existé.\n\nÊtes-vous absolument certain de vouloir continuer ?`;
 
     if (confirm(confirmMessage)) {
-      const doubleConfirm = confirm(`Dernière confirmation :\n\nSupprimer DÉFINITIVEMENT la commande #${orderNumber} ?\n\nTapez "CONFIRMER" si vous êtes sûr, sinon annulez.`);
+      const doubleConfirm = confirm(`Dernière confirmation :\n\nSupprimer DÉFINITIVEMENT la commande #${orderNumber} ?\n\nTapez "CONFIRMER" si vous êtes sûr, annulez.`);
       if (doubleConfirm) {
         deleteOrderMutation.mutate(orderId);
       }
