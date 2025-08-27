@@ -1388,13 +1388,30 @@ export default function DashboardPharmacien() {
                       Patient: {(() => {
                         // Essayer d'obtenir les infos patient depuis plusieurs sources
                         if (order.user?.firstName) {
-                          return `${order.user.firstName} ${order.user.lastName || ''} • ${order.user.phone || ''}`;
+                          return `${order.user.firstName} ${order.user.lastName || ''} • ${order.user.phone || order.phone || 'Téléphone non disponible'}`;
                         }
 
-                        // Si pas d'user direct, essayer de récupérer via userId
+                        // Essayer les champs directs de la commande
+                        if (order.patientName || order.customerName) {
+                          const patientName = order.patientName || order.customerName;
+                          const phone = order.patientPhone || order.customerPhone || order.phone || 'Téléphone non disponible';
+                          return `${patientName} • ${phone}`;
+                        }
+
+                        // Essayer d'extraire depuis les métadonnées de la commande
+                        if (order.metadata?.patientInfo) {
+                          const { firstName, lastName, phone } = order.metadata.patientInfo;
+                          return `${firstName} ${lastName || ''} • ${phone || 'Téléphone non disponible'}`;
+                        }
+
+                        // Si on a juste un téléphone
+                        if (order.phone) {
+                          return `Téléphone: ${order.phone}`;
+                        }
+
+                        // Fallback avec ID mais essayer de le rendre plus lisible
                         if (order.userId) {
-                          // Pour l'instant, afficher l'ID en attendant que les données soient chargées
-                          return `ID Patient: ${order.userId.slice(0, 8)} • ${order.phone || 'Téléphone non disponible'}`;
+                          return `Patient ID: ${order.userId.slice(0, 8)} • Informations en cours de chargement`;
                         }
 
                         return 'Informations patient non disponibles';
