@@ -11,8 +11,12 @@ import {
   insertOrderSchema,
   insertNotificationSchema,
   registerSchema,
-  loginSchema
+  loginSchema,
+  requestPasswordResetSchema,
+  verifyResetCodeSchema,
+  resetPasswordSchema
 } from "@shared/schema";
+import emailjs from '@emailjs/nodejs';
 
 // Create storage instance
 const storage = createStorage();
@@ -269,6 +273,108 @@ export async function registerRoutes(app: Express, io?: SocketIOServer): Promise
       }
       res.json({ message: 'Déconnexion réussie' });
     });
+  });
+
+  // Password reset routes
+  app.post('/api/auth/request-reset', async (req, res) => {
+    try {
+      const validatedData = requestPasswordResetSchema.parse(req.body);
+      const { email } = validatedData;
+
+      // Find user by email (we'll add email field to User later)
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Don't reveal if email exists or not for security
+        return res.json({ message: 'Si cet email existe, un code de vérification a été envoyé.' });
+      }
+
+      // Generate 6-digit code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Store reset code (expires in 10 minutes)
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      await storage.createPasswordResetCode({
+        email,
+        code,
+        expiresAt,
+      });
+
+      // Send email via EmailJS
+      try {
+        await emailjs.send(
+          'service_1',
+          'template_1',
+          {
+            passcode: code,
+            email: email,
+            to_email: email
+          },
+          {
+            publicKey: process.env.EMAILJS_PUBLIC_KEY,
+            privateKey: process.env.EMAILJS_PRIVATE_KEY,
+          }
+        );
+        
+        console.log('Code de récupération envoyé à:', email);
+      } catch (emailError) {
+        console.error('Erreur envoi email:', emailError);
+        return res.status(500).json({ message: 'Erreur lors de l\'envoi de l\'email' });
+      }
+
+      res.json({ message: 'Code de vérification envoyé par email' });
+    } catch (error) {
+      console.error('Erreur demande de réinitialisation:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Email invalide', errors: error.errors });
+      }
+      res.status(500).json({ message: 'Erreur lors de la demande de réinitialisation' });
+    }
+  });
+
+  app.post('/api/auth/verify-reset-code', async (req, res) => {
+    try {
+      const validatedData = verifyResetCodeSchema.parse(req.body);
+      const { email, code } = validatedData;
+
+      // Find valid, non-expired, non-used code
+      const resetCode = await storage.getValidPasswordResetCode(email, code);
+      if (!resetCode) {
+        return res.status(400).json({ message: 'Code invalide ou expiré' });
+      }
+
+      res.json({ message: 'Code valide', valid: true });
+    } catch (error) {
+      console.error('Erreur vérification code:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Données invalides', errors: error.errors });
+      }
+      res.status(500).json({ message: 'Erreur lors de la vérification' });
+    }
+  });
+
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const validatedData = resetPasswordSchema.parse(req.body);
+      const { email, code, password } = validatedData;
+
+      // Verify code is still valid
+      const resetCode = await storage.getValidPasswordResetCode(email, code);
+      if (!resetCode) {
+        return res.status(400).json({ message: 'Code invalide ou expiré' });
+      }
+
+      // Update user password and mark code as used
+      await storage.resetUserPassword(email, password);
+      await storage.markPasswordResetCodeUsed(resetCode.id);
+
+      res.json({ message: 'Mot de passe réinitialisé avec succès' });
+    } catch (error) {
+      console.error('Erreur réinitialisation mot de passe:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Données invalides', errors: error.errors });
+      }
+      res.status(500).json({ message: 'Erreur lors de la réinitialisation' });
+    }
   });
 
   // Get current user

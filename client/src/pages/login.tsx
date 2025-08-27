@@ -149,16 +149,27 @@ export default function Login() {
             </div>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Pas encore de compte ?{" "}
-                <Link
-                  href="/register"
-                  className="text-blue-600 hover:text-blue-500 dark:text-blue-400 font-medium"
-                  data-testid="link-register"
-                >
-                  S'inscrire
-                </Link>
-              </p>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                  <Link
+                    href="/forgot-password"
+                    className="text-blue-600 hover:text-blue-500 dark:text-blue-400 font-medium"
+                    data-testid="link-forgot-password"
+                  >
+                    Mot de passe oublié ?
+                  </Link>
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Pas encore de compte ?{" "}
+                  <Link
+                    href="/register"
+                    className="text-blue-600 hover:text-blue-500 dark:text-blue-400 font-medium"
+                    data-testid="link-register"
+                  >
+                    S'inscrire
+                  </Link>
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

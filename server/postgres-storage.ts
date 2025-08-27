@@ -9,9 +9,11 @@ import {
   type InsertOrder,
   type Notification,
   type InsertNotification,
+  type PasswordResetCode,
+  type InsertPasswordResetCode,
 } from "@shared/schema";
-import { eq, and, or, desc, asc, lt, sql, ne } from "drizzle-orm";
-import { users, pharmacies, prescriptions, orders, notifications } from "@shared/schema";
+import { eq, and, or, desc, asc, lt, gt, sql, ne } from "drizzle-orm";
+import { users, pharmacies, prescriptions, orders, notifications, passwordResetCodes } from "@shared/schema";
 // Import db only when needed to avoid DATABASE_URL requirement in development
 let db: any = null;
 
@@ -196,6 +198,12 @@ export class PostgresStorage implements IStorage {
     return result[0];
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const db = await getDb();
+    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result[0];
+  }
+
   async createUser(user: InsertUser): Promise<User> {
     const db = await getDb();
     const hashedPassword = await bcrypt.hash(user.password, 10);
@@ -224,6 +232,14 @@ export class PostgresStorage implements IStorage {
     if (!isValid) return null;
 
     return user;
+  }
+
+  async resetUserPassword(email: string, newPassword: string): Promise<void> {
+    const db = await getDb();
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await db.update(users).set({ 
+      password: hashedPassword 
+    }).where(eq(users.email, email));
   }
 
   // Admin operations
@@ -1118,5 +1134,48 @@ export class PostgresStorage implements IStorage {
       .where(eq(orders.id, orderId))
       .returning();
     return result[0];
+  }
+
+  // Missing methods from interface
+  async cleanupOldOrders(): Promise<number> {
+    const db = await getDb();
+    const cutoffTime = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 heures
+    
+    const deletedOrders = await db.delete(orders)
+      .where(and(
+        eq(orders.status, 'cancelled'),
+        lt(orders.updatedAt, cutoffTime)
+      ))
+      .returning({ id: orders.id });
+    
+    return deletedOrders.length;
+  }
+
+  // Password reset operations
+  async createPasswordResetCode(resetCode: InsertPasswordResetCode): Promise<PasswordResetCode> {
+    const db = await getDb();
+    const result = await db.insert(passwordResetCodes).values(resetCode).returning();
+    return result[0];
+  }
+
+  async getValidPasswordResetCode(email: string, code: string): Promise<PasswordResetCode | undefined> {
+    const db = await getDb();
+    const now = new Date();
+    const result = await db.select().from(passwordResetCodes)
+      .where(and(
+        eq(passwordResetCodes.email, email),
+        eq(passwordResetCodes.code, code),
+        eq(passwordResetCodes.used, false),
+        gt(passwordResetCodes.expiresAt, now)
+      ))
+      .limit(1);
+    return result[0];
+  }
+
+  async markPasswordResetCodeUsed(id: string): Promise<void> {
+    const db = await getDb();
+    await db.update(passwordResetCodes)
+      .set({ used: true })
+      .where(eq(passwordResetCodes.id, id));
   }
 }

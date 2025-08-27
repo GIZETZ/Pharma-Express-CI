@@ -24,6 +24,9 @@ import HelpCenter from "./pages/help-center";
 import PrivacyPolicy from "./pages/privacy-policy";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import ForgotPassword from "@/pages/forgot-password";
+import VerifyResetCode from "@/pages/verify-reset-code";
+import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
 import DashboardPatient from "@/pages/dashboard-patient";
 import DashboardPharmacien from "@/pages/dashboard-pharmacien";
@@ -109,6 +112,9 @@ function Router() {
       {/* Routes publiques - pages d'auth */}
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/verify-reset-code" component={VerifyResetCode} />
+      <Route path="/reset-password" component={ResetPassword} />
 
       {/* Routes protégées - nécessitent l'authentification */}
       {isAuthenticated ? (
@@ -136,8 +142,8 @@ function Router() {
           <Route path="/pharmacy-profile" component={PharmacyProfile} />
           <Route path="/create-pharmacy" component={CreatePharmacy} />
           <Route path="/delivery-application" component={DeliveryApplication} />
-          <Route path="/application-status" element={<ApplicationStatus />} />
-              <Route path="/delivery-application-status" element={<ApplicationStatus />} />
+          <Route path="/application-status" component={ApplicationStatus} />
+          <Route path="/delivery-application-status" component={ApplicationStatus} />
           <Route path="/delivery-tracking" component={DeliveryTracking} />
           <Route path="/delivery-address" component={DeliveryAddress} />
           <Route path="/help-center" component={HelpCenter} />

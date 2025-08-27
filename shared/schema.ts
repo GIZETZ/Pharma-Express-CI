@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name").notNull(),
   lastName: varchar("last_name").notNull(),
   phone: varchar("phone").notNull().unique(),
+  email: varchar("email"),
   address: varchar("address").notNull(),
   password: varchar("password").notNull(), // Mot de passe haché
   role: varchar("role").notNull().default("patient"), // patient, pharmacien, livreur, admin
@@ -114,6 +115,15 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const passwordResetCodes = pgTable("password_reset_codes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").notNull(),
+  code: varchar("code", { length: 6 }).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  isUsed: boolean("is_used").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -174,6 +184,31 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+export const insertPasswordResetCodeSchema = createInsertSchema(passwordResetCodes).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Password reset schemas
+export const requestPasswordResetSchema = z.object({
+  email: z.string().email("Email invalide"),
+});
+
+export const verifyResetCodeSchema = z.object({
+  email: z.string().email("Email invalide"),
+  code: z.string().length(6, "Le code doit contenir 6 chiffres"),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email("Email invalide"),
+  code: z.string().length(6, "Le code doit contenir 6 chiffres"),
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+  confirmPassword: z.string().min(6, "Confirmez votre mot de passe"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
+});
+
 // Schémas supprimés - informations consolidées dans users
 
 // Types
@@ -193,5 +228,8 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export type PasswordResetCode = typeof passwordResetCodes.$inferSelect;
+export type InsertPasswordResetCode = z.infer<typeof insertPasswordResetCodeSchema>;
 
 // Types supprimés - informations consolidées dans users

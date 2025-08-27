@@ -9,10 +9,8 @@ import {
   type InsertOrder,
   type Notification,
   type InsertNotification,
-  type DeliveryVehicle,
-  type InsertDeliveryVehicle,
-  type DeliveryProfile,
-  type InsertDeliveryProfile,
+  type PasswordResetCode,
+  type InsertPasswordResetCode,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
@@ -22,9 +20,11 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   getUserByPhone(phone: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
   loginUser(phone: string, password: string): Promise<User | null>;
+  resetUserPassword(email: string, newPassword: string): Promise<void>;
   getUserStats(userId: string): Promise<{
     totalOrders: number;
     totalSpent: number;
@@ -87,20 +87,12 @@ export interface IStorage {
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(id: string): Promise<Notification | undefined>;
 
-  // Delivery Profile operations
-  getDeliveryProfile(userId: string): Promise<DeliveryProfile | undefined>;
-  createDeliveryProfile(profile: InsertDeliveryProfile): Promise<DeliveryProfile>;
-  updateDeliveryProfile(userId: string, updates: Partial<InsertDeliveryProfile>): Promise<DeliveryProfile | undefined>;
+  // Password reset operations
+  createPasswordResetCode(resetCode: InsertPasswordResetCode): Promise<PasswordResetCode>;
+  getValidPasswordResetCode(email: string, code: string): Promise<PasswordResetCode | undefined>;
+  markPasswordResetCodeUsed(id: string): Promise<void>;
 
-  // Delivery Vehicle operations
-  getDeliveryVehicle(deliveryPersonId: string): Promise<DeliveryVehicle | undefined>;
-  createDeliveryVehicle(vehicle: InsertDeliveryVehicle): Promise<DeliveryVehicle>;
-  updateDeliveryVehicle(deliveryPersonId: string, updates: Partial<InsertDeliveryVehicle>): Promise<DeliveryVehicle | undefined>;
-  getDeliveryPersonWithVehicleAndProfile(deliveryPersonId: string): Promise<{
-    user: User;
-    profile?: DeliveryProfile;
-    vehicle?: DeliveryVehicle;
-  } | undefined>;
+  // Consolidated delivery data is in users table - no separate profile/vehicle tables needed
 
   // Order cleanup operations  
   cleanupOldOrders(): Promise<number>;
@@ -440,6 +432,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(user => user.phone === phone);
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
+  }
+
   async createUser(user: InsertUser): Promise<User> {
     const id = randomUUID();
     const hashedPassword = await bcrypt.hash(user.password, 10);
@@ -486,6 +482,16 @@ export class MemStorage implements IStorage {
     // Only block login if user account itself is not verified yet
 
     return user;
+  }
+
+  async resetUserPassword(email: string, newPassword: string): Promise<void> {
+    const user = await this.getUserByEmail(email);
+    if (!user) throw new Error('User not found');
+    
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.updatedAt = new Date();
+    this.users.set(user.id, user);
   }
 
   // Admin operations
@@ -1709,5 +1715,39 @@ export class MemStorage implements IStorage {
     }
 
     return deletedCount;
+  }
+
+  // Password reset operations (in-memory storage)
+  private passwordResetCodes: Map<string, PasswordResetCode> = new Map();
+
+  async createPasswordResetCode(resetCode: InsertPasswordResetCode): Promise<PasswordResetCode> {
+    const id = randomUUID();
+    const newResetCode: PasswordResetCode = {
+      id,
+      ...resetCode,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.passwordResetCodes.set(id, newResetCode);
+    return newResetCode;
+  }
+
+  async getValidPasswordResetCode(email: string, code: string): Promise<PasswordResetCode | undefined> {
+    const now = new Date();
+    return Array.from(this.passwordResetCodes.values()).find(resetCode => 
+      resetCode.email === email &&
+      resetCode.code === code &&
+      !resetCode.used &&
+      resetCode.expiresAt > now
+    );
+  }
+
+  async markPasswordResetCodeUsed(id: string): Promise<void> {
+    const resetCode = this.passwordResetCodes.get(id);
+    if (resetCode) {
+      resetCode.used = true;
+      resetCode.updatedAt = new Date();
+      this.passwordResetCodes.set(id, resetCode);
+    }
   }
 }
