@@ -1,29 +1,125 @@
 {
-  "name": "PharmaChape",
+  "name": "PharmaChape - Livraison de médicaments",
   "short_name": "PharmaChape",
-  "description": "Livraison de médicaments à domicile en Côte d'Ivoire",
+  "description": "Application de livraison rapide de médicaments et produits de santé en Côte d'Ivoire.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FAFAFA",
   "theme_color": "#22C55E",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "scope": "/",
+  "lang": "fr",
+  "dir": "ltr",
+  "categories": ["health", "medical", "pharmacy", "delivery"],
   "icons": [
     {
-      "src": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192' fill='%2322C55E'%3e%3cpath d='M96 16a80 80 0 1 0 0 160 80 80 0 0 0 0-160zm0 24a8 8 0 0 1 8 8v40h40a8 8 0 0 1 0 16h-40v40a8 8 0 0 1-16 0v-40H48a8 8 0 0 1 0-16h40V48a8 8 0 0 1 8-8z'/%3e%3c/svg%3e",
+      "src": "/icons/icon-48x48.png",
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%2322C55E'%3e%3cpath d='M256 32a224 224 0 1 0 0 448 224 224 0 0 0 0-448zm0 64a16 16 0 0 1 16 16v128h128a16 16 0 0 1 0 32H272v128a16 16 0 0 1-32 0V272H112a16 16 0 0 1 0-32h128V112a16 16 0 0 1 16-16z'/%3e%3c/svg%3e",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "maskable any"
     }
   ],
-  "categories": ["health", "medical", "pharmacy"],
-  "lang": "fr",
-  "dir": "ltr",
-  "prefer_related_applications": false
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot-home.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/screenshot-cart.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "features": [
+    "offline-capable",
+    "push-notifications",
+    "geolocation",
+    "cross-platform"
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "shortcuts": [
+    {
+      "name": "Nouvelle ordonnance",
+      "short_name": "Ordonnance",
+      "description": "Scanner ou télécharger une ordonnance",
+      "url": "/ordonnance",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Pharmacies proches",
+      "short_name": "Pharmacies",
+      "description": "Voir les pharmacies les plus proches",
+      "url": "/pharmacies",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Mes commandes",
+      "short_name": "Commandes",
+      "description": "Consulter l’historique et le suivi des commandes",
+      "url": "/commandes",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Assistance",
+      "short_name": "Aide",
+      "description": "Contacter le support client Pharmachape",
+      "url": "/support",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": []
 }
