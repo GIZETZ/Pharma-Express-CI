@@ -1292,9 +1292,9 @@ export default function DashboardPharmacien() {
       <div className="bg-white shadow-sm border-b p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img 
-              src="/icon-512x512.png" 
-              alt="PharmaChape Logo" 
+            <img
+              src="/icon-512x512.png"
+              alt="PharmaChape Logo"
               className="w-10 h-10 rounded-lg"
             />
             <div>
@@ -2129,7 +2129,7 @@ export default function DashboardPharmacien() {
                                   console.error('Error calculating total:', error);
                                   return 'En cours d\'évaluation';
                                 }
-                              })()} 
+                              })()}
                             </div>
                             <div className="text-sm">
                               <span className="font-medium">Adresse:</span> {order.deliveryAddress}
