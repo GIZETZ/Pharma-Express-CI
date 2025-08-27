@@ -32,7 +32,7 @@ export default function ApplicationStatus() {
 
   // Mutation to cancel application
   const cancelApplicationMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/livreur/cancel-application"),
+    mutationFn: () => apiRequest("/api/livreur/cancel-application", "POST"),
     onSuccess: () => {
       toast({
         title: "Candidature annulée",

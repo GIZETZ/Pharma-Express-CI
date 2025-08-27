@@ -193,7 +193,7 @@ export default function DashboardPatient() {
   const confirmDeliveryMutation = useMutation({
     mutationFn: async (orderId: string) => {
       console.log('🔄 Tentative de confirmation de livraison pour:', orderId);
-      return await apiRequest("POST", `/api/orders/${orderId}/confirm-delivery`);
+      return await apiRequest(`/api/orders/${orderId}/confirm-delivery`, "POST");
     },
     onSuccess: (data, orderId) => {
       console.log('✅ Confirmation de livraison réussie pour:', orderId);
@@ -237,7 +237,7 @@ export default function DashboardPatient() {
   // Mutation pour supprimer définitivement une commande
   const deleteOrderMutation = useMutation({
     mutationFn: (orderId: string) =>
-      apiRequest("DELETE", `/api/orders/${orderId}`),
+      apiRequest(`/api/orders/${orderId}`, "DELETE"),
     onSuccess: () => {
       toast({
         title: "Commande supprimée",

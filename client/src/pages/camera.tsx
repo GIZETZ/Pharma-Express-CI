@@ -46,7 +46,7 @@ export default function Camera() {
     mutationFn: async (imageBlob: Blob) => {
       const formData = new FormData();
       formData.append('prescription', imageBlob, 'prescription.jpg');
-      return apiRequest('POST', '/api/prescriptions', formData);
+      return apiRequest('/api/prescriptions', 'POST', formData);
     },
     onSuccess: () => {
       toast({

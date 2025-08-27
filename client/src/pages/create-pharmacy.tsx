@@ -28,7 +28,7 @@ export default function CreatePharmacy() {
   const createPharmacyMutation = useMutation({
     mutationFn: async (data: any) => {
       // First create the pharmacy
-      const pharmacyResponse = await apiRequest('POST', '/api/pharmacies', {
+      const pharmacyResponse = await apiRequest('/api/pharmacies', 'POST', {
         name: data.name,
         address: data.address,
         phone: data.phone,

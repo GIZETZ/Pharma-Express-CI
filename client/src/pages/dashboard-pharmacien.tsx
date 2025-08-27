@@ -43,7 +43,7 @@ function DeliveryApplicationsManager() {
 
   const respondToApplicationMutation = useMutation({
     mutationFn: ({ applicationId, action }: { applicationId: string; action: string }) =>
-      apiRequest("POST", `/api/pharmacien/delivery-applications/${applicationId}/respond`, { action }),
+      apiRequest(`/api/pharmacien/delivery-applications/${applicationId}/respond`, "POST", { action }),
     onSuccess: (data, variables) => {
       toast({
         title: variables.action === 'approve' ? "Candidature acceptée" : "Candidature rejetée",
@@ -589,7 +589,7 @@ const PrescriptionImage = ({ prescriptionId, className }: { prescriptionId: stri
   useEffect(() => {
     const fetchImage = async () => {
       try {
-        const response = await apiRequest('GET', `/api/prescriptions/${prescriptionId}`);
+        const response = await apiRequest(`/api/prescriptions/${prescriptionId}`, 'GET');
         const prescription = await response.json();
         setImageUrl(prescription.imageUrl);
       } catch (error) {
@@ -734,7 +734,7 @@ const ReadyForDeliveryOrders = ({ orders }: { orders: any[] }) => {
   // Assign delivery person mutation
   const assignDeliveryMutation = useMutation({
     mutationFn: async ({ orderId, deliveryPersonId }: { orderId: string, deliveryPersonId: string }) => {
-      const response = await apiRequest('POST', `/api/pharmacien/orders/${orderId}/assign-delivery`, {
+      const response = await apiRequest(`/api/pharmacien/orders/${orderId}/assign-delivery`, 'POST', {
         deliveryPersonId
       });
       if (!response.ok) {
@@ -950,7 +950,7 @@ export default function DashboardPharmacien() {
   // Mutation pour mettre à jour le statut des commandes
   const updateOrderMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: string; status: string }) =>
-      apiRequest("POST", `/api/pharmacien/orders/${orderId}/status`, { status }),
+      apiRequest(`/api/pharmacien/orders/${orderId}/status`, "POST", { status }),
     onSuccess: (data, variables) => {
       toast({
         title: "Commande mise à jour",
@@ -970,7 +970,7 @@ export default function DashboardPharmacien() {
   // Mutation pour mettre à jour les médicaments
   const updateMedicationsMutation = useMutation({
     mutationFn: ({ orderId, medications }: { orderId: string; medications: any[] }) =>
-      apiRequest("POST", `/api/pharmacien/orders/${orderId}/medications`, { medications }),
+      apiRequest(`/api/pharmacien/orders/${orderId}/medications`, "POST", { medications }),
     onSuccess: () => {
       toast({
         title: "Médicaments mis à jour",
@@ -990,7 +990,7 @@ export default function DashboardPharmacien() {
   // Mutation pour envoyer la réponse au patient
   const sendResponseMutation = useMutation({
     mutationFn: ({ orderId, medications }: { orderId: string; medications: any[] }) =>
-      apiRequest("POST", `/api/pharmacien/orders/${orderId}/send-response`, { medications }),
+      apiRequest(`/api/pharmacien/orders/${orderId}/send-response`, "POST", { medications }),
     onSuccess: (data, variables) => {
       toast({
         title: "Réponse envoyée",
@@ -1045,7 +1045,7 @@ export default function DashboardPharmacien() {
   // Function to get prescription image
   const getPrescriptionImage = async (prescriptionId: string) => {
     try {
-      const response = await apiRequest(`/api/prescriptions/${prescriptionId}`);
+      const response = await apiRequest(`/api/prescriptions/${prescriptionId}`, 'GET');
       return response.imageUrl;
     } catch (error) {
       console.error('Error fetching prescription:', error);
@@ -1154,7 +1154,7 @@ export default function DashboardPharmacien() {
       setIsVerifying(true);
 
       // Vérifier le mot de passe en tentant une connexion temporaire
-      const response = await apiRequest('POST', '/api/auth/verify-password', {
+      const response = await apiRequest('/api/auth/verify-password', 'POST', {
         phone: user?.phone,
         password: password
       });

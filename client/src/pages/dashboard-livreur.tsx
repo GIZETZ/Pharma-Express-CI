@@ -115,7 +115,7 @@ export default function DashboardLivreur() {
   // Mutation pour accepter une livraison assignée
   const acceptAssignmentMutation = useMutation({
     mutationFn: (orderId: string) =>
-      apiRequest("POST", `/api/livreur/deliveries/${orderId}/accept`),
+      apiRequest(`/api/livreur/deliveries/${orderId}/accept`, "POST"),
     onSuccess: () => {
       toast({
         title: "Livraison acceptée",
@@ -135,7 +135,7 @@ export default function DashboardLivreur() {
   // Mutation pour rejeter une livraison assignée
   const rejectAssignmentMutation = useMutation({
     mutationFn: (orderId: string) =>
-      apiRequest("POST", `/api/livreur/deliveries/${orderId}/reject`),
+      apiRequest(`/api/livreur/deliveries/${orderId}/reject`, "POST"),
     onSuccess: () => {
       toast({
         title: "Livraison refusée",
@@ -175,7 +175,7 @@ export default function DashboardLivreur() {
   // Mutation pour confirmer l'arrivée
   const confirmArrivalMutation = useMutation({
     mutationFn: (deliveryId: string) =>
-      apiRequest("POST", `/api/livreur/deliveries/${deliveryId}/status`, { status: 'arrived_pending_confirmation' }),
+      apiRequest(`/api/livreur/deliveries/${deliveryId}/status`, "POST", { status: 'arrived_pending_confirmation' }),
     onSuccess: () => {
       toast({
         title: "Arrivée confirmée",
@@ -196,7 +196,7 @@ export default function DashboardLivreur() {
   // Mutation pour mettre à jour le statut d'une livraison
   const updateDeliveryMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: string; status: string }) =>
-      apiRequest("POST", `/api/livreur/deliveries/${orderId}/status`, { status }),
+      apiRequest(`/api/livreur/deliveries/${orderId}/status`, "POST", { status }),
     onSuccess: (data, variables) => {
       toast({
         title: "Statut mis à jour",
@@ -216,7 +216,7 @@ export default function DashboardLivreur() {
   // Mutation pour mettre à jour la position GPS
   const updateLocationMutation = useMutation({
     mutationFn: async ({ latitude, longitude }: { latitude: number, longitude: number }) => {
-      const response = await apiRequest('POST', '/api/livreur/update-location', {
+      const response = await apiRequest('/api/livreur/update-location', 'POST', {
         latitude,
         longitude
       });

@@ -16,7 +16,7 @@ export function useAuth() {
   
   const logout = async () => {
     try {
-      await apiRequest('POST', '/api/auth/logout', {});
+      await apiRequest('/api/auth/logout', 'POST', {});
     } catch (error) {
       console.error('Logout error:', error);
     } finally {

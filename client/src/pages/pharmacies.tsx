@@ -115,7 +115,7 @@ export default function Pharmacies() {
   // Mutation pour postuler à une pharmacie (livreurs uniquement)
   const applyToPharmacyMutation = useMutation({
     mutationFn: async (pharmacyId: string) => {
-      return apiRequest('POST', '/api/livreur/apply-to-pharmacy', { pharmacyId });
+      return apiRequest('/api/livreur/apply-to-pharmacy', 'POST', { pharmacyId });
     },
     onSuccess: () => {
       toast({

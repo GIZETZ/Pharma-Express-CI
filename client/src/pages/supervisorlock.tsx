@@ -23,7 +23,7 @@ const OrdersManagementModule = () => {
 
   const updateOrderStatusMutation = useMutation({
     mutationFn: (data: { orderId: string; status: string }) =>
-      apiRequest(`/api/admin/orders/${data.orderId}/status`, {
+      apiRequest(`/api/admin/orders/${data.orderId}/status`, "POST", {
         method: "PATCH",
         body: JSON.stringify({ status: data.status }),
       }),
@@ -152,7 +152,7 @@ const PharmaciesManagementModule = () => {
 
   const updatePharmacyStatusMutation = useMutation({
     mutationFn: (data: { pharmacyId: string; isActive: boolean }) =>
-      apiRequest(`/api/admin/pharmacies/${data.pharmacyId}/status`, {
+      apiRequest(`/api/admin/pharmacies/${data.pharmacyId}/status`, "POST", {
         method: "PATCH",
         body: JSON.stringify({ isActive: data.isActive }),
       }),
@@ -239,7 +239,7 @@ const UsersManagementModule = () => {
 
   const updateUserStatusMutation = useMutation({
     mutationFn: (data: { userId: string; isActive: boolean }) =>
-      apiRequest("PATCH", `/api/admin/users/${data.userId}/status`, {
+      apiRequest(`/api/admin/users/${data.userId}/status`, "PATCH", {
         isActive: data.isActive
       }),
     onSuccess: (data, variables) => {
@@ -375,7 +375,7 @@ const DeliveryPersonnelManagementModule = () => {
 
   const updateDeliveryPersonStatusMutation = useMutation({
     mutationFn: (data: { deliveryPersonId: string; isActive: boolean }) =>
-      apiRequest("PATCH", `/api/admin/delivery-personnel/${data.deliveryPersonId}/status`, {
+      apiRequest(`/api/admin/delivery-personnel/${data.deliveryPersonId}/status`, "PATCH", {
         isActive: data.isActive
       }),
     onSuccess: () => {
@@ -469,7 +469,7 @@ export default function SupervisorLock() {
 
   const validateUserMutation = useMutation({
     mutationFn: (data: { userId: string; action: 'approve' | 'reject' }) =>
-      apiRequest("POST", `/api/admin/validate-user`, data),
+      apiRequest(`/api/admin/validate-user`, "POST", data),
     onSuccess: (data, variables) => {
       toast({
         title: variables.action === 'approve' ? "Utilisateur approuvé" : "Utilisateur rejeté",
@@ -495,7 +495,7 @@ export default function SupervisorLock() {
     if (user?.role === 'livreur' && user.appliedPharmacyId) {
       // Use the admin delivery application response endpoint
       try {
-        const response = await apiRequest('POST', `/api/admin/delivery-applications/${userId}/respond`, {
+        const response = await apiRequest(`/api/admin/delivery-applications/${userId}/respond`, 'POST', {
           action
         });
         if (!response.ok) {

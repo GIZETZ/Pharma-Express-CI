@@ -86,7 +86,7 @@ export default function Profile() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/auth/logout', {});
+      const response = await apiRequest('/api/auth/logout', 'POST', {});
       return response.json();
     },
     onSuccess: () => {

@@ -27,7 +27,7 @@ const DeliveryPersonnelTab = ({ pharmacyData, editMode }: { pharmacyData: any, e
   const { data: deliveryPersonnel, isLoading: personnelLoading } = useQuery({
     queryKey: ['/api/pharmacien/delivery-personnel'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/pharmacien/delivery-personnel');
+      const response = await apiRequest('/api/pharmacien/delivery-personnel', 'GET');
       if (!response.ok) {
         throw new Error('Failed to fetch delivery personnel');
       }
@@ -41,7 +41,7 @@ const DeliveryPersonnelTab = ({ pharmacyData, editMode }: { pharmacyData: any, e
   // Remove delivery person mutation
   const removeDeliveryPersonMutation = useMutation({
     mutationFn: async (deliveryPersonId: string) => {
-      const response = await apiRequest('POST', `/api/pharmacien/fire-delivery-person/${deliveryPersonId}`);
+      const response = await apiRequest(`/api/pharmacien/fire-delivery-person/${deliveryPersonId}`, 'POST');
       if (!response.ok) {
         const errorData = await response.text();
         throw new Error(errorData || 'Failed to remove delivery person');
@@ -187,7 +187,7 @@ export default function PharmacyProfile() {
   const { data: pharmacyData, isLoading } = useQuery({
     queryKey: ['/api/pharmacies/my-pharmacy'],
     queryFn: async () => {
-      const response = await apiRequest('PUT', '/api/pharmacies/my-pharmacy', {});
+      const response = await apiRequest('/api/pharmacies/my-pharmacy', 'PUT', {});
       if (!response.ok) {
         if (response.status === 404) {
           return null; // No pharmacy found yet
@@ -202,7 +202,7 @@ export default function PharmacyProfile() {
   const updatePharmacyMutation = useMutation({
     mutationFn: async (data: any) => {
       console.log('Sending pharmacy update data:', data);
-      const response = await apiRequest('PUT', '/api/pharmacies/my-pharmacy', data);
+      const response = await apiRequest('/api/pharmacies/my-pharmacy', 'PUT', data);
 
       if (!response.ok) {
         const errorData = await response.text();

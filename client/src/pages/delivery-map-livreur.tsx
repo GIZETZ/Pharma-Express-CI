@@ -76,7 +76,7 @@ export default function DeliveryMapLivreur() {
     }) => {
       if (!user?.id) throw new Error('Utilisateur non connecté');
       
-      return apiRequest('POST', `/api/delivery-persons/${user.id}/location`, {
+      return apiRequest(`/api/delivery-persons/${user.id}/location`, 'POST', {
         lat,
         lng,
         speed: speed || 0,
@@ -627,7 +627,7 @@ export default function DeliveryMapLivreur() {
   // Mutation to update delivery status
   const updateDeliveryMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: string; status: string }) =>
-      apiRequest("POST", `/api/livreur/deliveries/${orderId}/status`, { status }),
+      apiRequest(`/api/livreur/deliveries/${orderId}/status`, "POST", { status }),
     onSuccess: () => {
       toast({
         title: "Statut mis à jour",

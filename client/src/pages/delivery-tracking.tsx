@@ -685,7 +685,7 @@ export default function DeliveryTracking() {
   // Mutation to confirm delivery completion by patient
   const confirmDeliveryMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      return await apiRequest("POST", `/api/orders/${orderId}/confirm-delivery-completion`);
+      return await apiRequest(`/api/orders/${orderId}/confirm-delivery-completion`, "POST");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
