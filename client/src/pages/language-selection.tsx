@@ -27,10 +27,12 @@ export default function LanguageSelection() {
     <div className="min-h-screen flex flex-col bg-pharma-bg">
       <div className="flex-1 flex flex-col justify-center items-center px-6 py-8">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-pharma-green rounded-2xl mb-6">
-            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
+          <div className="inline-flex items-center justify-center w-20 h-20 mb-6">
+            <img 
+              src="/icon-512x512.png" 
+              alt="PharmaChape Logo" 
+              className="w-20 h-20 rounded-2xl"
+            />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2" data-testid="app-title">
             PharmaChape

@@ -527,7 +527,7 @@ const PatientInfo = ({ order }: { order: any }) => {
         const response = await fetch(`/api/users/${order.userId}`, {
           credentials: 'include'
         });
-        
+
         if (response.ok) {
           const userData = await response.json();
           setPatientData(userData);
@@ -652,7 +652,7 @@ const PrescriptionImage = ({ prescriptionId, className }: { prescriptionId: stri
 
     // Empêcher la fermeture quand on clique sur l'image
     modalContent.addEventListener('click', (e) => e.stopPropagation());
-    
+
     // Fermer avec le bouton X
     closeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1288,761 +1288,767 @@ export default function DashboardPharmacien() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img 
+              src="/icon-512x512.png" 
+              alt="PharmaChape Logo" 
+              className="w-10 h-10 rounded-lg"
+            />
             <div>
-              <h1 className="text-3xl font-bold text-green-600 mb-2">
-                💊 Tableau de bord Pharmacien
+              <h1 className="text-xl font-bold text-gray-900">
+                Dashboard Pharmacien 💊
               </h1>
-              <p className="text-gray-600">
-                Bienvenue Dr. {user?.firstName} ! Gérez votre pharmacie et les commandes
+              <p className="text-sm text-gray-600">
+                Bienvenue, {user?.firstName} {user?.lastName}
               </p>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleSecureAccess('pharmacy-profile')}
-                className="bg-blue-50 hover:bg-blue-100 border-blue-200"
-              >
-                🔒 🏪 Gérer la pharmacie
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleSecureAccess('applications')}
-                className="bg-orange-50 hover:bg-orange-100 border-orange-200"
-              >
-                🔒 👥 Candidatures Livreurs
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleSecureAccess('create-pharmacy')}
-                className="bg-green-50 hover:bg-green-100 border-green-200"
-              >
-                🔒 ➕ Créer pharmacie
-              </Button>
-            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleSecureAccess('pharmacy-profile')}
+              className="bg-blue-50 hover:bg-blue-100 border-blue-200"
+            >
+              🔒 🏪 Gérer la pharmacie
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleSecureAccess('applications')}
+              className="bg-orange-50 hover:bg-orange-100 border-orange-200"
+            >
+              🔒 👥 Candidatures Livreurs
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleSecureAccess('create-pharmacy')}
+              className="bg-green-50 hover:bg-green-100 border-green-200"
+            >
+              🔒 ➕ Créer pharmacie
+            </Button>
           </div>
         </div>
+      </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="orders">
-              Nouvelles Commandes
-              {orders?.filter((o: any) => o.status === 'pending')?.length > 0 && (
-                <Badge variant="destructive" className="ml-2">
-                  {orders.filter((o: any) => o.status === 'pending').length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="preparation">
-              Livraison & Livreurs
-              {orders?.filter((o: any) => o.status === 'confirmed' || o.status === 'ready_for_delivery')?.length > 0 && (
-                <Badge variant="outline" className="ml-2">
-                  {orders.filter((o: any) => o.status === 'confirmed' || o.status === 'ready_for_delivery').length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 p-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="orders">
+            Nouvelles Commandes
+            {orders?.filter((o: any) => o.status === 'pending')?.length > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {orders.filter((o: any) => o.status === 'pending').length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="preparation">
+            Livraison & Livreurs
+            {orders?.filter((o: any) => o.status === 'confirmed' || o.status === 'ready_for_delivery')?.length > 0 && (
+              <Badge variant="outline" className="ml-2">
+                {orders.filter((o: any) => o.status === 'confirmed' || o.status === 'ready_for_delivery').length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-          {/* Réception des Commandes */}
-          <TabsContent value="orders">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <Card
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => setActiveTab("orders")}
-                  data-testid="card-nouvelles-commandes"
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Nouvelles Commandes</p>
-                        <p className="text-2xl font-bold text-orange-600">
-                          {ordersLoading ? "..." : (orders?.filter((o: any) => o.status === 'pending')?.length || 0)}
-                        </p>
-                      </div>
-                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                        🔔
-                      </div>
+        {/* Réception des Commandes */}
+        <TabsContent value="orders">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => setActiveTab("orders")}
+                data-testid="card-nouvelles-commandes"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Nouvelles Commandes</p>
+                      <p className="text-2xl font-bold text-orange-600">
+                        {ordersLoading ? "..." : (orders?.filter((o: any) => o.status === 'pending')?.length || 0)}
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
-
-                <Card
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => setActiveTab("preparation")}
-                  data-testid="card-en-preparation"
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">En Préparation</p>
-                        <p className="text-2xl font-bold text-blue-600">
-                          {ordersLoading ? "..." : (orders?.filter((o: any) => o.status === 'confirmed' || o.status === 'preparing')?.length || 0)}
-                        </p>
-                      </div>
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        ⚗️
-                      </div>
+                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                      🔔
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <Card
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => setActiveTab("preparation")}
-                  data-testid="card-pretes"
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Prêtes</p>
-                        <p className="text-2xl font-bold text-green-600">
-                          {ordersLoading ? "..." : (orders?.filter((o: any) => o.status === 'ready_for_delivery')?.length || 0)}
-                        </p>
-                      </div>
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                        ✅
-                      </div>
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => setActiveTab("preparation")}
+                data-testid="card-en-preparation"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">En Préparation</p>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {ordersLoading ? "..." : (orders?.filter((o: any) => o.status === 'confirmed' || o.status === 'preparing')?.length || 0)}
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      ⚗️
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <Card
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  data-testid="card-livrees"
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Livrées</p>
-                        <p className="text-2xl font-bold text-purple-600">
-                          {ordersLoading ? "..." : (orders?.filter((o: any) => o.status === 'delivered')?.length || 0)}
-                        </p>
-                      </div>
-                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                        🚚
-                      </div>
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => setActiveTab("preparation")}
+                data-testid="card-pretes"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Prêtes</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {ordersLoading ? "..." : (orders?.filter((o: any) => o.status === 'ready_for_delivery')?.length || 0)}
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      ✅
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                data-testid="card-livrees"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Livrées</p>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {ordersLoading ? "..." : (orders?.filter((o: any) => o.status === 'delivered')?.length || 0)}
+                      </p>
+                    </div>
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                      🚚
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {ordersLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Chargement des commandes...</p>
               </div>
-
-              {ordersLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-600">Chargement des commandes...</p>
-                </div>
-              ) : !orders || orders?.filter((order: any) => !['ready_for_delivery', 'in_transit', 'delivered', 'cancelled'].includes(order.status))?.length === 0 ? (
-                <Card className="text-center py-8">
-                  <CardContent>
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      📋
-                    </div>
-                    <h3 className="font-semibold mb-2">Aucune commande</h3>
-                    <p className="text-sm text-gray-600">Les nouvelles commandes apparaîtront ici</p>
-                  </CardContent>
-                </Card>
-              ) : orders?.filter((order: any) => !['ready_for_delivery', 'in_transit', 'delivered', 'cancelled'].includes(order.status))?.map((order: any) => (
-                <Card key={order.id} className="border-l-4 border-l-orange-500">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">
-                        Commande #{order.id.slice(0, 8)}
-                      </CardTitle>
-                      <Badge variant={order.status === 'pending' ? "secondary" : "outline"}>
-                        {order.status === 'pending' ? 'Nouvelle' :
-                         order.status === 'confirmed' ? 'Confirmée' :
-                         order.status === 'preparing' ? 'En préparation' :
-                         order.status}
-                      </Badge>
-                    </div>
-                    <CardDescription>
-                      <PatientInfo order={order} />
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <p className="text-sm"><strong>Pharmacie:</strong> {(() => {
-                        if (order.pharmacy?.name) {
-                          return order.pharmacy.name;
+            ) : !orders || orders?.filter((order: any) => !['ready_for_delivery', 'in_transit', 'delivered', 'cancelled'].includes(order.status))?.length === 0 ? (
+              <Card className="text-center py-8">
+                <CardContent>
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    📋
+                  </div>
+                  <h3 className="font-semibold mb-2">Aucune commande</h3>
+                  <p className="text-sm text-gray-600">Les nouvelles commandes apparaîtront ici</p>
+                </CardContent>
+              </Card>
+            ) : orders?.filter((order: any) => !['ready_for_delivery', 'in_transit', 'delivered', 'cancelled'].includes(order.status))?.map((order: any) => (
+              <Card key={order.id} className="border-l-4 border-l-orange-500">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">
+                      Commande #{order.id.slice(0, 8)}
+                    </CardTitle>
+                    <Badge variant={order.status === 'pending' ? "secondary" : "outline"}>
+                      {order.status === 'pending' ? 'Nouvelle' :
+                       order.status === 'confirmed' ? 'Confirmée' :
+                       order.status === 'preparing' ? 'En préparation' :
+                       order.status}
+                    </Badge>
+                  </div>
+                  <CardDescription>
+                    <PatientInfo order={order} />
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-sm"><strong>Pharmacie:</strong> {(() => {
+                      if (order.pharmacy?.name) {
+                        return order.pharmacy.name;
+                      }
+                      if (order.pharmacyId) {
+                        // Essayer de récupérer le nom depuis les données de pharmacies
+                        const pharmacy = pharmacies?.find(p => p.id === order.pharmacyId);
+                        if (pharmacy?.name) {
+                          return pharmacy.name;
                         }
-                        if (order.pharmacyId) {
-                          // Essayer de récupérer le nom depuis les données de pharmacies
-                          const pharmacy = pharmacies?.find(p => p.id === order.pharmacyId);
-                          if (pharmacy?.name) {
-                            return pharmacy.name;
-                          }
-                        }
-                        return 'En cours d\'attribution';
-                      })()}</p>
-                    </div>
+                      }
+                      return 'En cours d\'attribution';
+                    })()}</p>
+                  </div>
 
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Adresse de livraison</p>
-                        <p className="text-sm text-gray-600">{order.deliveryAddress}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Date de commande</p>
-                        <p className="text-sm text-gray-600">
-                          {new Date(order.createdAt).toLocaleDateString("fr-FR")}
-                        </p>
-                      </div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Adresse de livraison</p>
+                      <p className="text-sm text-gray-600">{order.deliveryAddress}</p>
                     </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Date de commande</p>
+                      <p className="text-sm text-gray-600">
+                        {new Date(order.createdAt).toLocaleDateString("fr-FR")}
+                      </p>
+                    </div>
+                  </div>
 
-                    {/* Médicaments demandés */}
-                    <div className="mb-4">
-                      <p className="text-sm font-medium text-gray-700 mb-2">Médicaments demandés</p>
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        {order.medications && typeof order.medications === 'string' ? (
-                          JSON.parse(order.medications).map((med: any, index: number) => (
-                            <div key={index} className="flex items-center justify-between text-sm py-1">
-                              <span>{med.name}</span>
-                              {med.surBon && <Badge variant="outline" className="text-xs">Sur BON</Badge>}
-                            </div>
-                          ))
-                        ) : order.medications && Array.isArray(order.medications) ? (
-                          order.medications.map((med: any, index: number) => (
-                            <div key={index} className="flex items-center justify-between text-sm py-1">
-                              <span>{med.name}</span>
-                              {med.surBon && <Badge variant="outline" className="text-xs">Sur BON</Badge>}
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-sm text-gray-500">Aucun médicament spécifié</p>
-                        )}
-                      </div>
+                  {/* Médicaments demandés */}
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Médicaments demandés</p>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      {order.medications && typeof order.medications === 'string' ? (
+                        JSON.parse(order.medications).map((med: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between text-sm py-1">
+                            <span>{med.name}</span>
+                            {med.surBon && <Badge variant="outline" className="text-xs">Sur BON</Badge>}
+                          </div>
+                        ))
+                      ) : order.medications && Array.isArray(order.medications) ? (
+                        order.medications.map((med: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between text-sm py-1">
+                            <span>{med.name}</span>
+                            {med.surBon && <Badge variant="outline" className="text-xs">Sur BON</Badge>}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">Aucun médicament spécifié</p>
+                      )}
                     </div>
-                    <div className="flex space-x-2 flex-wrap gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button size="sm" data-testid={`button-view-prescription-${order.id}`}>
-                            👁️ Voir Ordonnance
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Ordonnance - Commande #{order.id.slice(0, 8)}</DialogTitle>
-                            <DialogDescription>
-                              Patient: {order.user?.firstName} {order.user?.lastName}
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            {/* Layout en deux colonnes pour ordonnance et documents */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                              {/* Colonne gauche - Photo d'ordonnance */}
-                              <div>
-                                <h4 className="font-medium mb-3">Photo de l'ordonnance</h4>
-                                {order.prescriptionId ? (
-                                  <div className="border rounded-lg p-4 bg-gray-50">
-                                    <p className="text-sm text-gray-600 mb-3">Ordonnance ID: {order.prescriptionId}</p>
-                                    <div className="bg-white rounded-lg overflow-hidden border">
-                                      <PrescriptionImage
-                                        prescriptionId={order.prescriptionId}
-                                        className="w-full h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                      />
-                                      <div className="p-2 bg-gray-50 text-center">
-                                        <p className="text-xs text-gray-500">Cliquez pour agrandir</p>
-                                      </div>
+                  </div>
+                  <div className="flex space-x-2 flex-wrap gap-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button size="sm" data-testid={`button-view-prescription-${order.id}`}>
+                          👁️ Voir Ordonnance
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Ordonnance - Commande #{order.id.slice(0, 8)}</DialogTitle>
+                          <DialogDescription>
+                            Patient: {order.user?.firstName} {order.user?.lastName}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          {/* Layout en deux colonnes pour ordonnance et documents */}
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Colonne gauche - Photo d'ordonnance */}
+                            <div>
+                              <h4 className="font-medium mb-3">Photo de l'ordonnance</h4>
+                              {order.prescriptionId ? (
+                                <div className="border rounded-lg p-4 bg-gray-50">
+                                  <p className="text-sm text-gray-600 mb-3">Ordonnance ID: {order.prescriptionId}</p>
+                                  <div className="bg-white rounded-lg overflow-hidden border">
+                                    <PrescriptionImage
+                                      prescriptionId={order.prescriptionId}
+                                      className="w-full h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                    />
+                                    <div className="p-2 bg-gray-50 text-center">
+                                      <p className="text-xs text-gray-500">Cliquez pour agrandir</p>
                                     </div>
                                   </div>
-                                ) : (
-                                  <div className="border rounded-lg p-6 bg-yellow-50">
-                                    <div className="text-center">
-                                      <span className="text-4xl mb-2 block">⚠️</span>
-                                      <p className="text-sm text-yellow-700 font-medium">Commande sans ordonnance</p>
-                                      <p className="text-xs text-yellow-600 mt-1">Cette commande a été passée sans ordonnance photographiée</p>
-                                    </div>
+                                </div>
+                              ) : (
+                                <div className="border rounded-lg p-6 bg-yellow-50">
+                                  <div className="text-center">
+                                    <span className="text-4xl mb-2 block">⚠️</span>
+                                    <p className="text-sm text-yellow-700 font-medium">Commande sans ordonnance</p>
+                                    <p className="text-xs text-yellow-600 mt-1">Cette commande a été passée sans ordonnance photographiée</p>
                                   </div>
-                                )}
-                              </div>
+                                </div>
+                              )}
+                            </div>
 
-                              {/* Colonne droite - Documents BON et informations */}
-                              <div>
-                                <h4 className="font-medium mb-3">Documents BON et informations</h4>
-                                <div className="space-y-3">
-                                  {/* Documents BON */}
-                                  {order.bonDocuments ? (
-                                    <div className="border rounded-lg p-4 bg-blue-50">
-                                      <h5 className="font-medium text-blue-900 mb-2">Documents BON uploadés</h5>
-                                      <div className="space-y-2">
-                                        {JSON.parse(order.bonDocuments).map((doc: any, index: number) => (
-                                          <div key={index} className="bg-white rounded border">
-                                            <div className="flex items-center justify-between p-2">
-                                              <div className="flex items-center space-x-2">
-                                                <span className="text-blue-600">📄</span>
-                                                <span className="text-sm font-medium">{doc.name}</span>
-                                              </div>
-                                              <Button
-                                                size="sm"
-                                                variant="outline"
+                            {/* Colonne droite - Documents BON et informations */}
+                            <div>
+                              <h4 className="font-medium mb-3">Documents BON et informations</h4>
+                              <div className="space-y-3">
+                                {/* Documents BON */}
+                                {order.bonDocuments ? (
+                                  <div className="border rounded-lg p-4 bg-blue-50">
+                                    <h5 className="font-medium text-blue-900 mb-2">Documents BON uploadés</h5>
+                                    <div className="space-y-2">
+                                      {JSON.parse(order.bonDocuments).map((doc: any, index: number) => (
+                                        <div key={index} className="bg-white rounded border">
+                                          <div className="flex items-center justify-between p-2">
+                                            <div className="flex items-center space-x-2">
+                                              <span className="text-blue-600">📄</span>
+                                              <span className="text-sm font-medium">{doc.name}</span>
+                                            </div>
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                const imageKey = `${order.id}-${index}`;
+                                                setVisibleImages(prev => ({
+                                                  ...prev,
+                                                  [imageKey]: !prev[imageKey]
+                                                }));
+                                              }}
+                                            >
+                                              {visibleImages[`${order.id}-${index}`] ? '👁️ Cacher' : '👁️ Voir'}
+                                            </Button>
+                                          </div>
+
+                                          {/* Image affichée directement */}
+                                          {visibleImages[`${order.id}-${index}`] && (
+                                            <div className="border-t p-4 bg-gray-50">
+                                              <img
+                                                src={doc.data}
+                                                alt={`Document BON: ${doc.name}`}
+                                                className="w-full max-h-80 object-contain rounded cursor-pointer hover:shadow-lg transition-shadow"
                                                 onClick={(e) => {
                                                   e.preventDefault();
                                                   e.stopPropagation();
-                                                  const imageKey = `${order.id}-${index}`;
-                                                  setVisibleImages(prev => ({
-                                                    ...prev,
-                                                    [imageKey]: !prev[imageKey]
-                                                  }));
+
+                                                  // Ouvrir en plein écran pour agrandir
+                                                  const modal = document.createElement('div');
+                                                  modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4';
+                                                  modal.style.zIndex = '9999';
+                                                  modal.style.cursor = 'pointer';
+
+                                                  const modalContent = document.createElement('div');
+                                                  modalContent.className = 'relative max-w-full max-h-full';
+                                                  modalContent.innerHTML = `
+                                                    <img src="${doc.data}"
+                                                         class="max-w-full max-h-full object-contain"
+                                                         alt="Document BON: ${doc.name}" />
+                                                    <button class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 text-2xl font-bold">&times;</button>
+                                                  `;
+
+                                                  modal.appendChild(modalContent);
+
+                                                  const closeModal = () => {
+                                                    try {
+                                                      if (modal && document.body.contains(modal)) {
+                                                        document.body.removeChild(modal);
+                                                      }
+                                                    } catch (error) {
+                                                      console.log('Modal already removed');
+                                                    }
+                                                  };
+
+                                                  modalContent.addEventListener('click', (e) => e.stopPropagation());
+                                                  const closeBtn = modalContent.querySelector('button');
+                                                  closeBtn?.addEventListener('click', (e) => { e.stopPropagation(); closeModal(); });
+                                                  modal.addEventListener('click', closeModal);
+
+                                                  const handleEscape = (e: KeyboardEvent) => {
+                                                    if (e.key === 'Escape') {
+                                                      closeModal();
+                                                      document.removeEventListener('keydown', handleEscape);
+                                                    }
+                                                  };
+                                                  document.addEventListener('keydown', handleEscape);
+
+                                                  document.body.appendChild(modal);
                                                 }}
-                                              >
-                                                {visibleImages[`${order.id}-${index}`] ? '👁️ Cacher' : '👁️ Voir'}
-                                              </Button>
+                                              />
+                                              <p className="text-xs text-gray-500 mt-2 text-center">
+                                                Cliquez sur l'image pour l'agrandir
+                                              </p>
                                             </div>
-
-                                            {/* Image affichée directement */}
-                                            {visibleImages[`${order.id}-${index}`] && (
-                                              <div className="border-t p-4 bg-gray-50">
-                                                <img
-                                                  src={doc.data}
-                                                  alt={`Document BON: ${doc.name}`}
-                                                  className="w-full max-h-80 object-contain rounded cursor-pointer hover:shadow-lg transition-shadow"
-                                                  onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-
-                                                    // Ouvrir en plein écran pour agrandir
-                                                    const modal = document.createElement('div');
-                                                    modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4';
-                                                    modal.style.zIndex = '9999';
-                                                    modal.style.cursor = 'pointer';
-
-                                                    const modalContent = document.createElement('div');
-                                                    modalContent.className = 'relative max-w-full max-h-full';
-                                                    modalContent.innerHTML = `
-                                                      <img src="${doc.data}"
-                                                           class="max-w-full max-h-full object-contain"
-                                                           alt="Document BON: ${doc.name}" />
-                                                      <button class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 text-2xl font-bold">&times;</button>
-                                                    `;
-
-                                                    modal.appendChild(modalContent);
-
-                                                    const closeModal = () => {
-                                                      try {
-                                                        if (modal && document.body.contains(modal)) {
-                                                          document.body.removeChild(modal);
-                                                        }
-                                                      } catch (error) {
-                                                        console.log('Modal already removed');
-                                                      }
-                                                    };
-
-                                                    modalContent.addEventListener('click', (e) => e.stopPropagation());
-                                                    const closeBtn = modalContent.querySelector('button');
-                                                    closeBtn?.addEventListener('click', (e) => { e.stopPropagation(); closeModal(); });
-                                                    modal.addEventListener('click', closeModal);
-
-                                                    const handleEscape = (e: KeyboardEvent) => {
-                                                      if (e.key === 'Escape') {
-                                                        closeModal();
-                                                        document.removeEventListener('keydown', handleEscape);
-                                                      }
-                                                    };
-                                                    document.addEventListener('keydown', handleEscape);
-
-                                                    document.body.appendChild(modal);
-                                                  }}
-                                                />
-                                                <p className="text-xs text-gray-500 mt-2 text-center">
-                                                  Cliquez sur l'image pour l'agrandir
-                                                </p>
-                                              </div>
-                                            )}
-                                          </div>
-                                        ))}
-                                      </div>
+                                          )}
+                                        </div>
+                                      ))}
                                     </div>
-                                  ) : (
-                                    <div className="border rounded-lg p-4 bg-gray-50">
-                                      <p className="text-sm text-gray-500 text-center">Aucun document BON uploadé</p>
-                                    </div>
-                                  )}
-
-                                  {/* Informations supplémentaires */}
+                                  </div>
+                                ) : (
                                   <div className="border rounded-lg p-4 bg-gray-50">
-                                    <h5 className="font-medium mb-2">Informations de la commande</h5>
-                                    <div className="space-y-1 text-sm">
-                                      <p><span className="font-medium">Date:</span> {new Date(order.createdAt).toLocaleDateString("fr-FR", {
-                                        weekday: 'long',
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                      })}</p>
-                                      <p><span className="font-medium">Notes:</span> {order.deliveryNotes || "Aucune note"}</p>
-                                      {order.totalAmount && (
-                                        <p><span className="font-medium">Montant estimé:</span> {order.totalAmount} FCFA</p>
-                                      )}
-                                    </div>
+                                    <p className="text-sm text-gray-500 text-center">Aucun document BON uploadé</p>
+                                  </div>
+                                )}
+
+                                {/* Informations supplémentaires */}
+                                <div className="border rounded-lg p-4 bg-gray-50">
+                                  <h5 className="font-medium mb-2">Informations de la commande</h5>
+                                  <div className="space-y-1 text-sm">
+                                    <p><span className="font-medium">Date:</span> {new Date(order.createdAt).toLocaleDateString("fr-FR", {
+                                      weekday: 'long',
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}</p>
+                                    <p><span className="font-medium">Notes:</span> {order.deliveryNotes || "Aucune note"}</p>
+                                    {order.totalAmount && (
+                                      <p><span className="font-medium">Montant estimé:</span> {order.totalAmount} FCFA</p>
+                                    )}
                                   </div>
                                 </div>
                               </div>
                             </div>
+                          </div>
 
-                            {/* Gestion des médicaments */}
-                            <div>
-                              <h4 className="font-medium mb-3">Gestion des médicaments</h4>
+                          {/* Gestion des médicaments */}
+                          <div>
+                            <h4 className="font-medium mb-3">Gestion des médicaments</h4>
 
-                              {/* Section pour ajouter de nouveaux médicaments */}
-                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                                <h5 className="font-medium text-blue-900 mb-3">➕ Ajouter des médicaments depuis l'ordonnance</h5>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                                  <Input
-                                    placeholder="Nom du médicament"
-                                    value={newMedication.name}
-                                    onChange={(e) => setNewMedication(prev => ({ ...prev, name: e.target.value }))}
+                            {/* Section pour ajouter de nouveaux médicaments */}
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                              <h5 className="font-medium text-blue-900 mb-3">➕ Ajouter des médicaments depuis l'ordonnance</h5>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                                <Input
+                                  placeholder="Nom du médicament"
+                                  value={newMedication.name}
+                                  onChange={(e) => setNewMedication(prev => ({ ...prev, name: e.target.value }))}
+                                />
+                                <Input
+                                  type="number"
+                                  placeholder="Prix (FCFA)"
+                                  value={newMedication.price}
+                                  onChange={(e) => setNewMedication(prev => ({ ...prev, price: e.target.value }))}
+                                  min="0"
+                                  step="1"
+                                />
+                                <div className="flex items-center space-x-2">
+                                  <Switch
+                                    id={`new-med-surbon-${order.id}`}
+                                    checked={newMedication.surBon}
+                                    onCheckedChange={(checked) => setNewMedication(prev => ({ ...prev, surBon: checked }))}
                                   />
-                                  <Input
-                                    type="number"
-                                    placeholder="Prix (FCFA)"
-                                    value={newMedication.price}
-                                    onChange={(e) => setNewMedication(prev => ({ ...prev, price: e.target.value }))}
-                                    min="0"
-                                    step="1"
-                                  />
-                                  <div className="flex items-center space-x-2">
-                                    <Switch
-                                      id={`new-med-surbon-${order.id}`}
-                                      checked={newMedication.surBon}
-                                      onCheckedChange={(checked) => setNewMedication(prev => ({ ...prev, surBon: checked }))}
-                                    />
-                                    <Label htmlFor={`new-med-surbon-${order.id}`} className="text-sm">
-                                      Sur BON
-                                    </Label>
+                                  <Label htmlFor={`new-med-surbon-${order.id}`} className="text-sm">
+                                    Sur BON
+                                  </Label>
+                                </div>
+                              </div>
+                              <Button
+                                onClick={() => addMedicationToOrder(order.id)}
+                                disabled={!newMedication.name.trim() || !newMedication.price}
+                                size="sm"
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                ➕ Ajouter ce médicament
+                              </Button>
+                            </div>
+
+                            {/* Liste des médicaments existants et ajoutés */}
+                            <div className="space-y-3">
+                              {/* Médicaments du patient */}
+                              {order.medications && typeof order.medications === 'string' ? (
+                                JSON.parse(order.medications).map((med: any, index: number) => {
+                                  const statusKey = `${order.id}-${index}`;
+                                  const currentStatus = medicationStatuses[statusKey] || { available: true, surBon: med.surBon || false };
+
+                                  return (
+                                    <div key={index} className="border rounded-lg p-4 bg-white">
+                                      <div className="flex items-center justify-between mb-3">
+                                        {editingMedication[statusKey] ? (
+                                          <div className="flex items-center space-x-2 flex-1">
+                                            <Input
+                                              value={medicationNames[statusKey] || med.name}
+                                              onChange={(e) => updateMedicationName(order.id, index, e.target.value, true)}
+                                              className="flex-1"
+                                              placeholder="Nom du médicament"
+                                            />
+                                            <Button
+                                              size="sm"
+                                              onClick={() => toggleEditMode(statusKey)}
+                                              className="bg-green-600 hover:bg-green-700"
+                                            >
+                                              ✅
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={() => {
+                                                setMedicationNames(prev => {
+                                                  const updated = { ...prev };
+                                                  delete updated[statusKey];
+                                                  return updated;
+                                                });
+                                                toggleEditMode(statusKey);
+                                              }}
+                                            >
+                                              ❌
+                                            </Button>
+                                          </div>
+                                        ) : (
+                                          <div className="flex items-center space-x-2 flex-1">
+                                            <h5 className="font-medium">{medicationNames[statusKey] || med.name}</h5>
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={() => toggleEditMode(statusKey)}
+                                              className="text-blue-600 hover:text-blue-700"
+                                            >
+                                              ✏️
+                                            </Button>
+                                          </div>
+                                        )}
+                                        <Badge variant={currentStatus.available ? "default" : "destructive"}>
+                                          {currentStatus.available ? "Disponible" : "Indisponible"}
+                                        </Badge>
+                                      </div>
+
+                                      <div className="grid grid-cols-2 gap-4 mb-3">
+                                        <div className="flex items-center space-x-2">
+                                          <Switch
+                                            id={`available-${statusKey}`}
+                                            checked={currentStatus.available}
+                                            onCheckedChange={(checked) =>
+                                              toggleMedicationStatus(order.id, index, 'available', checked)
+                                            }
+                                          />
+                                          <Label htmlFor={`available-${statusKey}`} className="text-sm">
+                                            Disponible en stock
+                                          </Label>
+                                        </div>
+
+                                        <div className="flex items-center space-x-2">
+                                          <Switch
+                                            id={`surbon-${statusKey}`}
+                                            checked={currentStatus.surBon}
+                                            onCheckedChange={(checked) =>
+                                              toggleMedicationStatus(order.id, index, 'surBon', checked)
+                                            }
+                                          />
+                                          <Label htmlFor={`surbon-${statusKey}`} className="text-sm">
+                                            Sur BON (remboursable)
+                                          </Label>
+                                        </div>
+                                      </div>
+
+                                      {/* Prix du médicament */}
+                                      <div className="mt-3">
+                                        <Label htmlFor={`price-${statusKey}`} className="text-sm font-medium">
+                                          Prix (FCFA)
+                                        </Label>
+                                        <Input
+                                          id={`price-${statusKey}`}
+                                          type="number"
+                                          placeholder="Prix en FCFA"
+                                          value={medicationPrices[statusKey] || ''}
+                                          onChange={(e) => updateMedicationPrice(order.id, index, e.target.value)}
+                                          className="mt-1"
+                                          min="0"
+                                          step="1"
+                                        />
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              ) : order.medications && Array.isArray(order.medications) ? (
+                                order.medications.map((med: any, index: number) => {
+                                  const statusKey = `${order.id}-${index}`;
+                                  const currentStatus = medicationStatuses[statusKey] || { available: true, surBon: med.surBon || false };
+
+                                  return (
+                                    <div key={index} className="border rounded-lg p-4 bg-white">
+                                      <div className="flex items-center justify-between mb-3">
+                                        <h5 className="font-medium">{med.name}</h5>
+                                        <Badge variant={currentStatus.available ? "default" : "destructive"}>
+                                          {currentStatus.available ? "Disponible" : "Indisponible"}
+                                        </Badge>
+                                      </div>
+
+                                      <div className="grid grid-cols-2 gap-4 mb-3">
+                                        <div className="flex items-center space-x-2">
+                                          <Switch
+                                            id={`available-${statusKey}`}
+                                            checked={currentStatus.available}
+                                            onCheckedChange={(checked) =>
+                                              toggleMedicationStatus(order.id, index, 'available', checked)
+                                            }
+                                          />
+                                          <Label htmlFor={`available-${statusKey}`} className="text-sm">
+                                            Disponible en stock
+                                          </Label>
+                                        </div>
+
+                                        <div className="flex items-center space-x-2">
+                                          <Switch
+                                            id={`surbon-${statusKey}`}
+                                            checked={currentStatus.surBon}
+                                            onCheckedChange={(checked) =>
+                                              toggleMedicationStatus(order.id, index, 'surBon', checked)
+                                            }
+                                          />
+                                          <Label htmlFor={`surbon-${statusKey}`} className="text-sm">
+                                            Sur BON (remboursable)
+                                          </Label>
+                                        </div>
+                                      </div>
+
+                                      {/* Prix du médicament */}
+                                      <div className="mt-3">
+                                        <Label htmlFor={`price-${statusKey}`} className="text-sm font-medium">
+                                          Prix (FCFA)
+                                        </Label>
+                                        <Input
+                                          id={`price-${statusKey}`}
+                                          type="number"
+                                          placeholder="Prix en FCFA"
+                                          value={medicationPrices[statusKey] || ''}
+                                          onChange={(e) => updateMedicationPrice(order.id, index, e.target.value)}
+                                          className="mt-1"
+                                          min="0"
+                                          step="1"
+                                        />
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              ) : (
+                                <p className="text-sm text-gray-500">Aucun médicament spécifié par le patient</p>
+                              )}
+
+                              {/* Médicaments ajoutés par le pharmacien */}
+                              {orderMedications[order.id] && orderMedications[order.id].length > 0 && (
+                                <div className="border-t pt-4">
+                                  <h5 className="font-medium text-blue-900 mb-3">💊 Médicaments ajoutés depuis l'ordonnance</h5>
+                                  <div className="space-y-3">
+                                    {orderMedications[order.id].map((med: any, index: number) => {
+                                      const statusKey = `pharmacist-${order.id}-${index}`;
+                                      const currentStatus = medicationStatuses[statusKey] || { available: med.available, surBon: med.surBon };
+
+                                      return (
+                                        <div key={statusKey} className="border rounded-lg p-4 bg-blue-50">
+                                          <div className="flex items-center justify-between mb-3">
+                                            {editingMedication[statusKey] ? (
+                                              <div className="flex items-center space-x-2 flex-1">
+                                                <Input
+                                                  value={medicationNames[statusKey] || med.name}
+                                                  onChange={(e) => updateMedicationName(order.id, index, e.target.value, false)}
+                                                  className="flex-1"
+                                                  placeholder="Nom du médicament"
+                                                />
+                                                <Button
+                                                  size="sm"
+                                                  onClick={() => toggleEditMode(statusKey)}
+                                                  className="bg-green-600 hover:bg-green-700"
+                                                >
+                                                  ✅
+                                                </Button>
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline"
+                                                  onClick={() => {
+                                                    setMedicationNames(prev => {
+                                                      const updated = { ...prev };
+                                                      delete updated[statusKey];
+                                                      return updated;
+                                                    });
+                                                    toggleEditMode(statusKey);
+                                                  }}
+                                                >
+                                                  ❌
+                                                </Button>
+                                                <Button
+                                                  size="sm"
+                                                  variant="destructive"
+                                                  onClick={() => removePharmaticistMedication(order.id, index)}
+                                                  className="text-red-600 hover:text-red-700 bg-red-100 hover:bg-red-200"
+                                                  title="Supprimer ce médicament"
+                                                >
+                                                  🗑️
+                                                </Button>
+                                              </div>
+                                            ) : (
+                                              <div className="flex items-center space-x-2 flex-1">
+                                                <h5 className="font-medium text-blue-900">{medicationNames[statusKey] || med.name}</h5>
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline"
+                                                  onClick={() => toggleEditMode(statusKey)}
+                                                  className="text-blue-600 hover:text-blue-700"
+                                                >
+                                                  ✏️
+                                                </Button>
+                                                <Button
+                                                  size="sm"
+                                                  variant="destructive"
+                                                  onClick={() => removePharmaticistMedication(order.id, index)}
+                                                  className="text-red-600 hover:text-red-700 bg-red-100 hover:bg-red-200"
+                                                  title="Supprimer ce médicament"
+                                                >
+                                                  🗑️
+                                                </Button>
+                                              </div>
+                                            )}
+                                            <Badge variant={currentStatus.available ? "default" : "destructive"}>
+                                              {currentStatus.available ? "Disponible" : "Indisponible"}
+                                            </Badge>
+                                          </div>
+
+                                          <div className="grid grid-cols-2 gap-4 mb-3">
+                                            <div className="flex items-center space-x-2">
+                                              <Switch
+                                                id={`available-${statusKey}`}
+                                                checked={currentStatus.available}
+                                                onCheckedChange={(checked) =>
+                                                  toggleMedicationStatus(order.id, index, 'available', checked)
+                                                }
+                                              />
+                                              <Label htmlFor={`available-${statusKey}`} className="text-sm">
+                                                Disponible en stock
+                                              </Label>
+                                            </div>
+
+                                            <div className="flex items-center space-x-2">
+                                              <Switch
+                                                id={`surbon-${statusKey}`}
+                                                checked={currentStatus.surBon}
+                                                onCheckedChange={(checked) =>
+                                                  toggleMedicationStatus(order.id, index, 'surBon', checked)
+                                                }
+                                              />
+                                              <Label htmlFor={`surbon-${statusKey}`} className="text-sm">
+                                                Sur BON (remboursable)
+                                              </Label>
+                                            </div>
+                                          </div>
+
+                                          <div className="mt-3">
+                                            <Label htmlFor={`price-${statusKey}`} className="text-sm font-medium">
+                                              Prix (FCFA)
+                                            </Label>
+                                            <Input
+                                              id={`price-${statusKey}`}
+                                              type="number"
+                                              placeholder="Prix en FCFA"
+                                              value={medicationPrices[statusKey] || med.price || ''}
+                                              onChange={(e) => updateMedicationPrice(order.id, index, e.target.value)}
+                                              className="mt-1"
+                                              min="0"
+                                              step="1"
+                                            />
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 </div>
-                                <Button
-                                  onClick={() => addMedicationToOrder(order.id)}
-                                  disabled={!newMedication.name.trim() || !newMedication.price}
-                                  size="sm"
-                                  className="bg-blue-600 hover:bg-blue-700"
-                                >
-                                  ➕ Ajouter ce médicament
-                                </Button>
-                              </div>
+                              )}
+                            </div>
 
-                              {/* Liste des médicaments existants et ajoutés */}
-                              <div className="space-y-3">
-                                {/* Médicaments du patient */}
-                                {order.medications && typeof order.medications === 'string' ? (
-                                  JSON.parse(order.medications).map((med: any, index: number) => {
-                                    const statusKey = `${order.id}-${index}`;
-                                    const currentStatus = medicationStatuses[statusKey] || { available: true, surBon: med.surBon || false };
+                            <div className="flex space-x-2 mt-4 pt-4 border-t">
+                              <Button
+                                onClick={() => {
+                                  const originalMeds = order.medications && typeof order.medications === 'string'
+                                    ? JSON.parse(order.medications)
+                                    : (order.medications && Array.isArray(order.medications) ? order.medications : []);
 
-                                    return (
-                                      <div key={index} className="border rounded-lg p-4 bg-white">
-                                        <div className="flex items-center justify-between mb-3">
-                                          {editingMedication[statusKey] ? (
-                                            <div className="flex items-center space-x-2 flex-1">
-                                              <Input
-                                                value={medicationNames[statusKey] || med.name}
-                                                onChange={(e) => updateMedicationName(order.id, index, e.target.value, true)}
-                                                className="flex-1"
-                                                placeholder="Nom du médicament"
-                                              />
-                                              <Button
-                                                size="sm"
-                                                onClick={() => toggleEditMode(statusKey)}
-                                                className="bg-green-600 hover:bg-green-700"
-                                              >
-                                                ✅
-                                              </Button>
-                                              <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => {
-                                                  setMedicationNames(prev => {
-                                                    const updated = { ...prev };
-                                                    delete updated[statusKey];
-                                                    return updated;
-                                                  });
-                                                  toggleEditMode(statusKey);
-                                                }}
-                                              >
-                                                ❌
-                                              </Button>
-                                            </div>
-                                          ) : (
-                                            <div className="flex items-center space-x-2 flex-1">
-                                              <h5 className="font-medium">{medicationNames[statusKey] || med.name}</h5>
-                                              <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => toggleEditMode(statusKey)}
-                                                className="text-blue-600 hover:text-blue-700"
-                                              >
-                                                ✏️
-                                              </Button>
-                                            </div>
-                                          )}
-                                          <Badge variant={currentStatus.available ? "default" : "destructive"}>
-                                            {currentStatus.available ? "Disponible" : "Indisponible"}
-                                          </Badge>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4 mb-3">
-                                          <div className="flex items-center space-x-2">
-                                            <Switch
-                                              id={`available-${statusKey}`}
-                                              checked={currentStatus.available}
-                                              onCheckedChange={(checked) =>
-                                                toggleMedicationStatus(order.id, index, 'available', checked)
-                                              }
-                                            />
-                                            <Label htmlFor={`available-${statusKey}`} className="text-sm">
-                                              Disponible en stock
-                                            </Label>
-                                          </div>
-
-                                          <div className="flex items-center space-x-2">
-                                            <Switch
-                                              id={`surbon-${statusKey}`}
-                                              checked={currentStatus.surBon}
-                                              onCheckedChange={(checked) =>
-                                                toggleMedicationStatus(order.id, index, 'surBon', checked)
-                                              }
-                                            />
-                                            <Label htmlFor={`surbon-${statusKey}`} className="text-sm">
-                                              Sur BON (remboursable)
-                                            </Label>
-                                          </div>
-                                        </div>
-
-                                        {/* Prix du médicament */}
-                                        <div className="mt-3">
-                                          <Label htmlFor={`price-${statusKey}`} className="text-sm font-medium">
-                                            Prix (FCFA)
-                                          </Label>
-                                          <Input
-                                            id={`price-${statusKey}`}
-                                            type="number"
-                                            placeholder="Prix en FCFA"
-                                            value={medicationPrices[statusKey] || ''}
-                                            onChange={(e) => updateMedicationPrice(order.id, index, e.target.value)}
-                                            className="mt-1"
-                                            min="0"
-                                            step="1"
-                                          />
-                                        </div>
-                                      </div>
-                                    );
-                                  })
-                                ) : order.medications && Array.isArray(order.medications) ? (
-                                  order.medications.map((med: any, index: number) => {
-                                    const statusKey = `${order.id}-${index}`;
-                                    const currentStatus = medicationStatuses[statusKey] || { available: true, surBon: med.surBon || false };
-
-                                    return (
-                                      <div key={index} className="border rounded-lg p-4 bg-white">
-                                        <div className="flex items-center justify-between mb-3">
-                                          <h5 className="font-medium">{med.name}</h5>
-                                          <Badge variant={currentStatus.available ? "default" : "destructive"}>
-                                            {currentStatus.available ? "Disponible" : "Indisponible"}
-                                          </Badge>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4 mb-3">
-                                          <div className="flex items-center space-x-2">
-                                            <Switch
-                                              id={`available-${statusKey}`}
-                                              checked={currentStatus.available}
-                                              onCheckedChange={(checked) =>
-                                                toggleMedicationStatus(order.id, index, 'available', checked)
-                                              }
-                                            />
-                                            <Label htmlFor={`available-${statusKey}`} className="text-sm">
-                                              Disponible en stock
-                                            </Label>
-                                          </div>
-
-                                          <div className="flex items-center space-x-2">
-                                            <Switch
-                                              id={`surbon-${statusKey}`}
-                                              checked={currentStatus.surBon}
-                                              onCheckedChange={(checked) =>
-                                                toggleMedicationStatus(order.id, index, 'surBon', checked)
-                                              }
-                                            />
-                                            <Label htmlFor={`surbon-${statusKey}`} className="text-sm">
-                                              Sur BON (remboursable)
-                                            </Label>
-                                          </div>
-                                        </div>
-
-                                        {/* Prix du médicament */}
-                                        <div className="mt-3">
-                                          <Label htmlFor={`price-${statusKey}`} className="text-sm font-medium">
-                                            Prix (FCFA)
-                                          </Label>
-                                          <Input
-                                            id={`price-${statusKey}`}
-                                            type="number"
-                                            placeholder="Prix en FCFA"
-                                            value={medicationPrices[statusKey] || ''}
-                                            onChange={(e) => updateMedicationPrice(order.id, index, e.target.value)}
-                                            className="mt-1"
-                                            min="0"
-                                            step="1"
-                                          />
-                                        </div>
-                                      </div>
-                                    );
-                                  })
-                                ) : (
-                                  <p className="text-sm text-gray-500">Aucun médicament spécifié par le patient</p>
-                                )}
-
-                                {/* Médicaments ajoutés par le pharmacien */}
-                                {orderMedications[order.id] && orderMedications[order.id].length > 0 && (
-                                  <div className="border-t pt-4">
-                                    <h5 className="font-medium text-blue-900 mb-3">💊 Médicaments ajoutés depuis l'ordonnance</h5>
-                                    <div className="space-y-3">
-                                      {orderMedications[order.id].map((med: any, index: number) => {
-                                        const statusKey = `pharmacist-${order.id}-${index}`;
-                                        const currentStatus = medicationStatuses[statusKey] || { available: med.available, surBon: med.surBon };
-
-                                        return (
-                                          <div key={statusKey} className="border rounded-lg p-4 bg-blue-50">
-                                            <div className="flex items-center justify-between mb-3">
-                                              {editingMedication[statusKey] ? (
-                                                <div className="flex items-center space-x-2 flex-1">
-                                                  <Input
-                                                    value={medicationNames[statusKey] || med.name}
-                                                    onChange={(e) => updateMedicationName(order.id, index, e.target.value, false)}
-                                                    className="flex-1"
-                                                    placeholder="Nom du médicament"
-                                                  />
-                                                  <Button
-                                                    size="sm"
-                                                    onClick={() => toggleEditMode(statusKey)}
-                                                    className="bg-green-600 hover:bg-green-700"
-                                                  >
-                                                    ✅
-                                                  </Button>
-                                                  <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => {
-                                                      setMedicationNames(prev => {
-                                                        const updated = { ...prev };
-                                                        delete updated[statusKey];
-                                                        return updated;
-                                                      });
-                                                      toggleEditMode(statusKey);
-                                                    }}
-                                                  >
-                                                    ❌
-                                                  </Button>
-                                                  <Button
-                                                    size="sm"
-                                                    variant="destructive"
-                                                    onClick={() => removePharmaticistMedication(order.id, index)}
-                                                    className="text-red-600 hover:text-red-700 bg-red-100 hover:bg-red-200"
-                                                    title="Supprimer ce médicament"
-                                                  >
-                                                    🗑️
-                                                  </Button>
-                                                </div>
-                                              ) : (
-                                                <div className="flex items-center space-x-2 flex-1">
-                                                  <h5 className="font-medium text-blue-900">{medicationNames[statusKey] || med.name}</h5>
-                                                  <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => toggleEditMode(statusKey)}
-                                                    className="text-blue-600 hover:text-blue-700"
-                                                  >
-                                                    ✏️
-                                                  </Button>
-                                                  <Button
-                                                    size="sm"
-                                                    variant="destructive"
-                                                    onClick={() => removePharmaticistMedication(order.id, index)}
-                                                    className="text-red-600 hover:text-red-700 bg-red-100 hover:bg-red-200"
-                                                    title="Supprimer ce médicament"
-                                                  >
-                                                    🗑️
-                                                  </Button>
-                                                </div>
-                                              )}
-                                              <Badge variant={currentStatus.available ? "default" : "destructive"}>
-                                                {currentStatus.available ? "Disponible" : "Indisponible"}
-                                              </Badge>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4 mb-3">
-                                              <div className="flex items-center space-x-2">
-                                                <Switch
-                                                  id={`available-${statusKey}`}
-                                                  checked={currentStatus.available}
-                                                  onCheckedChange={(checked) =>
-                                                    toggleMedicationStatus(order.id, index, 'available', checked)
-                                                  }
-                                                />
-                                                <Label htmlFor={`available-${statusKey}`} className="text-sm">
-                                                  Disponible en stock
-                                                </Label>
-                                              </div>
-
-                                              <div className="flex items-center space-x-2">
-                                                <Switch
-                                                  id={`surbon-${statusKey}`}
-                                                  checked={currentStatus.surBon}
-                                                  onCheckedChange={(checked) =>
-                                                    toggleMedicationStatus(order.id, index, 'surBon', checked)
-                                                  }
-                                                />
-                                                <Label htmlFor={`surbon-${statusKey}`} className="text-sm">
-                                                  Sur BON (remboursable)
-                                                </Label>
-                                              </div>
-                                            </div>
-
-                                            <div className="mt-3">
-                                              <Label htmlFor={`price-${statusKey}`} className="text-sm font-medium">
-                                                Prix (FCFA)
-                                              </Label>
-                                              <Input
-                                                id={`price-${statusKey}`}
-                                                type="number"
-                                                placeholder="Prix en FCFA"
-                                                value={medicationPrices[statusKey] || med.price || ''}
-                                                onChange={(e) => updateMedicationPrice(order.id, index, e.target.value)}
-                                                className="mt-1"
-                                                min="0"
-                                                step="1"
-                                              />
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="flex space-x-2 mt-4 pt-4 border-t">
-                                <Button
-                                  onClick={() => {
-                                    const originalMeds = order.medications && typeof order.medications === 'string'
-                                      ? JSON.parse(order.medications)
-                                      : (order.medications && Array.isArray(order.medications) ? order.medications : []);
-
-                                    handleSendResponse(order.id, originalMeds);
-                                  }}
-                                  disabled={sendResponseMutation.isPending}
-                                  className="bg-blue-600 hover:bg-blue-700"
-                                >
-                                  📤 Envoyer la réponse
-                                </Button>
-                              </div>
+                                  handleSendResponse(order.id, originalMeds);
+                                }}
+                                disabled={sendResponseMutation.isPending}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                📤 Envoyer la réponse
+                              </Button>
                             </div>
                           </div>
                         </DialogContent>
@@ -2053,8 +2059,6 @@ export default function DashboardPharmacien() {
               ))}
             </div>
           </TabsContent>
-
-
 
           {/* Candidatures de Livreurs */}
           <TabsContent value="applications">

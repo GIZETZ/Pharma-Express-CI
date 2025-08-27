@@ -23,7 +23,7 @@ export default function DashboardPatient() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location, navigate] = useLocation();
-  
+
   // Hooks pour notifications sonores
   const {
     isNotificationsEnabled,
@@ -33,7 +33,7 @@ export default function DashboardPatient() {
     testNotification,
     playNotificationSound
   } = useOrderNotifications();
-  
+
   const { playSound, testSound, testAllSounds } = useAudioNotifications();
   const [activeTab, setActiveTab] = useState("orders");
   const [selectedPharmacy, setSelectedPharmacy] = useState<any>(null);
@@ -290,23 +290,23 @@ export default function DashboardPatient() {
     if (orders && Array.isArray(orders)) {
       let hasChanges = false;
       const newStatuses: Record<string, string> = {};
-      
+
       orders.forEach((order: any) => {
         const currentStatus = order.status;
         const previousStatus = previousOrderStatuses[order.id];
-        
+
         // Si le statut a changé et qu'on a les notifications activées
         if (previousStatus && previousStatus !== currentStatus) {
           console.log(`🔄 Changement de statut détecté: ${previousStatus} → ${currentStatus} pour commande ${order.id.slice(0, 8)}`);
-          
+
           // Jouer le son directement dans l'application
           playSound(currentStatus).catch(error => {
             console.error('Erreur lecture son dans l\'app:', error);
           });
-          
+
           // Déclencher notification système (sans son personnalisé)
           notifyOrderStatusChange(order.id, currentStatus, false);
-          
+
           // Notification toast aussi
           const statusMessages: Record<string, string> = {
             confirmed: "✅ Votre commande a été confirmée par la pharmacie",
@@ -317,7 +317,7 @@ export default function DashboardPatient() {
             delivered: "🎉 Votre commande a été livrée avec succès",
             cancelled: "❌ Votre commande a été annulée"
           };
-          
+
           if (statusMessages[currentStatus]) {
             toast({
               title: "Mise à jour de commande",
@@ -325,14 +325,14 @@ export default function DashboardPatient() {
               duration: currentStatus === 'in_transit' || currentStatus === 'in_delivery' ? 8000 : 5000,
             });
           }
-          
+
           hasChanges = true;
         }
-        
+
         // Conserver le statut actuel pour la prochaine vérification
         newStatuses[order.id] = currentStatus;
       });
-      
+
       // Mettre à jour seulement s'il y a eu des changements ou de nouvelles commandes
       if (hasChanges || Object.keys(newStatuses).length !== Object.keys(previousOrderStatuses).length) {
         setPreviousOrderStatuses(newStatuses);
@@ -356,7 +356,7 @@ export default function DashboardPatient() {
           duration: 10000,
         });
       }, 3000);
-      
+
       return () => clearTimeout(timer);
     }
   }, [isNotificationsEnabled, permissionStatus, requestNotificationPermission, toast]);
@@ -527,21 +527,47 @@ export default function DashboardPatient() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-blue-600 mb-2">
-            👥 Tableau de bord Patient
-          </h1>
-          <p className="text-gray-600">
-            Bienvenue {user?.firstName} ! Gérez vos commandes et ordonnances
-          </p>
-          {currentAddress && (
-            <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-              <MapPin className="h-4 w-4" />
-              <span>Votre position: {currentAddress}</span>
+        {/* Header */}
+        <div className="bg-white shadow-sm p-4 border-b">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img 
+                src="/icon-512x512.png" 
+                alt="PharmaChape Logo" 
+                className="w-10 h-10 rounded-lg"
+              />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">
+                  Bonjour, {user?.firstName}! 👋
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Que souhaitez-vous commander aujourd'hui?
+                </p>
+              </div>
             </div>
-          )}
+          <div className="flex items-center space-x-4">
+            <Button variant="outline" className="flex items-center gap-1">
+              <MapPin className="h-4 w-4 text-blue-600" />
+              <span>Ma Position</span>
+            </Button>
+            <Button onClick={() => navigate("/order-history")}>
+              Historique
+            </Button>
+            <Button variant="ghost" size="icon">
+              <Clock className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
+        <p className="text-gray-600 mt-2">
+          Bienvenue {user?.firstName} ! Gérez vos commandes et ordonnances
+        </p>
+        {currentAddress && (
+          <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+            <MapPin className="h-4 w-4" />
+            <span>Votre position: {currentAddress}</span>
+          </div>
+        )}
+      </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
@@ -630,7 +656,7 @@ export default function DashboardPatient() {
                           if (order.totalAmount && order.totalAmount !== '0' && parseFloat(order.totalAmount) > 0) {
                             return `${parseFloat(order.totalAmount).toFixed(0)} FCFA`;
                           }
-                          
+
                           // Sinon, calculer à partir des médicaments
                           if (order.status === 'confirmed' || order.medications) {
                             try {
@@ -659,7 +685,7 @@ export default function DashboardPatient() {
                               return 'En cours d\'évaluation';
                             }
                           }
-                          
+
                           return 'En cours d\'évaluation';
                         })()}</p>
                         <p className="text-sm"><strong>Adresse:</strong> {order.deliveryAddress}</p>
@@ -722,7 +748,7 @@ export default function DashboardPatient() {
                                     if (order.totalAmount && order.totalAmount !== '0' && parseFloat(order.totalAmount) > 0) {
                                       return parseFloat(order.totalAmount).toFixed(0);
                                     }
-                                    
+
                                     try {
                                       const medications = typeof order.medications === 'string' ? JSON.parse(order.medications) : order.medications;
                                       let medicationsList = [];
@@ -761,7 +787,7 @@ export default function DashboardPatient() {
                                     if (order.totalAmount && order.totalAmount !== '0' && parseFloat(order.totalAmount) > 0) {
                                       return (parseFloat(order.totalAmount) + 1000).toFixed(0);
                                     }
-                                    
+
                                     try {
                                       const medications = typeof order.medications === 'string' ? JSON.parse(order.medications) : order.medications;
                                       let medicationsList = [];
@@ -800,7 +826,7 @@ export default function DashboardPatient() {
                           {order.status === 'confirmed' && order.totalAmount && order.totalAmount !== '0' && (
                             <Button 
                               size="sm" 
-                              onClick={() => navigate(`/order-validation?orderId=${order.id}`)}
+                              onClick={() => navigate("/order-validation?orderId=" + order.id)}
                               className="w-full bg-blue-600 hover:bg-blue-700"
                             >
                               📋 Valider la commande
@@ -943,7 +969,6 @@ export default function DashboardPatient() {
                             </p>
                           </div>
                         )}
-
 
                       </div>
                     </CardContent>
@@ -1338,7 +1363,7 @@ export default function DashboardPatient() {
                     <p className="text-sm text-gray-600 mb-4">
                       Vos livraisons actives apparaîtront ici avec suivi en temps réel
                     </p>
-                    <Button onClick={() => setActiveTab("pharmacies")}>
+                    <Button onClick={() => navigate("/pharmacies")}>
                       Passer une commande
                     </Button>
                   </div>
@@ -1347,7 +1372,7 @@ export default function DashboardPatient() {
             </Card>
           </TabsContent>
 
-          
+
         </Tabs>
       </div>
 

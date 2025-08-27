@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "wouter";
 import { BarChart3, Users, Package, MapPin, Settings, User, TrendingUp, AlertTriangle } from "lucide-react";
@@ -88,7 +87,7 @@ export default function DashboardAdmin() {
     order.status === 'confirmed' || order.status === 'ready_for_delivery' || 
     order.status === 'in_delivery' || order.status === 'delivered'
   ) || [];
-  
+
   const activeOrders = allOrders?.filter((order: any) => 
     order.status === 'confirmed' || order.status === 'ready_for_delivery' || order.status === 'in_delivery'
   ) || [];
