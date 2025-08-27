@@ -15,8 +15,21 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
 
   const requestResetMutation = useMutation({
-    mutationFn: (email: string) => apiRequest("/api/auth/request-reset", "POST", { email }),
+    mutationFn: async (email: string) => {
+      console.log("🔄 Tentative d'envoi email:", email);
+      console.log("🌐 URL appelée:", "/api/auth/request-reset");
+      
+      try {
+        const result = await apiRequest("/api/auth/request-reset", "POST", { email });
+        console.log("✅ Succès API:", result);
+        return result;
+      } catch (error) {
+        console.error("❌ Erreur API:", error);
+        throw error;
+      }
+    },
     onSuccess: () => {
+      console.log("✅ Mutation réussie");
       toast({
         title: "Code envoyé !",
         description: "Vérifiez votre boîte mail pour le code de récupération.",
@@ -24,6 +37,7 @@ export default function ForgotPassword() {
       setLocation(`/verify-reset-code?email=${encodeURIComponent(email)}`);
     },
     onError: (error: any) => {
+      console.error("❌ Erreur mutation:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
