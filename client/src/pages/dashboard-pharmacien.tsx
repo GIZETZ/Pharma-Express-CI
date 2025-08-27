@@ -1133,7 +1133,7 @@ export default function DashboardPharmacien() {
 
   // Fonction pour modifier le nom d'un médicament patient
   const updateMedicationName = (orderId: string, medIndex: number, newName: string, isPatientMed: boolean = true) => {
-    const key = isPatientMed ? `${orderId}-${medIndex}` : `pharmacist-${orderId}-${medIndex}`;
+    const key = isPatientMed ? `${orderId}-${medIndex}` : `pharmacist-${orderId}-${index}`;
     setMedicationNames(prev => ({
       ...prev,
       [key]: newName
