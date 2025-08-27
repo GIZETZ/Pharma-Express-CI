@@ -1,4 +1,4 @@
-# 🚀 Guide de Déploiement Rapide - Pharma Express CI
+# 🚀 Guide de Déploiement Rapide - PharmaChape
 
 ## 📋 Résumé des Configurations
 
@@ -9,7 +9,7 @@ Votre application est maintenant **prête pour le déploiement** sur Replit et R
 ### 1. Connecter le Repository
 - Allez sur [render.com](https://render.com)
 - Cliquez "New" → "Web Service"  
-- Connectez le repo : `https://github.com/GIZETZ/Pharma-Express-CI.git`
+- Connectez le repo : `https://github.com/GIZETZ/PharmaChape.git`
 
 ### 2. Configuration Automatique
 Le fichier `render.yaml` configurera automatiquement :

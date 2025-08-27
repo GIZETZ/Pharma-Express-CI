@@ -1,5 +1,5 @@
 
-# 🏥 Yaho Pharma - ServiceConnect
+# 🏥 PharmaChape - ServiceConnect
 
 Une application web progressive (PWA) pour la livraison de médicaments en Côte d'Ivoire, développée avec React, Express.js et TypeScript.
 
@@ -83,7 +83,7 @@ Une application web progressive (PWA) pour la livraison de médicaments en Côte
 
 ```bash
 # Cloner depuis GitHub
-git clone https://github.com/GIZETZ/Pharma-Express-CI.git
+git clone https://github.com/GIZETZ/PharmaChape-CI.git
 cd yaho-pharma-serviceconnect
 
 # Ou copier depuis votre dossier local

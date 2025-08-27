@@ -1,9 +1,9 @@
-# Guide de Déploiement - Pharma Express CI
+# Guide de Déploiement - PharmaChape
 
 ## 🚀 Déploiement sur Render
 
 ### Étape 1 : Préparation du Repository GitHub
-1. Assurez-vous que votre code est poussé sur GitHub : `https://github.com/GIZETZ/Pharma-Express-CI.git`
+1. Assurez-vous que votre code est poussé sur GitHub : `https://github.com/GIZETZ/PharmaChape.git`
 2. Vérifiez que tous les fichiers de configuration sont présents :
    - `render.yaml`
    - `Dockerfile`
@@ -14,11 +14,11 @@
 1. Allez sur [render.com](https://render.com) et connectez-vous
 2. Cliquez sur "New" → "Web Service"
 3. Connectez votre compte GitHub
-4. Sélectionnez le repository `GIZETZ/Pharma-Express-CI`
+4. Sélectionnez le repository `GIZETZ/PharmaChape-CI`
 
 ### Étape 3 : Configuration du Service
 ```
-Name: pharma-express-ci
+Name: pharmachape
 Environment: Node
 Build Command: ./build.sh
 Start Command: npm run start

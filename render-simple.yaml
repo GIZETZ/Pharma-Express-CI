@@ -1,7 +1,7 @@
 # Configuration Render ultra-simplifiée
 services:
   - type: web
-    name: pharma-express-ci
+    name: pharmachape
     env: node
     buildCommand: npm install
     startCommand: npm run start

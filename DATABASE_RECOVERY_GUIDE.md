@@ -1,4 +1,4 @@
-# 🗄️ GUIDE DE RÉCUPÉRATION BASE DE DONNÉES - PHARMA EXPRESS CI
+# 🗄️ GUIDE DE RÉCUPÉRATION BASE DE DONNÉES - PHARMACHAPE
 
 Ce guide vous explique comment restaurer automatiquement votre base de données PostgreSQL en cas de perte, même si vous perdez toutes vos données.
 

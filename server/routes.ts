@@ -977,7 +977,7 @@ export async function registerRoutes(app: Express, io?: SocketIOServer): Promise
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
         {
           headers: {
-            'User-Agent': 'PharmaExpressCI/1.0'
+            'User-Agent': 'PharmaChapeCI/1.0'
           }
         }
       );

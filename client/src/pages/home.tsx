@@ -53,7 +53,7 @@ export default function Home() {
               </svg>
             </div>
             <h1 className="text-xl font-bold text-gray-900" data-testid="text-app-name">
-              Pharma Express CI
+              PharmaChape
             </h1>
           </div>
           <div className="flex items-center space-x-3">

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =====================================================
-# PHARMA EXPRESS CI - SCRIPT DE RESTAURATION RAPIDE
+# PHARMACHAPE - SCRIPT DE RESTAURATION RAPIDE
 # =====================================================
 
 set -e

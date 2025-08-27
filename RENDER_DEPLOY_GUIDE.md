@@ -14,10 +14,10 @@
 
 ### Option 2: Configuration Manuelle (Plus Fiable)
 1. **Nouveau Web Service** sur render.com
-2. **Repository**: `https://github.com/GIZETZ/Pharma-Express-CI.git`
+2. **Repository**: `https://github.com/GIZETZ/PharmaChape.git`
 3. **Configuration**:
    ```
-   Name: pharma-express-ci
+   Name: pharmachape
    Environment: Node
    Build Command: npm install
    Start Command: npm run start

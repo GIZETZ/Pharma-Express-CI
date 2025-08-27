@@ -17,7 +17,7 @@ const LOG_PREFIX = '🗄️ [DB-Setup]';
 // Configuration de la base de données par défaut
 const DB_CONFIG = {
   name: 'pharma_express_ci',
-  description: 'Base de données principale pour Pharma Express CI',
+  description: 'Base de données principale pour PharmaChape',
   version: '1.0.0',
   lastUpdate: new Date().toISOString()
 };

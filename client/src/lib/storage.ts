@@ -6,7 +6,7 @@ interface CacheData {
 }
 
 class OfflineStorage {
-  private dbName = 'pharma-express-db';
+  private dbName = 'pharmachape-db';
   private version = 1;
   private db: IDBDatabase | null = null;
 

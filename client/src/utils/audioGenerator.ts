@@ -1,4 +1,4 @@
-// Générateur de sons pour les notifications Pharma Express CI
+// Générateur de sons pour les notifications PharmaChape
 // Utilise Web Audio API pour créer des sons synthétiques
 
 interface SoundConfig {

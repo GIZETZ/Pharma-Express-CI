@@ -21,7 +21,7 @@ async function generateSchemaBackup() {
   await fs.mkdir(path.dirname(backupPath), { recursive: true });
   
   const sqlContent = `-- =====================================================
--- PHARMA EXPRESS CI - SCHEMA BACKUP
+-- PHARMACHAPE - SCHEMA BACKUP
 -- Date: ${new Date().toLocaleString('fr-FR')}
 -- Version: 1.0.0
 -- =====================================================
@@ -233,7 +233,7 @@ INSERT INTO users (
 -- =====================================================
 -- SCRIPT TERMINÉ AVEC SUCCÈS
 -- =====================================================
-COMMENT ON DATABASE CURRENT_DATABASE() IS 'Pharma Express CI - Base de données restaurée le ${new Date().toLocaleString('fr-FR')}';
+COMMENT ON DATABASE CURRENT_DATABASE() IS 'PharmaChape - Base de données restaurée le ${new Date().toLocaleString('fr-FR')}';
 
 SELECT 
     'Database schema restored successfully!' as status,

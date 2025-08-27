@@ -1,6 +1,6 @@
 {
-  "name": "Pharma Express CI",
-  "short_name": "PharmaCI",
+  "name": "PharmaChape",
+  "short_name": "PharmaChape",
   "description": "Livraison de médicaments à domicile en Côte d'Ivoire",
   "start_url": "/",
   "display": "standalone",

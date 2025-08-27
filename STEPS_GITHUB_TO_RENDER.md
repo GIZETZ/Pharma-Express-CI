@@ -33,11 +33,11 @@ git push origin main
 ### 3. Créer/Mettre à jour le Service
 **Si NOUVEAU déploiement :**
 - "New" → "Web Service"
-- Connect repository: `https://github.com/GIZETZ/Pharma-Express-CI.git`
+- Connect repository: `https://github.com/GIZETZ/PharmaChape-CI.git`
 - Render détectera automatiquement `render.yaml`
 
 **Si service EXISTANT :**
-- Allez à votre service "pharma-express-ci"
+- Allez à votre service "pharmachape-ci"
 - Settings → "Deploy"
 - "Manual Deploy" → "Deploy latest commit"
 

@@ -12,7 +12,7 @@ L'erreur `npm error command sh -c NODE_ENV=node de production dist/index.js` ind
 ```yaml
 services:
   - type: web
-    name: pharma-express-ci
+    name: pharmachape
     env: node
     plan: starter
     buildCommand: npm ci && npm run build  # ✅ npm ci au lieu de npm install
@@ -37,7 +37,7 @@ services:
 ## 🚀 Étapes de Redéploiement
 
 ### Sur Render Dashboard :
-1. **Allez à votre service Pharma Express CI**
+1. **Allez à votre service PharmaChape**
 2. **Settings** → **Environment Variables**
 3. **Ajoutez si manquant :**
    - `DATABASE_URL` = `[votre URL Neon complète]`
@@ -80,4 +80,4 @@ Après redéploiement, vous devriez voir :
 🌐 serving on 0.0.0.0:10000
 ```
 
-**Votre application Pharma Express CI sera accessible sur l'URL Render fournie !**
+**Votre application PharmaChape sera accessible sur l'URL Render fournie !**

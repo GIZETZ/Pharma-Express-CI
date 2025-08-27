@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pharma-express-v1';
+const CACHE_NAME = 'pharmachape-v1';
 const urlsToCache = [
   '/',
   '/static/css/main.css',

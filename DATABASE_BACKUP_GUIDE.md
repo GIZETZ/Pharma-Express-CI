@@ -1,8 +1,8 @@
-# Guide de Sauvegarde et Restauration Automatique - Pharma Express CI
+# Guide de Sauvegarde et Restauration Automatique - PharmaChape
 
 ## 🔒 Système de Protection des Données
 
-Votre application Pharma Express CI est maintenant équipée d'un système de sauvegarde et restauration automatique qui protège vos données contre toute perte accidentelle.
+Votre application PharmaChape est maintenant équipée d'un système de sauvegarde et restauration automatique qui protège vos données contre toute perte accidentelle.
 
 ## 🔧 Fonctionnement Automatique
 

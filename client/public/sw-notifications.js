@@ -1,4 +1,4 @@
-// Service Worker pour les notifications Pharma Express CI
+// Service Worker pour les notifications PharmaChape
 const CACHE_NAME = 'pharma-notifications-v1';
 const NOTIFICATION_CACHE = 'pharma-sounds-v1';
 

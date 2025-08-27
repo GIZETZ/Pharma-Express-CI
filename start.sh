@@ -3,7 +3,7 @@
 # Script de démarrage pour production
 set -e
 
-echo "🚀 Starting Pharma Express CI in production mode..."
+echo "🚀 Starting PharmaChape in production mode..."
 
 # Vérifier les variables d'environnement critiques
 if [ -z "$DATABASE_URL" ]; then

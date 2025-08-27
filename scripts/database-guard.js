@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * PHARMA EXPRESS CI - GARDE DE SÉCURITÉ BASE DE DONNÉES
+ * PHARMACHAPE - GARDE DE SÉCURITÉ BASE DE DONNÉES
  * 
  * Ce script s'assure que l'application utilise TOUJOURS PostgreSQL
  * au lieu du stockage en mémoire, même après des redémarrages.
