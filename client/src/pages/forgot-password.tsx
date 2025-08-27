@@ -21,8 +21,10 @@ export default function ForgotPassword() {
       
       try {
         // Step 1: Generate code on server
-        const data = await apiRequest("/api/auth/request-reset", "POST", { email });
+        const response = await apiRequest("/api/auth/request-reset", "POST", { email });
+        const data = await response.json();
         console.log("✅ Code généré:", data);
+        console.log("🔍 Code à envoyer:", data.code);
         
         // Step 2: Initialize EmailJS and send email (client-side)
         console.log("📧 Initialisation EmailJS...");

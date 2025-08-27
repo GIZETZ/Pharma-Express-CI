@@ -74,7 +74,7 @@ export default function ResetPassword() {
       return;
     }
 
-    resetPasswordMutation.mutate({ email, code, password });
+    resetPasswordMutation.mutate({ email, code, password, confirmPassword });
   };
 
   return (
