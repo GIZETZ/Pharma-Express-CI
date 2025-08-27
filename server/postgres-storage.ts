@@ -1165,7 +1165,7 @@ export class PostgresStorage implements IStorage {
       .where(and(
         eq(passwordResetCodes.email, email),
         eq(passwordResetCodes.code, code),
-        eq(passwordResetCodes.used, false),
+        eq(passwordResetCodes.isUsed, false),
         gt(passwordResetCodes.expiresAt, now)
       ))
       .limit(1);
@@ -1175,7 +1175,7 @@ export class PostgresStorage implements IStorage {
   async markPasswordResetCodeUsed(id: string): Promise<void> {
     const db = await getDb();
     await db.update(passwordResetCodes)
-      .set({ used: true })
+      .set({ isUsed: true })
       .where(eq(passwordResetCodes.id, id));
   }
 }

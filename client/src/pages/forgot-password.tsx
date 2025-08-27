@@ -37,7 +37,8 @@ export default function ForgotPassword() {
           {
             passcode: data.code,
             email: email,
-            to_email: email
+            to_email: email,
+            to_name: "Utilisateur"
           }
         );
         
