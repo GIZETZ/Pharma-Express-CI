@@ -526,86 +526,120 @@ const PrescriptionImage = ({ prescriptionId, className }: { prescriptionId: stri
     fetchImage();
   }, [prescriptionId]);
 
+  const openImageModal = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!imageUrl) return;
+
+    // Créer la modal avec de meilleurs styles
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center p-4';
+    modal.style.zIndex = '99999';
+    modal.style.cursor = 'zoom-out';
+
+    const modalContent = document.createElement('div');
+    modalContent.className = 'relative flex items-center justify-center max-w-[95vw] max-h-[95vh]';
+    modalContent.style.cursor = 'auto';
+
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.alt = 'Photo de l\'ordonnance';
+    img.className = 'max-w-full max-h-full object-contain rounded-lg shadow-2xl';
+    img.style.cursor = 'zoom-out';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '×';
+    closeBtn.className = 'absolute -top-12 right-0 text-white bg-red-600 hover:bg-red-700 rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold transition-all duration-200 shadow-lg';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.title = 'Fermer (Échap)';
+
+    modalContent.appendChild(img);
+    modalContent.appendChild(closeBtn);
+    modal.appendChild(modalContent);
+
+    const closeModal = () => {
+      try {
+        if (modal && document.body.contains(modal)) {
+          modal.style.opacity = '0';
+          setTimeout(() => {
+            if (document.body.contains(modal)) {
+              document.body.removeChild(modal);
+            }
+          }, 200);
+        }
+      } catch (error) {
+        console.log('Modal already removed');
+      }
+    };
+
+    // Empêcher la fermeture quand on clique sur l'image
+    modalContent.addEventListener('click', (e) => e.stopPropagation());
+    
+    // Fermer avec le bouton X
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeModal();
+    });
+
+    // Fermer en cliquant sur le fond
+    modal.addEventListener('click', closeModal);
+
+    // Fermer avec Escape
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeModal();
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+
+    // Animation d'entrée
+    modal.style.opacity = '0';
+    document.body.appendChild(modal);
+    setTimeout(() => {
+      modal.style.opacity = '1';
+      modal.style.transition = 'opacity 0.2s ease-in-out';
+    }, 10);
+  };
+
   if (loading) {
     return (
-      <div className={`${className} flex items-center justify-center bg-gray-100`}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className={`${className || 'w-full h-64'} flex items-center justify-center bg-gray-100 rounded-lg border`}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p className="text-sm text-gray-600">Chargement...</p>
+        </div>
       </div>
     );
   }
 
   if (!imageUrl) {
     return (
-      <div className={`${className} flex flex-col items-center justify-center bg-gray-100 text-gray-500`}>
-        <span className="text-2xl mb-2">📄</span>
-        <p className="text-sm">Image non disponible</p>
+      <div className={`${className || 'w-full h-64'} flex flex-col items-center justify-center bg-gray-100 text-gray-500 rounded-lg border`}>
+        <span className="text-4xl mb-2">📄</span>
+        <p className="text-sm font-medium">Image non disponible</p>
+        <p className="text-xs text-gray-400 mt-1">L'ordonnance n'a pas pu être chargée</p>
       </div>
     );
   }
 
   return (
-    <img
-      src={imageUrl}
-      alt="Photo de l'ordonnance"
-      className={className}
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        // Ouvrir l'image en plein écran
-        const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4';
-        modal.style.zIndex = '9999';
-        modal.style.cursor = 'pointer';
-
-        const modalContent = document.createElement('div');
-        modalContent.className = 'relative max-w-full max-h-full';
-        modalContent.innerHTML = `
-          <img src="${imageUrl}"
-               class="max-w-full max-h-full object-contain"
-               alt="Photo de l'ordonnance" />
-          <button class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 text-2xl font-bold">&times;</button>
-        `;
-
-        modal.appendChild(modalContent);
-
-        const closeModal = () => {
-          try {
-            if (modal && document.body.contains(modal)) {
-              document.body.removeChild(modal);
-            }
-          } catch (error) {
-            console.log('Modal already removed');
-          }
-        };
-
-        // Empêcher la propagation sur le contenu de l'image
-        modalContent.addEventListener('click', (e) => {
-          e.stopPropagation();
-        });
-
-        // Fermer avec le bouton X
-        const closeBtn = modalContent.querySelector('button');
-        closeBtn?.addEventListener('click', (e) => {
-          e.stopPropagation();
-          closeModal();
-        });
-
-        // Fermer en cliquant sur le fond
-        modal.addEventListener('click', closeModal);
-
-        // Fermer avec Escape
-        const handleEscape = (e: KeyboardEvent) => {
-          if (e.key === 'Escape') {
-            closeModal();
-            document.removeEventListener('keydown', handleEscape);
-          }
-        };
-        document.addEventListener('keydown', handleEscape);
-
-        document.body.appendChild(modal);
-      }}
-    />
+    <div className="relative group">
+      <img
+        src={imageUrl}
+        alt="Photo de l'ordonnance"
+        className={`${className || 'w-full h-64 object-cover'} cursor-pointer rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 group-hover:brightness-95`}
+        onClick={openImageModal}
+      />
+      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 rounded-lg flex items-center justify-center">
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white bg-opacity-90 rounded-full p-2 shadow-lg">
+          <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+          </svg>
+        </div>
+      </div>
+    </div>
   );
 };
 
