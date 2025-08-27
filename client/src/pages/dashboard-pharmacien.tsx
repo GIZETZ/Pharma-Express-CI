@@ -2231,7 +2231,7 @@ export default function DashboardPharmacien() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+      </Tabs>
     </div>
   );
 }
