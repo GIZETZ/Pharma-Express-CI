@@ -1049,25 +1049,30 @@ export default function DashboardPatient() {
                       <>
                         <div className="flex items-start gap-4 mb-4">
                           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center border-2 border-green-200 overflow-hidden">
-                            <img 
-                              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face" 
-                              alt="Photo du livreur"
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                                (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                              }}
-                            />
-                            <span className="text-2xl hidden">🚴</span>
+                            {/* Photo de profil réelle du livreur */}
+                            {(() => {
+                              // Récupérer les infos du livreur depuis l'API ou les données de la commande
+                              const deliveryPersonId = ((selectedOrderForTracking || currentOrder) as any).deliveryPersonId;
+                              // Pour l'instant, utiliser les initiales en attendant l'implémentation de la photo
+                              return (
+                                <span className="text-2xl font-bold text-green-600">
+                                  {deliveryPersonId ? deliveryPersonId.slice(0, 2).toUpperCase() : '🚴'}
+                                </span>
+                              );
+                            })()}
                           </div>
                           <div className="flex-1">
                             <h4 className="font-semibold text-green-900">
-                              KOUASSI KPATA
+                              {(() => {
+                                const deliveryPersonId = ((selectedOrderForTracking || currentOrder) as any).deliveryPersonId;
+                                // Ici on pourrait récupérer le vrai nom depuis l'API
+                                return deliveryPersonId ? `Livreur ${deliveryPersonId.slice(0, 8)}` : 'Livreur en cours d\'assignation';
+                              })()}
                             </h4>
                             <p className="text-sm text-green-700">Livreur agréé - En service</p>
                             <div className="flex items-center gap-1 mt-1">
                               <span className="text-yellow-500">⭐⭐⭐⭐⭐</span>
-                              <span className="text-xs text-green-600">4.5/5 (50 livraisons)</span>
+                              <span className="text-xs text-green-600">Évaluation en cours</span>
                             </div>
                           </div>
                         </div>
