@@ -139,12 +139,16 @@ export default function Register() {
   // Render role selection first
   if (!selectedRole) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 dark:from-gray-900 dark:to-gray-800 p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              YahoPharma+
-            </CardTitle>
+            <div className="flex justify-center mb-2">
+              <img 
+                src="/logotype-1563x323.webp" 
+                alt="PharmaChape" 
+                className="h-12 w-auto"
+              />
+            </div>
             <CardDescription>
               Choisissez votre profil pour continuer
             </CardDescription>
@@ -158,15 +162,15 @@ export default function Register() {
             <div className="space-y-3">
               <Button
                 variant="outline"
-                className="w-full h-20 flex items-center justify-start space-x-4 hover:bg-blue-50 border-2 hover:border-blue-300"
+                className="w-full h-20 flex items-center justify-start space-x-4 hover:bg-green-50 border-2 hover:border-green-300"
                 onClick={() => setSelectedRole("patient")}
                 data-testid="button-select-patient"
               >
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                   👥
                 </div>
                 <div className="text-left">
-                  <div className="font-semibold text-blue-600">Patient</div>
+                  <div className="font-semibold text-green-600">Patient</div>
                   <div className="text-sm text-gray-500">Commander vos médicaments</div>
                 </div>
               </Button>
@@ -207,7 +211,7 @@ export default function Register() {
                 Déjà un compte ?{" "}
                 <Link
                   href="/login"
-                  className="text-blue-600 hover:text-blue-500 dark:text-blue-400 font-medium"
+                  className="text-green-600 hover:text-green-500 dark:text-green-400 font-medium"
                   data-testid="link-login"
                 >
                   Se connecter
@@ -221,12 +225,16 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            YahoPharma+
-          </CardTitle>
+          <div className="flex justify-center mb-2">
+            <img 
+              src="/logotype-1563x323.webp" 
+              alt="PharmaChape" 
+              className="h-12 w-auto"
+            />
+          </div>
           <CardDescription>
             Inscription - {selectedRole === "patient" ? "👥 Patient" : selectedRole === "pharmacien" ? "💊 Pharmacien" : "🚴 Livreur"}
           </CardDescription>
@@ -478,8 +486,8 @@ export default function Register() {
               </Button>
 
               {(selectedRole === "pharmacien" || selectedRole === "livreur") && (
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <p className="text-xs text-blue-700">
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <p className="text-xs text-green-700">
                     ⏳ Votre compte sera activé après validation par notre équipe (24-48h)
                   </p>
                 </div>
@@ -492,7 +500,7 @@ export default function Register() {
               Déjà un compte ?{" "}
               <Link
                 href="/login"
-                className="text-blue-600 hover:text-blue-500 dark:text-blue-400 font-medium"
+                className="text-green-600 hover:text-green-500 dark:text-green-400 font-medium"
                 data-testid="link-login"
               >
                 Se connecter
