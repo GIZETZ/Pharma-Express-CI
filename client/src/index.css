@@ -88,23 +88,23 @@
   --card-foreground: hsl(222, 84%, 4.9%);
   --border: hsl(214, 32%, 91%);
   --input: hsl(214, 32%, 91%);
-  --primary: hsl(221, 83%, 53%);
-  --primary-foreground: hsl(210, 40%, 98%);
-  --secondary: hsl(210, 40%, 96%);
-  --secondary-foreground: hsl(222, 84%, 4.9%);
-  --accent: hsl(210, 40%, 96%);
-  --accent-foreground: hsl(222, 84%, 4.9%);
+  --primary: hsl(142, 76%, 36%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(0, 0%, 15%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(142, 76%, 36%);
+  --accent-foreground: hsl(0, 0%, 100%);
   --destructive: hsl(0, 84%, 60%);
   --destructive-foreground: hsl(210, 40%, 98%);
-  --ring: hsl(221, 83%, 53%);
+  --ring: hsl(142, 76%, 36%);
   --radius: 0.75rem;
   
   /* PharmaChape modern colors */
-  --pharma-primary: hsl(221, 83%, 53%);
-  --pharma-primary-dark: hsl(221, 83%, 43%);
-  --pharma-secondary: hsl(142, 76%, 36%);
-  --pharma-accent: hsl(262, 83%, 58%);
-  --pharma-bg: linear-gradient(135deg, hsl(210, 40%, 98%), hsl(220, 69%, 97%));
+  --pharma-primary: hsl(142, 76%, 36%);
+  --pharma-primary-dark: hsl(142, 76%, 26%);
+  --pharma-secondary: hsl(0, 0%, 15%);
+  --pharma-accent: hsl(142, 76%, 46%);
+  --pharma-bg: linear-gradient(135deg, hsl(142, 20%, 98%), hsl(142, 20%, 96%));
   --pharma-card: hsl(0, 0%, 100%);
   --pharma-shadow: 0 4px 32px -4px rgba(0, 0, 0, 0.08);
   --pharma-shadow-lg: 0 10px 64px -4px rgba(0, 0, 0, 0.12);
@@ -185,15 +185,15 @@
   }
 
   .pharma-btn {
-    background: linear-gradient(135deg, var(--pharma-primary), hsl(221, 83%, 58%));
-    box-shadow: 0 4px 16px -2px hsla(221, 83%, 53%, 0.3);
+    background: linear-gradient(135deg, var(--pharma-primary), hsl(142, 76%, 46%));
+    box-shadow: 0 4px 16px -2px hsla(142, 76%, 36%, 0.3);
     border: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .pharma-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px -4px hsla(221, 83%, 53%, 0.4);
+    box-shadow: 0 8px 24px -4px hsla(142, 76%, 36%, 0.4);
   }
 
   .pharma-input {
@@ -205,7 +205,7 @@
 
   .pharma-input:focus {
     border-color: var(--pharma-primary);
-    box-shadow: 0 0 0 4px hsla(221, 83%, 53%, 0.1);
+    box-shadow: 0 0 0 4px hsla(142, 76%, 36%, 0.1);
   }
 
   .fade-in {
@@ -253,7 +253,7 @@
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, var(--pharma-primary), var(--pharma-accent));
+    background: linear-gradient(135deg, var(--pharma-primary), var(--pharma-secondary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

@@ -359,8 +359,8 @@ export default function OrderPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 glass-effect">
-              <p className="text-sm font-medium text-blue-900 flex items-center gap-2">
+            <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-xl p-4 glass-effect">
+              <p className="text-sm font-medium text-green-900 flex items-center gap-2">
                 <span className="text-lg">💰</span>
                 Frais de livraison: <span className="font-bold text-pharma-primary">1000 FCFA</span>
               </p>
@@ -385,7 +385,7 @@ export default function OrderPage() {
               <label className="block text-sm font-semibold mb-4 text-slate-700">📷 Photo de l'ordonnance</label>
               <div className="space-y-4">
                 {!orderData.prescriptionPhoto ? (
-                  <div className="border-2 border-dashed border-pharma-primary/30 rounded-2xl p-8 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 glass-effect transition-all duration-300 hover:border-pharma-primary/50">
+                  <div className="border-2 border-dashed border-pharma-primary/30 rounded-2xl p-8 bg-gradient-to-br from-green-50/50 to-green-100/50 glass-effect transition-all duration-300 hover:border-pharma-primary/50">
                     <div className="text-center">
                       <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-pharma-primary to-pharma-accent rounded-2xl flex items-center justify-center">
                         <Camera className="h-10 w-10 text-white" />
@@ -650,8 +650,8 @@ export default function OrderPage() {
               />
             </div>
 
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 glass-effect">
-              <p className="text-sm text-blue-900 flex items-start gap-3">
+            <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-xl p-5 glass-effect">
+              <p className="text-sm text-green-900 flex items-start gap-3">
                 <span className="text-lg mt-0.5">💡</span>
                 <span><strong>Info:</strong> Photo d'ordonnance ou liste de médicaments requise. La pharmacie confirmera le prix final.</span>
               </p>
