@@ -68,21 +68,25 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            YahoPharma+
-          </CardTitle>
+          <div className="flex justify-center mb-2">
+            <img 
+              src="/logotype-1563x323.webp" 
+              alt="PharmaChape" 
+              className="h-12 w-auto"
+            />
+          </div>
           <CardDescription>
             Connectez-vous à votre compte
           </CardDescription>
         </CardHeader>
         <CardContent>
           {/* Comptes de test */}
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h3 className="font-semibold text-blue-900 mb-2">Comptes de test :</h3>
-            <div className="text-sm text-blue-800 space-y-1">
+          <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+            <h3 className="font-semibold text-green-900 mb-2">Comptes de test :</h3>
+            <div className="text-sm text-green-800 space-y-1">
               <div><strong>Patient:</strong> +225 05 77 88 99 / patient123</div>
               <div><strong>Pharmacien:</strong> +225 07 11 22 33 / pharma123</div>
               <div><strong>Livreur:</strong> +225 07 44 55 66 / livreur123</div>
@@ -143,7 +147,7 @@ export default function Login() {
             <p className="text-sm text-gray-600 dark:text-gray-400">
               <Link
                 href="/forgot-password"
-                className="text-blue-600 hover:text-blue-500 dark:text-blue-400 font-medium"
+                className="text-green-600 hover:text-green-500 dark:text-green-400 font-medium"
                 data-testid="link-forgot-password"
               >
                 Mot de passe oublié ?
@@ -153,7 +157,7 @@ export default function Login() {
               Pas encore de compte ?{" "}
               <Link
                 href="/register"
-                className="text-blue-600 hover:text-blue-500 dark:text-blue-400 font-medium"
+                className="text-green-600 hover:text-green-500 dark:text-green-400 font-medium"
                 data-testid="link-register"
               >
                 S'inscrire
