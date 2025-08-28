@@ -546,18 +546,7 @@ export default function DashboardPatient() {
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <Button variant="outline" className="flex items-center gap-1">
-              <MapPin className="h-4 w-4 text-blue-600" />
-              <span>Ma Position</span>
-            </Button>
-            <Button onClick={() => navigate("/order-history")}>
-              Historique
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Clock className="h-5 w-5" />
-            </Button>
-          </div>
+          
         </div>
         <p className="text-gray-600 mt-2">
           Bienvenue {user?.firstName} ! Gérez vos commandes et ordonnances
