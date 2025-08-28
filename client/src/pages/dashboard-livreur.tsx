@@ -555,15 +555,34 @@ export default function DashboardLivreur() {
                   <CardContent className="space-y-4">
                     {/* Informations Patient */}
                     <div className="bg-blue-50 p-4 rounded-lg">
-                      <h4 className="font-semibold text-blue-800 mb-2 flex items-center">
-                        👤 Information Patient
-                      </h4>
-                      <p className="text-sm text-blue-700">
-                        <strong>Nom:</strong> {delivery.patient?.firstName} {delivery.patient?.lastName}
-                      </p>
-                      <p className="text-sm text-blue-700">
-                        <strong>Téléphone:</strong> {delivery.patient?.phone}
-                      </p>
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="flex-shrink-0">
+                          {delivery.patient?.profilePicture ? (
+                            <img 
+                              src={delivery.patient.profilePicture} 
+                              alt={`${delivery.patient?.firstName} ${delivery.patient?.lastName}`}
+                              className="w-12 h-12 rounded-full object-cover border-2 border-blue-200"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center">
+                              <span className="text-blue-600 font-semibold text-lg">
+                                {delivery.patient?.firstName?.charAt(0) || '?'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-blue-800 mb-2 flex items-center">
+                            👤 Information Patient
+                          </h4>
+                          <p className="text-sm text-blue-700 truncate">
+                            <strong>Nom:</strong> {delivery.patient?.firstName} {delivery.patient?.lastName}
+                          </p>
+                          <p className="text-sm text-blue-700">
+                            <strong>Téléphone:</strong> {delivery.patient?.phone}
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Adresse de Livraison */}
@@ -593,12 +612,12 @@ export default function DashboardLivreur() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2">
+                    <div className="space-y-3">
                       {delivery.status === 'assigned_pending_acceptance' && (
-                        <>
+                        <div className="grid grid-cols-2 gap-3">
                           <Button
                             onClick={() => acceptAssignmentMutation.mutate(delivery.id)}
-                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            className="w-full bg-green-600 hover:bg-green-700"
                             disabled={acceptAssignmentMutation.isPending || rejectAssignmentMutation.isPending}
                           >
                             <CheckCircle className="h-4 w-4 mr-2" />
@@ -607,17 +626,18 @@ export default function DashboardLivreur() {
                           <Button
                             onClick={() => rejectAssignmentMutation.mutate(delivery.id)}
                             variant="destructive"
-                            className="flex-1"
+                            className="w-full"
                             disabled={acceptAssignmentMutation.isPending || rejectAssignmentMutation.isPending}
                           >
                             <XCircle className="h-4 w-4 mr-2" />
                             Refuser
                           </Button>
-                        </>
+                        </div>
                       )}
+                      
                       {delivery.status === 'in_transit' && (
-                        <>
-                          <div className="flex-1">
+                        <div className="space-y-3">
+                          <div className="bg-blue-50 p-3 rounded-lg">
                             <p className="text-sm text-blue-700 font-medium">
                               🚚 En route vers le client
                             </p>
@@ -625,27 +645,27 @@ export default function DashboardLivreur() {
                               Livraison en cours
                             </p>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="grid grid-cols-2 gap-3">
                             <Button
                               onClick={() => navigate("/delivery-map-livreur")}
-                              className="bg-orange-600 hover:bg-orange-700 text-white"
+                              className="w-full bg-orange-600 hover:bg-orange-700 text-white"
                             >
                               🗺️ GPS
                             </Button>
                             <Button
                               onClick={() => confirmArrivalMutation.mutate(delivery.id)}
                               disabled={confirmArrivalMutation.isPending}
-                              className="bg-green-600 hover:bg-green-700 text-white"
+                              className="w-full bg-green-600 hover:bg-green-700 text-white"
                             >
-                              {confirmArrivalMutation.isPending ? 'Confirmation...' : '📍 Confirmer arrivée'}
+                              {confirmArrivalMutation.isPending ? 'Confirmation...' : '📍 Arrivée'}
                             </Button>
                           </div>
-                        </>
+                        </div>
                       )}
 
                       {delivery.status === 'arrived_pending_confirmation' && (
-                        <>
-                          <div className="flex-1">
+                        <div className="space-y-3">
+                          <div className="bg-orange-50 p-3 rounded-lg">
                             <p className="text-sm text-orange-700 font-medium">
                               ⏳ Arrivé sur place
                             </p>
@@ -655,29 +675,31 @@ export default function DashboardLivreur() {
                           </div>
                           <Button
                             onClick={() => navigate("/delivery-map-livreur")}
-                            className="bg-orange-600 hover:bg-orange-700 text-white"
+                            className="w-full bg-orange-600 hover:bg-orange-700 text-white"
                           >
                             🗺️ GPS
                           </Button>
-                        </>
+                        </div>
                       )}
+                      
                       {(delivery.status === 'assigned_pending_acceptance' || delivery.status === 'in_transit') && delivery.status !== 'in_transit' && (
                         <Button
                           onClick={() => navigate("/delivery-map-livreur")}
                           variant="outline"
-                          className="flex-1 border-orange-500 text-orange-600 hover:bg-orange-50"
+                          className="w-full border-orange-500 text-orange-600 hover:bg-orange-50"
                         >
                           🗺️ Voir sur GPS
                         </Button>
                       )}
+                      
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
                             variant="outline"
                             onClick={() => setSelectedOrder(delivery)}
-                            className="flex-1"
+                            className="w-full"
                           >
-                            Voir Détails
+                            👁️ Voir Détails
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-2xl">
@@ -699,8 +721,25 @@ export default function DashboardLivreur() {
                             </div>
                             <div>
                               <Label>Patient</Label>
-                              <p>{delivery.patient?.firstName} {delivery.patient?.lastName}</p>
-                              <p className="text-sm text-gray-600">{delivery.patient?.phone}</p>
+                              <div className="flex items-center gap-3 mt-2">
+                                {delivery.patient?.profilePicture ? (
+                                  <img 
+                                    src={delivery.patient.profilePicture} 
+                                    alt={`${delivery.patient?.firstName} ${delivery.patient?.lastName}`}
+                                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                    <span className="text-gray-600 font-semibold">
+                                      {delivery.patient?.firstName?.charAt(0) || '?'}
+                                    </span>
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="font-medium">{delivery.patient?.firstName} {delivery.patient?.lastName}</p>
+                                  <p className="text-sm text-gray-600">{delivery.patient?.phone}</p>
+                                </div>
+                              </div>
                             </div>
                             <div>
                               <Label>Adresse</Label>
