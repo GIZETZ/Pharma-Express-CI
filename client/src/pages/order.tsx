@@ -52,60 +52,119 @@ export default function OrderPage() {
 
   // Géolocalisation automatique avec haute précision
   useEffect(() => {
-    if (navigator.geolocation) {
-      setIsDetectingLocation(true);
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude, accuracy } = position.coords;
+    if (!navigator.geolocation) {
+      toast({
+        title: "Géolocalisation non supportée",
+        description: "Votre navigateur ne supporte pas la géolocalisation. Veuillez saisir votre adresse manuellement.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-          // Stocker les coordonnées GPS précises
-          setUserLocation({ lat: latitude, lng: longitude });
-          setOrderData(prev => ({
-            ...prev,
-            deliveryLatitude: latitude,
-            deliveryLongitude: longitude
-          }));
+    setIsDetectingLocation(true);
+    
+    const timeoutId = setTimeout(() => {
+      setIsDetectingLocation(false);
+      toast({
+        title: "Délai dépassé",
+        description: "La géolocalisation prend trop de temps. Veuillez saisir votre adresse manuellement.",
+        variant: "destructive",
+      });
+    }, 20000); // 20 secondes timeout
 
-          console.log(`📍 GPS précis capturé: ${latitude}, ${longitude} (précision: ${accuracy}m)`);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        clearTimeout(timeoutId);
+        const { latitude, longitude, accuracy } = position.coords;
 
-          // Reverse geocoding pour obtenir l'adresse
-          try {
-            const response = await fetch(`/api/location/reverse?lat=${latitude}&lng=${longitude}`);
-            const addressData = await response.json();
-            setCurrentAddress(addressData.formatted_address);
-            setOrderData(prev => ({ ...prev, deliveryAddress: addressData.formatted_address }));
-
-            toast({
-              title: "Position GPS détectée",
-              description: `Coordonnées précises capturées (précision: ${Math.round(accuracy)}m)`,
-            });
-          } catch (error) {
-            console.error("Erreur géolocalisation:", error);
-            // Garder les coordonnées même si le reverse geocoding échoue
-            toast({
-              title: "Coordonnées GPS capturées",
-              description: "Position GPS enregistrée. Veuillez saisir votre adresse manuellement.",
-            });
-          } finally {
-            setIsDetectingLocation(false);
-          }
-        },
-        (error) => {
-          console.error("Erreur de géolocalisation:", error);
+        // Vérifier que les coordonnées sont valides
+        if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
           setIsDetectingLocation(false);
           toast({
-            title: "Géolocalisation",
-            description: "Impossible d'obtenir votre position. Veuillez saisir votre adresse manuellement.",
+            title: "Coordonnées invalides",
+            description: "Les coordonnées GPS reçues sont invalides. Veuillez saisir votre adresse manuellement.",
             variant: "destructive",
           });
-        },
-        {
-          enableHighAccuracy: true,    // Demander la meilleure précision possible
-          timeout: 15000,              // Augmenter le timeout pour permettre une meilleure précision
-          maximumAge: 0                // Ne pas utiliser de position en cache, toujours récupérer une nouvelle position
+          return;
         }
-      );
-    }
+
+        // Stocker les coordonnées GPS précises
+        setUserLocation({ lat: latitude, lng: longitude });
+        setOrderData(prev => ({
+          ...prev,
+          deliveryLatitude: latitude,
+          deliveryLongitude: longitude
+        }));
+
+        console.log(`📍 GPS précis capturé: ${latitude}, ${longitude} (précision: ${accuracy}m)`);
+
+        // Reverse geocoding pour obtenir l'adresse
+        try {
+          const response = await fetch(`/api/location/reverse?lat=${latitude}&lng=${longitude}`);
+          
+          if (!response.ok) {
+            throw new Error(`Erreur API: ${response.status}`);
+          }
+          
+          const addressData = await response.json();
+          
+          if (addressData?.formatted_address) {
+            setCurrentAddress(addressData.formatted_address);
+            setOrderData(prev => ({ ...prev, deliveryAddress: addressData.formatted_address }));
+            
+            toast({
+              title: "✅ Position détectée",
+              description: `Adresse: ${addressData.formatted_address}`,
+            });
+          } else {
+            throw new Error("Adresse non trouvée");
+          }
+        } catch (error) {
+          console.error("Erreur reverse geocoding:", error);
+          // Garder les coordonnées même si le reverse geocoding échoue
+          toast({
+            title: "📍 GPS capturé",
+            description: "Position GPS enregistrée. Veuillez compléter votre adresse ci-dessous.",
+            variant: "default",
+          });
+        } finally {
+          setIsDetectingLocation(false);
+        }
+      },
+      (error) => {
+        clearTimeout(timeoutId);
+        setIsDetectingLocation(false);
+        
+        let errorMessage = "Erreur inconnue de géolocalisation";
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Accès à la géolocalisation refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Position indisponible. Vérifiez votre connexion internet et que le GPS est activé.";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Délai dépassé pour obtenir votre position. Réessayez ou saisissez votre adresse manuellement.";
+            break;
+          default:
+            errorMessage = `Erreur de géolocalisation: ${error.message || "Cause inconnue"}`;
+            break;
+        }
+        
+        console.error("Erreur de géolocalisation:", error);
+        toast({
+          title: "⚠️ Géolocalisation échouée",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      },
+      {
+        enableHighAccuracy: true,    // Demander la meilleure précision possible
+        timeout: 15000,              // 15 secondes timeout pour getCurrentPosition
+        maximumAge: 60000            // Accepter une position de moins d'1 minute
+      }
+    );
   }, [toast]);
 
   // Helper functions for medication management
@@ -504,13 +563,31 @@ export default function OrderPage() {
                 </div>
               )}
 
-              <Input
-                type="text"
-                placeholder="Saisissez votre adresse complète"
-                value={orderData.deliveryAddress}
-                onChange={(e) => setOrderData(prev => ({ ...prev, deliveryAddress: e.target.value }))}
-                className="w-full pharma-input py-6 text-base"
-              />
+              <div className="space-y-3">
+                <Input
+                  type="text"
+                  placeholder="Saisissez votre adresse complète"
+                  value={orderData.deliveryAddress}
+                  onChange={(e) => setOrderData(prev => ({ ...prev, deliveryAddress: e.target.value }))}
+                  className="w-full pharma-input py-6 text-base"
+                />
+                
+                {!userLocation && !isDetectingLocation && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Relancer la géolocalisation
+                      window.location.reload();
+                    }}
+                    className="w-full border-pharma-primary/30 text-pharma-primary hover:bg-pharma-primary hover:text-white"
+                  >
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Réessayer la géolocalisation
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Liste des médicaments */}
