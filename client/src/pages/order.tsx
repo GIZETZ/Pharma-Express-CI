@@ -361,7 +361,7 @@ export default function OrderPage() {
             </div>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-sm text-blue-800">
-                💰 Frais de livraison: 1000 FCFA (500 FCFA plateforme + 500 FCFA livreur)
+                💰 Frais de livraison: 1000 FCFA
               </p>
             </div>
           </CardContent>
@@ -486,19 +486,13 @@ export default function OrderPage() {
 
               {userLocation && (
                 <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-2">
-                      <MapPin className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-green-700 text-sm font-medium">📍 Position GPS précise détectée</p>
-                        <p className="text-green-600 text-xs font-mono">
-                          Lat: {userLocation.lat.toFixed(8)}° | Lng: {userLocation.lng.toFixed(8)}°
-                        </p>
-                        {currentAddress && (
-                          <p className="text-green-600 text-xs mt-1">📍 {currentAddress}</p>
-                        )}
-                        <p className="text-green-500 text-xs mt-1">✅ Coordonnées GPS haute précision pour routage exact</p>
-                      </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-green-600" />
+                    <div>
+                      <p className="text-green-700 text-sm font-medium">📍 Position détectée</p>
+                      {currentAddress && (
+                        <p className="text-green-600 text-xs mt-1">{currentAddress}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -511,9 +505,6 @@ export default function OrderPage() {
                 onChange={(e) => setOrderData(prev => ({ ...prev, deliveryAddress: e.target.value }))}
                 className="w-full"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                L'adresse sera automatiquement remplie si la géolocalisation est autorisée
-              </p>
             </div>
 
             {/* Liste des médicaments */}
@@ -521,7 +512,7 @@ export default function OrderPage() {
               <div className="flex items-center justify-between mb-3">
                 <label className="block text-sm font-medium">
                   Médicaments souhaités
-                  <span className="text-gray-500 text-xs ml-2">(Optionnel si photo d'ordonnance fournie)</span>
+                  <span className="text-gray-500 text-xs ml-2">(Optionnel)</span>
                 </label>
                 <Button 
                   type="button" 
@@ -581,19 +572,16 @@ export default function OrderPage() {
             {(orderData.prescriptionPhoto || orderData.medications.some(med => med.surBon)) && (
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Documents BON (si nécessaire)
+                  Documents BON
                   <span className="text-blue-600 text-xs ml-2">
-                    (Carte d'assurance, attestation de prise en charge, etc.)
+                    (Assurance, attestation)
                   </span>
                 </label>
                 <div className="border-2 border-dashed rounded-lg p-4 border-blue-300 bg-blue-50">
                   <div className="text-center">
                     <FileText className="mx-auto h-8 w-8 mb-2 text-blue-500" />
-                    <p className="text-sm mb-2 font-medium text-blue-800">
-                      Documents BON (si nécessaire)
-                    </p>
-                    <p className="text-xs mb-3 text-blue-700">
-                      Carte d'assurance, attestation de prise en charge, etc.
+                    <p className="text-sm mb-3 font-medium text-blue-800">
+                      Documents d'assurance
                     </p>
                     <input
                       type="file"
@@ -658,11 +646,7 @@ export default function OrderPage() {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                💡 <strong>Info:</strong> Vous pouvez envoyer votre commande de deux façons : 
-                1) <strong>Photo d'ordonnance uniquement</strong> (le pharmacien saisira les médicaments) 
-                2) <strong>Médicaments saisis manuellement</strong> (avec ou sans photo). 
-                La pharmacie déterminera le prix final et pourra modifier les détails si nécessaire. 
-                Les médicaments marqués "Sur BON" nécessitent une validation de vos documents d'assurance.
+                💡 <strong>Info:</strong> Photo d'ordonnance ou liste de médicaments requise. La pharmacie confirmera le prix final.
               </p>
             </div>
 
