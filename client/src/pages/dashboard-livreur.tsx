@@ -557,19 +557,23 @@ export default function DashboardLivreur() {
                     <div className="bg-blue-50 p-4 rounded-lg">
                       <div className="flex items-start gap-3 mb-3">
                         <div className="flex-shrink-0">
-                          {delivery.patient?.profilePicture ? (
+                          {delivery.patient?.profileImageUrl || delivery.patient?.profilePicture ? (
                             <img 
-                              src={delivery.patient.profilePicture} 
-                              alt={`${delivery.patient?.firstName} ${delivery.patient?.lastName}`}
+                              src={delivery.patient.profileImageUrl || delivery.patient.profilePicture} 
+                              alt={`${delivery.patient?.firstName || 'Patient'} ${delivery.patient?.lastName || ''}`}
                               className="w-12 h-12 rounded-full object-cover border-2 border-blue-200"
+                              onError={(e) => {
+                                // Fallback si l'image ne charge pas
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.nextElementSibling.style.display = 'flex';
+                              }}
                             />
-                          ) : (
-                            <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center">
-                              <span className="text-blue-600 font-semibold text-lg">
-                                {delivery.patient?.firstName?.charAt(0) || '?'}
-                              </span>
-                            </div>
-                          )}
+                          ) : null}
+                          <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center" style={{display: delivery.patient?.profileImageUrl || delivery.patient?.profilePicture ? 'none' : 'flex'}}>
+                            <span className="text-blue-600 font-semibold text-lg">
+                              {delivery.patient?.firstName?.charAt(0)?.toUpperCase() || delivery.patient?.name?.charAt(0)?.toUpperCase() || '👤'}
+                            </span>
+                          </div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-semibold text-blue-800 mb-2 flex items-center">
@@ -722,22 +726,26 @@ export default function DashboardLivreur() {
                             <div>
                               <Label>Patient</Label>
                               <div className="flex items-center gap-3 mt-2">
-                                {delivery.patient?.profilePicture ? (
+                                {delivery.patient?.profileImageUrl || delivery.patient?.profilePicture ? (
                                   <img 
-                                    src={delivery.patient.profilePicture} 
-                                    alt={`${delivery.patient?.firstName} ${delivery.patient?.lastName}`}
+                                    src={delivery.patient.profileImageUrl || delivery.patient.profilePicture} 
+                                    alt={`${delivery.patient?.firstName || 'Patient'} ${delivery.patient?.lastName || ''}`}
                                     className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                                    onError={(e) => {
+                                      // Fallback si l'image ne charge pas
+                                      e.currentTarget.style.display = 'none';
+                                      e.currentTarget.nextElementSibling.style.display = 'flex';
+                                    }}
                                   />
-                                ) : (
-                                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                    <span className="text-gray-600 font-semibold">
-                                      {delivery.patient?.firstName?.charAt(0) || '?'}
-                                    </span>
-                                  </div>
-                                )}
+                                ) : null}
+                                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center" style={{display: delivery.patient?.profileImageUrl || delivery.patient?.profilePicture ? 'none' : 'flex'}}>
+                                  <span className="text-gray-600 font-semibold">
+                                    {delivery.patient?.firstName?.charAt(0)?.toUpperCase() || delivery.patient?.name?.charAt(0)?.toUpperCase() || '👤'}
+                                  </span>
+                                </div>
                                 <div>
-                                  <p className="font-medium">{delivery.patient?.firstName} {delivery.patient?.lastName}</p>
-                                  <p className="text-sm text-gray-600">{delivery.patient?.phone}</p>
+                                  <p className="font-medium">{delivery.patient?.firstName || delivery.patient?.name || 'Patient'} {delivery.patient?.lastName || ''}</p>
+                                  <p className="text-sm text-gray-600">{delivery.patient?.phone || 'Téléphone non disponible'}</p>
                                 </div>
                               </div>
                             </div>
