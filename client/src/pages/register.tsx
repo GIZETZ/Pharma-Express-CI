@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -290,10 +291,9 @@ export default function Register() {
                   <FormItem>
                     <FormLabel>Numéro de téléphone</FormLabel>
                     <FormControl>
-                      <Input
+                      <PhoneInput
                         {...field}
-                        placeholder="+225 XX XX XX XX XX"
-                        type="tel"
+                        placeholder="XX XX XX XX XX"
                         data-testid="input-phone"
                       />
                     </FormControl>

@@ -8,6 +8,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -42,6 +43,8 @@ export default function EditProfile() {
   const {
     register,
     handleSubmit,
+    getValues,
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm<UpdateProfileData>({
     resolver: zodResolver(updateProfileSchema),
@@ -183,10 +186,11 @@ export default function EditProfile() {
 
               <div>
                 <Label htmlFor="phone">Numéro de téléphone</Label>
-                <Input
+                <PhoneInput
                   id="phone"
-                  {...register("phone")}
-                  placeholder="0707070707"
+                  value={getValues("phone")}
+                  onChange={(value) => setValue("phone", value)}
+                  placeholder="XX XX XX XX XX"
                 />
                 {errors.phone && (
                   <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
