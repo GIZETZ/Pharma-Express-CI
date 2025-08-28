@@ -515,21 +515,11 @@ export default function OrderPage() {
 
             {/* Liste des médicaments */}
             <div className="fade-in" style={{animationDelay: '0.5s'}}>
-              <div className="flex items-center justify-between mb-4">
+              <div className="mb-4">
                 <label className="block text-sm font-semibold text-slate-700">
                   💊 Médicaments souhaités
                   <span className="text-slate-500 text-xs ml-2">(Optionnel)</span>
                 </label>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={addMedication}
-                  className="flex items-center gap-2 border-pharma-primary/30 text-pharma-primary hover:bg-pharma-primary hover:text-white transition-all duration-300 rounded-lg px-4 py-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Ajouter
-                </Button>
               </div>
               <div className="space-y-4">
                 {orderData.medications.map((medication, index) => (
@@ -571,6 +561,18 @@ export default function OrderPage() {
                     )}
                   </div>
                 ))}
+              </div>
+              <div className="mt-4 flex justify-center">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={addMedication}
+                  className="flex items-center gap-2 border-pharma-primary/30 text-pharma-primary hover:bg-pharma-primary hover:text-white transition-all duration-300 rounded-lg px-4 py-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Ajouter
+                </Button>
               </div>
             </div>
 
