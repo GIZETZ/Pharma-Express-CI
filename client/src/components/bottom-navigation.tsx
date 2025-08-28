@@ -29,17 +29,7 @@ export default function BottomNavigation({ currentPage }: BottomNavigationProps)
       ),
       path: '/pharmacies'
     },
-    {
-      key: 'orders',
-      label: 'Commandes',
-      icon: (
-        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-          <path fillRule="evenodd" d="M4 5a2 2 0 012-2v1a2 2 0 002 2h4a2 2 0 002-2V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 3a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-        </svg>
-      ),
-      path: '/delivery'
-    },
+    
     {
       key: 'profile',
       label: 'Profil',
