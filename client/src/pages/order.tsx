@@ -303,32 +303,32 @@ export default function OrderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto p-4 pb-20">
+    <div className="min-h-screen bg-pharma-bg">
+      <div className="max-w-4xl mx-auto p-4 pb-20 fade-in">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-8 slide-in">
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={() => navigate('/pharmacies')}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 hover:bg-white/60 transition-all duration-300 glass-effect rounded-xl"
           >
             <ArrowLeft className="h-4 w-4" />
             Retour
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold gradient-text">
               Nouvelle Commande
             </h1>
-            <p className="text-gray-600">
+            <p className="text-slate-600 mt-1">
               Commande à {selectedPharmacy.name}
             </p>
           </div>
         </div>
 
         {/* Pharmacy Info Card */}
-        <Card className="mb-6 border-l-4 border-l-blue-500">
-          <CardContent className="p-4">
+        <Card className="mb-8 pharma-card border-l-4 border-l-pharma-primary scale-in" style={{animationDelay: '0.1s'}}>
+          <CardContent className="p-6">
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
                 <h4 className="font-semibold text-lg">{selectedPharmacy.name}</h4>
@@ -359,37 +359,41 @@ export default function OrderPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-sm text-blue-800">
-                💰 Frais de livraison: 1000 FCFA
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 glass-effect">
+              <p className="text-sm font-medium text-blue-900 flex items-center gap-2">
+                <span className="text-lg">💰</span>
+                Frais de livraison: <span className="font-bold text-pharma-primary">1000 FCFA</span>
               </p>
             </div>
           </CardContent>
         </Card>
 
         {/* Order Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">
-              📋 Détails de la Commande
+        <Card className="pharma-card scale-in" style={{animationDelay: '0.2s'}}>
+          <CardHeader className="pb-6">
+            <CardTitle className="text-xl flex items-center gap-3 gradient-text">
+              <span className="text-2xl">📋</span>
+              Détails de la Commande
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-600 mt-2">
               Remplissez les informations nécessaires pour votre commande
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8">
             {/* Photo de l'ordonnance */}
-            <div>
-              <label className="block text-sm font-medium mb-3">Photo de l'ordonnance</label>
-              <div className="space-y-3">
+            <div className="fade-in" style={{animationDelay: '0.3s'}}>
+              <label className="block text-sm font-semibold mb-4 text-slate-700">📷 Photo de l'ordonnance</label>
+              <div className="space-y-4">
                 {!orderData.prescriptionPhoto ? (
-                  <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50">
+                  <div className="border-2 border-dashed border-pharma-primary/30 rounded-2xl p-8 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 glass-effect transition-all duration-300 hover:border-pharma-primary/50">
                     <div className="text-center">
-                      <Camera className="mx-auto h-16 w-16 text-blue-500 mb-3" />
-                      <div className="text-lg font-medium text-blue-900 mb-2">
+                      <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-pharma-primary to-pharma-accent rounded-2xl flex items-center justify-center">
+                        <Camera className="h-10 w-10 text-white" />
+                      </div>
+                      <div className="text-xl font-bold text-slate-800 mb-2">
                           Envoyer la photo de l'ordonnance
                         </div>
-                        <div className="text-sm text-blue-700 mb-4">
+                        <div className="text-sm text-slate-600 mb-6">
                           Prenez une photo claire de votre ordonnance en format portrait
                         </div>
                         <div className="space-y-3">
@@ -402,10 +406,10 @@ export default function OrderPage() {
                           />
                           <Button 
                             type="button" 
-                            className="bg-blue-600 hover:bg-blue-700 w-full"
+                            className="pharma-btn w-full py-6 text-white font-semibold rounded-xl"
                             onClick={(e) => triggerCameraInput(e)}
                           >
-                            <Camera className="h-4 w-4 mr-2" />
+                            <Camera className="h-5 w-5 mr-2" />
                             Prendre une photo
                           </Button>
                           <input
@@ -420,16 +424,16 @@ export default function OrderPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="border border-green-200 rounded-lg p-4 bg-green-50">
+                  <div className="space-y-4">
+                    <div className="border border-emerald-200 rounded-xl p-5 bg-gradient-to-r from-emerald-50 to-green-50 glass-effect">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                            <Camera className="h-6 w-6 text-green-600" />
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+                            <Camera className="h-7 w-7 text-white" />
                           </div>
                           <div>
-                            <p className="font-medium text-green-900">Photo ajoutée</p>
-                            <p className="text-sm text-green-700 truncate max-w-48">{orderData.prescriptionPhoto.name}</p>
+                            <p className="font-semibold text-emerald-900">Photo ajoutée</p>
+                            <p className="text-sm text-emerald-700 truncate max-w-48">{orderData.prescriptionPhoto.name}</p>
                           </div>
                         </div>
                         <Button
@@ -453,7 +457,7 @@ export default function OrderPage() {
                     />
                     <Button 
                       type="button" 
-                      className="bg-green-600 hover:bg-green-700 w-full"
+                      className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 w-full py-4 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl"
                       onClick={() => {
                         document.getElementById('bon-documents-input')?.click();
                         toast({
@@ -462,7 +466,7 @@ export default function OrderPage() {
                         });
                       }}
                     >
-                      <FileText className="h-4 w-4 mr-2" />
+                      <FileText className="h-5 w-5 mr-2" />
                       Associer un BON
                     </Button>
                   </div>
@@ -471,8 +475,8 @@ export default function OrderPage() {
             </div>
 
             {/* Adresse de livraison */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Adresse de livraison</label>
+            <div className="fade-in" style={{animationDelay: '0.4s'}}>
+              <label className="block text-sm font-semibold mb-4 text-slate-700">📍 Adresse de livraison</label>
 
               {/* Zone d'affichage de la géolocalisation */}
               {isDetectingLocation && (
@@ -485,13 +489,15 @@ export default function OrderPage() {
               )}
 
               {userLocation && (
-                <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-green-600" />
+                <div className="mb-4 p-4 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl glass-effect">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
+                      <MapPin className="h-5 w-5 text-white" />
+                    </div>
                     <div>
-                      <p className="text-green-700 text-sm font-medium">📍 Position détectée</p>
+                      <p className="text-emerald-800 text-sm font-semibold">Position détectée</p>
                       {currentAddress && (
-                        <p className="text-green-600 text-xs mt-1">{currentAddress}</p>
+                        <p className="text-emerald-700 text-sm mt-1">{currentAddress}</p>
                       )}
                     </div>
                   </div>
@@ -503,38 +509,38 @@ export default function OrderPage() {
                 placeholder="Saisissez votre adresse complète"
                 value={orderData.deliveryAddress}
                 onChange={(e) => setOrderData(prev => ({ ...prev, deliveryAddress: e.target.value }))}
-                className="w-full"
+                className="w-full pharma-input py-6 text-base"
               />
             </div>
 
             {/* Liste des médicaments */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="block text-sm font-medium">
-                  Médicaments souhaités
-                  <span className="text-gray-500 text-xs ml-2">(Optionnel)</span>
+            <div className="fade-in" style={{animationDelay: '0.5s'}}>
+              <div className="flex items-center justify-between mb-4">
+                <label className="block text-sm font-semibold text-slate-700">
+                  💊 Médicaments souhaités
+                  <span className="text-slate-500 text-xs ml-2">(Optionnel)</span>
                 </label>
                 <Button 
                   type="button" 
                   variant="outline" 
                   size="sm" 
                   onClick={addMedication}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-2 border-pharma-primary/30 text-pharma-primary hover:bg-pharma-primary hover:text-white transition-all duration-300 rounded-lg px-4 py-2"
                 >
                   <Plus className="h-4 w-4" />
                   Ajouter
                 </Button>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {orderData.medications.map((medication, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
+                  <div key={index} className="flex items-center gap-4 p-4 border border-slate-200 rounded-xl bg-white/60 glass-effect transition-all duration-300 hover:border-pharma-primary/30">
                     <div className="flex-1">
                       <Input
                         type="text"
                         placeholder="Nom du médicament"
                         value={medication.name}
                         onChange={(e) => updateMedication(index, 'name', e.target.value)}
-                        className="w-full"
+                        className="w-full pharma-input"
                       />
                     </div>
                     <div className="flex items-center space-x-2">
@@ -644,28 +650,45 @@ export default function OrderPage() {
               />
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800">
-                💡 <strong>Info:</strong> Photo d'ordonnance ou liste de médicaments requise. La pharmacie confirmera le prix final.
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 glass-effect">
+              <p className="text-sm text-blue-900 flex items-start gap-3">
+                <span className="text-lg mt-0.5">💡</span>
+                <span><strong>Info:</strong> Photo d'ordonnance ou liste de médicaments requise. La pharmacie confirmera le prix final.</span>
               </p>
             </div>
 
-            <div className="pt-4">
+            <div className="pt-6 fade-in" style={{animationDelay: '0.6s'}}>
               <Button
                 onClick={handleCreateOrder}
                 disabled={createOrderMutation.isPending || !validateOrder()}
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full pharma-btn py-6 text-lg font-bold text-white rounded-xl disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {createOrderMutation.isPending ? "Envoi en cours..." : "📤 Confirmer la commande"}
+                {createOrderMutation.isPending ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Envoi en cours...
+                  </div>
+                ) : (
+                  <span className="flex items-center gap-3">
+                    <span className="text-xl">📤</span>
+                    Confirmer la commande
+                  </span>
+                )}
               </Button>
 
               {/* Indicateur de validation */}
-              <div className="mt-2 text-xs text-gray-500 text-center">
+              <div className="mt-4 text-sm text-center">
                 {!validateOrder() && (
-                  <span className="text-red-600">⚠️ Vérifiez les éléments requis</span>
+                  <span className="text-red-600 flex items-center justify-center gap-2 bg-red-50 py-2 px-4 rounded-lg">
+                    <span>⚠️</span>
+                    Vérifiez les éléments requis
+                  </span>
                 )}
                 {validateOrder() && (
-                  <span className="text-green-600">✅ Prêt à confirmer</span>
+                  <span className="text-emerald-600 flex items-center justify-center gap-2 bg-emerald-50 py-2 px-4 rounded-lg">
+                    <span>✅</span>
+                    Prêt à confirmer
+                  </span>
                 )}
               </div>
             </div>

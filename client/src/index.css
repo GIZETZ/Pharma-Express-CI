@@ -79,31 +79,35 @@
 
 :root {
   --background: hsl(0, 0%, 100%);
-  --foreground: hsl(20, 14.3%, 4.1%);
-  --muted: hsl(60, 4.8%, 95.9%);
-  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --foreground: hsl(222, 84%, 4.9%);
+  --muted: hsl(210, 40%, 96%);
+  --muted-foreground: hsl(215, 16%, 46.9%);
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --popover-foreground: hsl(222, 84%, 4.9%);
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(20, 14.3%, 4.1%);
-  --border: hsl(20, 5.9%, 90%);
-  --input: hsl(20, 5.9%, 90%);
-  --primary: hsl(142, 76%, 36%);
-  --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(60, 4.8%, 95.9%);
-  --secondary-foreground: hsl(24, 9.8%, 10%);
-  --accent: hsl(60, 4.8%, 95.9%);
-  --accent-foreground: hsl(24, 9.8%, 10%);
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(20, 14.3%, 4.1%);
-  --radius: 0.5rem;
+  --card-foreground: hsl(222, 84%, 4.9%);
+  --border: hsl(214, 32%, 91%);
+  --input: hsl(214, 32%, 91%);
+  --primary: hsl(221, 83%, 53%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(210, 40%, 96%);
+  --secondary-foreground: hsl(222, 84%, 4.9%);
+  --accent: hsl(210, 40%, 96%);
+  --accent-foreground: hsl(222, 84%, 4.9%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --ring: hsl(221, 83%, 53%);
+  --radius: 0.75rem;
   
-  /* Pharma Express specific colors */
-  --pharma-green: hsl(142, 76%, 36%);
-  --pharma-green-dark: hsl(142, 76%, 31%);
-  --pharma-blue: hsl(217, 91%, 60%);
-  --pharma-bg: hsl(0, 0%, 98%);
+  /* PharmaChape modern colors */
+  --pharma-primary: hsl(221, 83%, 53%);
+  --pharma-primary-dark: hsl(221, 83%, 43%);
+  --pharma-secondary: hsl(142, 76%, 36%);
+  --pharma-accent: hsl(262, 83%, 58%);
+  --pharma-bg: linear-gradient(135deg, hsl(210, 40%, 98%), hsl(220, 69%, 97%));
+  --pharma-card: hsl(0, 0%, 100%);
+  --pharma-shadow: 0 4px 32px -4px rgba(0, 0, 0, 0.08);
+  --pharma-shadow-lg: 0 10px 64px -4px rgba(0, 0, 0, 0.12);
 }
 
 .dark {
@@ -134,38 +138,86 @@
   }
 
   body {
-    @apply font-sans antialiased bg-pharma-bg text-foreground;
-    font-family: 'Inter', system-ui, sans-serif;
+    @apply font-sans antialiased text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--pharma-bg);
+    min-height: 100vh;
   }
 }
 
 @layer utilities {
-  .pharma-green {
-    color: var(--pharma-green);
+  .pharma-primary {
+    color: var(--pharma-primary);
   }
   
-  .bg-pharma-green {
-    background-color: var(--pharma-green);
+  .bg-pharma-primary {
+    background-color: var(--pharma-primary);
   }
   
-  .border-pharma-green {
-    border-color: var(--pharma-green);
+  .border-pharma-primary {
+    border-color: var(--pharma-primary);
   }
   
-  .pharma-blue {
-    color: var(--pharma-blue);
+  .pharma-secondary {
+    color: var(--pharma-secondary);
   }
   
-  .bg-pharma-blue {
-    background-color: var(--pharma-blue);
+  .bg-pharma-secondary {
+    background-color: var(--pharma-secondary);
   }
   
   .bg-pharma-bg {
-    background-color: var(--pharma-bg);
+    background: var(--pharma-bg);
+  }
+
+  .pharma-card {
+    background: var(--pharma-card);
+    box-shadow: var(--pharma-shadow);
+    border: 1px solid hsl(214, 32%, 91%);
+    border-radius: var(--radius);
+    backdrop-filter: blur(12px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .pharma-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--pharma-shadow-lg);
+  }
+
+  .pharma-btn {
+    background: linear-gradient(135deg, var(--pharma-primary), hsl(221, 83%, 58%));
+    box-shadow: 0 4px 16px -2px hsla(221, 83%, 53%, 0.3);
+    border: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .pharma-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px -4px hsla(221, 83%, 53%, 0.4);
+  }
+
+  .pharma-input {
+    background: hsl(0, 0%, 100%);
+    border: 2px solid hsl(214, 32%, 91%);
+    border-radius: var(--radius);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .pharma-input:focus {
+    border-color: var(--pharma-primary);
+    box-shadow: 0 0 0 4px hsla(221, 83%, 53%, 0.1);
   }
 
   .fade-in {
-    animation: fadeIn 0.3s ease-in;
+    animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .slide-in {
+    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .scale-in {
+    animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .notification-badge {
@@ -178,25 +230,40 @@
 
   .camera-preview {
     aspect-ratio: 4/3;
-    background: #000;
-    border-radius: 12px;
+    background: linear-gradient(135deg, #1f2937, #111827);
+    border-radius: 16px;
     overflow: hidden;
     position: relative;
+    box-shadow: var(--pharma-shadow-lg);
   }
 
   .map-container {
     height: 200px;
-    background: linear-gradient(45deg, #e5e7eb, #f3f4f6);
-    border-radius: 12px;
+    background: linear-gradient(135deg, hsl(210, 40%, 96%), hsl(220, 69%, 97%));
+    border-radius: 16px;
     position: relative;
     overflow: hidden;
+    box-shadow: var(--pharma-shadow);
+  }
+
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, var(--pharma-primary), var(--pharma-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -204,12 +271,36 @@
   }
 }
 
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes pulse {
   0%, 100% {
     transform: scale(1);
+    opacity: 1;
   }
   50% {
-    transform: scale(1.1);
+    transform: scale(1.05);
+    opacity: 0.9;
   }
 }
 
@@ -218,9 +309,24 @@
     transform: translateY(0);
   }
   40% {
-    transform: translateY(-10px);
+    transform: translateY(-12px);
   }
   60% {
-    transform: translateY(-5px);
+    transform: translateY(-6px);
   }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  background-size: 200px 100%;
+  animation: shimmer 2s infinite;
 }
