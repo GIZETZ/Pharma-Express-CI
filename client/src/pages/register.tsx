@@ -201,7 +201,7 @@ export default function Register() {
                 </div>
                 <div className="text-left">
                   <div className="font-semibold text-purple-600">Livreur</div>
-                  <div className="text-sm text-gray-500">500 FCFA par livraison</div>
+                  <div className="text-sm text-gray-500">Livraison rapide.</div>
                 </div>
               </Button>
             </div>
