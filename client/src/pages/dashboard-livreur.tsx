@@ -85,7 +85,7 @@ export default function DashboardLivreur() {
   const testAllSounds = async () => {
     const sounds = ['pending', 'confirmed', 'preparing', 'ready_for_delivery', 'in_transit', 'in_delivery', 'delivered', 'cancelled'];
     for (const sound of sounds) {
-      await playSound(sound as any);
+      await playNotificationSound(sound as any);
       await new Promise(resolve => setTimeout(resolve, 1000)); // Attendre 1 seconde entre chaque son
     }
   };
@@ -348,21 +348,28 @@ export default function DashboardLivreur() {
     }
   }, [myDeliveries, previousDeliveryStatuses, notifyOrderStatusChange, toast, playNotificationSound]);
 
-  // Initialiser les notifications au premier chargement pour les livreurs
+  // Initialiser les notifications au premier chargement pour les livreurs (version moins intrusive)
   useEffect(() => {
-    if (!isNotificationsEnabled && permissionStatus === 'default') {
+    if (!isNotificationsEnabled && permissionStatus === 'default' && !localStorage.getItem('notifications-prompt-dismissed')) {
       const timer = setTimeout(() => {
         toast({
           title: "🔔 Notifications livreur",
-          description: "Activez les notifications pour être averti des nouvelles livraisons même quand l'app est fermée",
+          description: "Restez informé des nouvelles livraisons",
           action: (
-            <Button size="sm" onClick={requestNotificationPermission}>
-              Activer
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => {
+                localStorage.setItem('notifications-prompt-dismissed', 'true');
+              }}>
+                Plus tard
+              </Button>
+              <Button size="sm" onClick={requestNotificationPermission}>
+                Activer
+              </Button>
+            </div>
           ),
-          duration: 10000,
+          duration: 5000,
         });
-      }, 3000);
+      }, 10000);
 
       return () => clearTimeout(timer);
     }
@@ -565,7 +572,8 @@ export default function DashboardLivreur() {
                               onError={(e) => {
                                 // Fallback si l'image ne charge pas
                                 e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling.style.display = 'flex';
+                                const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (fallback) fallback.style.display = 'flex';
                               }}
                             />
                           ) : null}
@@ -734,7 +742,8 @@ export default function DashboardLivreur() {
                                     onError={(e) => {
                                       // Fallback si l'image ne charge pas
                                       e.currentTarget.style.display = 'none';
-                                      e.currentTarget.nextElementSibling.style.display = 'flex';
+                                      const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (fallback) fallback.style.display = 'flex';
                                     }}
                                   />
                                 ) : null}

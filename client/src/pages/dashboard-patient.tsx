@@ -341,22 +341,29 @@ export default function DashboardPatient() {
     }
   }, [orders, notifyOrderStatusChange, toast, playSound]);
 
-  // Initialiser les notifications au premier chargement
+  // Initialiser les notifications au premier chargement (version moins intrusive)
   useEffect(() => {
-    if (!isNotificationsEnabled && permissionStatus === 'default') {
-      // Proposer d'activer les notifications après 3 secondes
+    if (!isNotificationsEnabled && permissionStatus === 'default' && !localStorage.getItem('notifications-prompt-dismissed')) {
+      // Proposer d'activer les notifications après 10 secondes
       const timer = setTimeout(() => {
         toast({
-          title: "🔔 Notifications sonores",
-          description: "Activez les notifications pour être averti des changements de statut de vos commandes même quand l'app est fermée",
+          title: "🔔 Notifications",
+          description: "Activez les notifications pour suivre vos commandes",
           action: (
-            <Button size="sm" onClick={requestNotificationPermission}>
-              Activer
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => {
+                localStorage.setItem('notifications-prompt-dismissed', 'true');
+              }}>
+                Plus tard
+              </Button>
+              <Button size="sm" onClick={requestNotificationPermission}>
+                Activer
+              </Button>
+            </div>
           ),
-          duration: 10000,
+          duration: 5000,
         });
-      }, 3000);
+      }, 10000);
 
       return () => clearTimeout(timer);
     }
